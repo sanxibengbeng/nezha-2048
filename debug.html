@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSS调试页面</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <style>
+        /* 调试样式 */
+        .debug-info {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 9999;
+        }
+        
+        .debug-section {
+            margin: 20px;
+            padding: 20px;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+        }
+        
+        .debug-section h3 {
+            margin-bottom: 10px;
+            color: #DC143C;
+        }
+    </style>
+</head>
+<body data-theme="nezha">
+    <div class="debug-info">
+        <div>CSS加载状态: <span id="css-status">检查中...</span></div>
+        <div>主题: <span id="theme-status">nezha</span></div>
+        <div>背景: <span id="bg-status">检查中...</span></div>
+    </div>
+
+    <!-- 云朵装饰 -->
+    <div class="cloud-decoration">☁️</div>
+    <div class="cloud-decoration">☁️</div>
+    <div class="cloud-decoration">☁️</div>
+    
+    <div id="game-container">
+        <div class="debug-section">
+            <h3>游戏标题测试</h3>
+            <header class="game-header">
+                <h1 class="game-title">哪吒2048</h1>
+            </header>
+        </div>
+
+        <div class="debug-section">
+            <h3>分数框测试</h3>
+            <div class="score-container">
+                <div class="score-box">
+                    <div class="score-label">分数</div>
+                    <div class="score-value">12800</div>
+                </div>
+                <div class="score-box">
+                    <div class="score-label">最高分</div>
+                    <div class="score-value">25600</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="debug-section">
+            <h3>技能按钮测试</h3>
+            <div class="skills-container">
+                <div class="skill-item" id="skill-three-heads" title="三头六臂">
+                    <div class="skill-icon">🔥</div>
+                    <div class="skill-cooldown"></div>
+                </div>
+                <div class="skill-item" id="skill-qiankun-circle" title="乾坤圈">
+                    <div class="skill-icon">⭕</div>
+                    <div class="skill-cooldown"></div>
+                </div>
+                <div class="skill-item" id="skill-huntian-ling" title="混天绫">
+                    <div class="skill-icon">🌊</div>
+                    <div class="skill-cooldown"></div>
+                </div>
+                <div class="skill-item" id="skill-transformation" title="哪吒变身">
+                    <div class="skill-icon">⚡</div>
+                    <div class="skill-cooldown"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="debug-section">
+            <h3>方块样式测试</h3>
+            <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
+                <div class="tile tile-2" style="position: relative; width: 80px; height: 80px;">
+                    <div class="tile-content">🪷</div>
+                </div>
+                <div class="tile tile-4" style="position: relative; width: 80px; height: 80px;">
+                    <div class="tile-content">🔥</div>
+                </div>
+                <div class="tile tile-8" style="position: relative; width: 80px; height: 80px;">
+                    <div class="tile-content">🌊</div>
+                </div>
+                <div class="tile tile-16" style="position: relative; width: 80px; height: 80px;">
+                    <div class="tile-content">⭕</div>
+                </div>
+                <div class="tile tile-128" style="position: relative; width: 80px; height: 80px;">
+                    <div class="tile-content">👑</div>
+                </div>
+                <div class="tile tile-2048" style="position: relative; width: 80px; height: 80px;">
+                    <div class="tile-content">👼</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="debug-section">
+            <h3>游戏区域测试</h3>
+            <div class="game-area" style="position: relative; width: 300px; height: 300px; margin: 0 auto;">
+                <canvas id="game-canvas" width="300" height="300"></canvas>
+                <div class="game-grid breathing" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                    <!-- 网格单元格 -->
+                </div>
+                <div class="effects-container"></div>
+            </div>
+        </div>
+
+        <div class="debug-section">
+            <h3>按钮测试</h3>
+            <div class="game-controls">
+                <button class="control-btn primary">新游戏</button>
+                <button class="control-btn">暂停</button>
+                <button class="control-btn">设置</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检查CSS是否正确加载
+            const gameTitle = document.querySelector('.game-title');
+            const computedStyle = window.getComputedStyle(gameTitle);
+            
+            const cssStatus = document.getElementById('css-status');
+            const bgStatus = document.getElementById('bg-status');
+            
+            // 检查标题样式
+            const titleBg = computedStyle.background || computedStyle.backgroundImage;
+            if (titleBg && titleBg.includes('gradient')) {
+                cssStatus.textContent = '✅ 已加载';
+                cssStatus.style.color = '#4CAF50';
+            } else {
+                cssStatus.textContent = '❌ 未加载';
+                cssStatus.style.color = '#F44336';
+            }
+            
+            // 检查背景
+            const bodyStyle = window.getComputedStyle(document.body);
+            const bodyBg = bodyStyle.background || bodyStyle.backgroundImage;
+            if (bodyBg && bodyBg.includes('gradient')) {
+                bgStatus.textContent = '✅ 正常';
+                bgStatus.style.color = '#4CAF50';
+            } else {
+                bgStatus.textContent = '❌ 异常';
+                bgStatus.style.color = '#F44336';
+            }
+            
+            // 测试技能按钮点击效果
+            const skillItems = document.querySelectorAll('.skill-item');
+            skillItems.forEach((item, index) => {
+                item.addEventListener('click', function() {
+                    const skillNames = ['three-heads-active', 'qiankun-active', 'huntian-active', 'transformation-active'];
+                    const className = skillNames[index];
+                    
+                    item.classList.add(className);
+                    setTimeout(() => {
+                        item.classList.remove(className);
+                    }, 2000);
+                });
+            });
+            
+            // 创建网格单元格
+            const gameGrid = document.querySelector('.game-grid');
+            for (let i = 0; i < 16; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'grid-cell';
+                cell.style.cssText = `
+                    position: absolute;
+                    width: 23%;
+                    height: 23%;
+                    left: ${(i % 4) * 25 + 1}%;
+                    top: ${Math.floor(i / 4) * 25 + 1}%;
+                `;
+                gameGrid.appendChild(cell);
+            }
+            
+            console.log('调试页面加载完成');
+            console.log('游戏标题样式:', computedStyle.background);
+            console.log('Body背景样式:', bodyStyle.background);
+        });
+    </script>
+</body>
+</html>
