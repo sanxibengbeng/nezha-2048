@@ -1,0 +1,463 @@
+/* 哪吒2048游戏样式 */
+
+/* 基础重置和字体 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Noto Sans SC', sans-serif;
+    background: linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #CD853F 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #2F1B14;
+    overflow-x: hidden;
+}
+
+/* 游戏容器 */
+#game-container {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    max-width: 500px;
+    width: 90vw;
+    text-align: center;
+    position: relative;
+}
+
+/* 游戏标题 */
+.game-header {
+    margin-bottom: 20px;
+}
+
+.game-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #DC143C;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    margin-bottom: 15px;
+    background: linear-gradient(45deg, #DC143C, #FFD700);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* 分数容器 */
+.score-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.score-box {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    border-radius: 10px;
+    padding: 10px 20px;
+    min-width: 100px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.score-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #8B4513;
+    margin-bottom: 5px;
+}
+
+.score-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2F1B14;
+}
+
+/* 技能栏 */
+.skills-container {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    padding: 10px;
+    background: rgba(220, 20, 60, 0.1);
+    border-radius: 15px;
+}
+
+.skill-item {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #DC143C, #B22222);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.skill-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+.skill-item.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.skill-icon {
+    font-size: 1.5rem;
+    filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.5));
+}
+
+.skill-cooldown {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, transparent 0%, rgba(0, 0, 0, 0.7) 0%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.skill-cooldown.active {
+    opacity: 1;
+}
+
+/* 游戏区域 */
+.game-area {
+    position: relative;
+    margin: 20px auto;
+    width: 400px;
+    height: 400px;
+    max-width: 90vw;
+    max-height: 90vw;
+}
+
+#game-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+    background: #BBADA0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.game-grid {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    gap: 8px;
+    padding: 8px;
+    border-radius: 10px;
+    pointer-events: none;
+}
+
+.grid-cell {
+    background: rgba(238, 228, 218, 0.35);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #776E65;
+    transition: all 0.3s ease;
+}
+
+.tile {
+    position: absolute;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 700;
+    transition: all 0.15s ease-in-out;
+    z-index: 10;
+}
+
+/* 方块颜色主题 */
+.tile-2 { background: #EEE4DA; color: #776E65; }
+.tile-4 { background: #EDE0C8; color: #776E65; }
+.tile-8 { background: #F2B179; color: #F9F6F2; }
+.tile-16 { background: #F59563; color: #F9F6F2; }
+.tile-32 { background: #F67C5F; color: #F9F6F2; }
+.tile-64 { background: #F65E3B; color: #F9F6F2; }
+.tile-128 { background: #EDCF72; color: #F9F6F2; font-size: 1.8rem; }
+.tile-256 { background: #EDCC61; color: #F9F6F2; font-size: 1.8rem; }
+.tile-512 { background: #EDC850; color: #F9F6F2; font-size: 1.8rem; }
+.tile-1024 { background: #EDC53F; color: #F9F6F2; font-size: 1.6rem; }
+.tile-2048 { background: #EDC22E; color: #F9F6F2; font-size: 1.6rem; }
+
+/* 游戏控制按钮 */
+.game-controls {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.control-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #8F7A66;
+    color: #F9F6F2;
+}
+
+.control-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.control-btn.primary {
+    background: linear-gradient(135deg, #DC143C, #B22222);
+}
+
+.control-btn.primary:hover {
+    background: linear-gradient(135deg, #B22222, #8B0000);
+}
+
+/* 移动设备提示 */
+.mobile-instructions {
+    margin-top: 15px;
+    padding: 10px;
+    background: rgba(255, 215, 0, 0.2);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: #8B4513;
+    display: none;
+}
+
+/* 弹窗样式 */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.modal.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    max-width: 400px;
+    width: 90vw;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    transform: scale(1);
+    transition: transform 0.3s ease;
+}
+
+.modal.hidden .modal-content {
+    transform: scale(0.9);
+}
+
+.modal h2 {
+    color: #DC143C;
+    margin-bottom: 20px;
+    font-size: 1.8rem;
+}
+
+.modal p {
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+}
+
+#new-record {
+    color: #FFD700;
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 25px;
+}
+
+/* 设置项 */
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.setting-item label {
+    font-weight: 500;
+    color: #2F1B14;
+}
+
+.setting-item input,
+.setting-item select {
+    padding: 8px 12px;
+    border: 2px solid #BBADA0;
+    border-radius: 6px;
+    font-size: 1rem;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .game-title {
+        font-size: 2rem;
+    }
+    
+    .score-container {
+        gap: 10px;
+    }
+    
+    .score-box {
+        padding: 8px 15px;
+        min-width: 80px;
+    }
+    
+    .skills-container {
+        gap: 10px;
+    }
+    
+    .skill-item {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .skill-icon {
+        font-size: 1.2rem;
+    }
+    
+    .game-area {
+        width: 350px;
+        height: 350px;
+    }
+    
+    .mobile-instructions {
+        display: block;
+    }
+    
+    .game-controls {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .control-btn {
+        padding: 10px 20px;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    #game-container {
+        padding: 15px;
+        width: 95vw;
+    }
+    
+    .game-title {
+        font-size: 1.8rem;
+    }
+    
+    .game-area {
+        width: 300px;
+        height: 300px;
+    }
+    
+    .tile {
+        font-size: 1.5rem;
+    }
+    
+    .tile-128,
+    .tile-256,
+    .tile-512 {
+        font-size: 1.3rem;
+    }
+    
+    .tile-1024,
+    .tile-2048 {
+        font-size: 1.1rem;
+    }
+}
+
+/* 动画效果 */
+@keyframes tileAppear {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes tileMerge {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes skillActivate {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    50% {
+        transform: scale(1.1);
+        box-shadow: 0 8px 16px rgba(220, 20, 60, 0.4);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+}
+
+.tile-new {
+    animation: tileAppear 0.3s ease-in-out;
+}
+
+.tile-merged {
+    animation: tileMerge 0.3s ease-in-out;
+}
+
+.skill-item.activated {
+    animation: skillActivate 0.5s ease-in-out;
+}
