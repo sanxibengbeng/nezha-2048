@@ -16,6 +16,8 @@ class GameEngine {
         this.gameState = new GameState();
         this.themeConfig = new ThemeConfig('nezha');
         this.gridManager = new GridManager(4);
+        this.inputManager = new InputManager(this);
+        this.themeManager = new ThemeManager(this);
         
         // 渲染相关
         this.canvas = null;
@@ -48,7 +50,7 @@ class GameEngine {
      * 初始化游戏引擎
      * @param {HTMLCanvasElement} canvas - Canvas元素
      */
-    init(canvas) {
+    async init(canvas) {
         try {
             // 设置Canvas
             this.canvas = canvas;
@@ -66,6 +68,15 @@ class GameEngine {
             
             // 设置GridManager的游戏状态引用
             this.gridManager.setGameState(this.gameState);
+            
+            // 初始化输入管理器
+            this.inputManager.init();
+            
+            // 初始化主题管理器
+            await this.themeManager.init('nezha');
+            
+            // 绑定输入管理器事件
+            this.bindInputEvents();
             
             // 绑定事件
             this.bindEvents();
@@ -255,11 +266,26 @@ class GameEngine {
         // 更新技能冷却
         this.gameState.updateSkillCooldowns(deltaTime);
         
+        // 更新方块动画
+        this.updateTileAnimations(deltaTime);
+        
         // 检查游戏结束条件
         this.checkGameOver();
         
         // 触发更新事件
         this.emit('update', { deltaTime });
+    }
+
+    /**
+     * 更新方块动画
+     * @param {number} deltaTime - 时间差（毫秒）
+     */
+    updateTileAnimations(deltaTime) {
+        const tiles = this.gameState.getAllTiles();
+        
+        tiles.forEach(tile => {
+            tile.updateAnimation(deltaTime);
+        });
     }
 
     /**
@@ -337,30 +363,10 @@ class GameEngine {
      */
     renderTiles() {
         const tiles = this.gameState.getAllTiles();
-        const cellSize = this.canvas.width / 4;
-        const gap = cellSize * 0.1;
-        const actualCellSize = cellSize - gap;
         
+        // 渲染所有方块
         tiles.forEach(tile => {
-            const posX = tile.x * cellSize + gap;
-            const posY = tile.y * cellSize + gap;
-            
-            // 获取方块颜色
-            const colors = this.themeConfig.getTileColor(tile.value);
-            
-            // 绘制方块背景
-            this.ctx.fillStyle = colors.bg;
-            this.ctx.fillRect(posX, posY, actualCellSize, actualCellSize);
-            
-            // 绘制方块内容
-            this.ctx.fillStyle = colors.text;
-            this.ctx.font = `${actualCellSize * 0.4}px 'Noto Sans SC', sans-serif`;
-            
-            const symbol = this.themeConfig.getTileSprite(tile.value);
-            const centerX = posX + actualCellSize / 2;
-            const centerY = posY + actualCellSize / 2;
-            
-            this.ctx.fillText(symbol, centerX, centerY);
+            tile.render(this.ctx, this.canvas.width, this.themeConfig, 4);
         });
     }
 
@@ -459,6 +465,29 @@ class GameEngine {
     }
 
     /**
+     * 绑定输入管理器事件
+     */
+    bindInputEvents() {
+        // 技能输入事件
+        this.on('skillInput', (data) => {
+            console.log('技能输入事件:', data.skillName);
+            this.emit('skillActivated', data);
+        });
+        
+        // 新游戏输入事件
+        this.on('newGameInput', () => {
+            console.log('新游戏输入事件');
+            this.emit('newGameRequested');
+        });
+        
+        // ESC键输入事件
+        this.on('escapeInput', () => {
+            console.log('ESC输入事件');
+            this.emit('escapePressed');
+        });
+    }
+
+    /**
      * 绑定窗口事件
      */
     bindEvents() {
@@ -551,6 +580,7 @@ class GameEngine {
      * @returns {boolean} 是否成功移动
      */
     move(direction) {
+        // 基础状态检查
         if (this.gameState.isGameOver || this.isPaused) {
             return false;
         }
@@ -568,20 +598,39 @@ class GameEngine {
             return false;
         }
 
+        // 检查是否可以移动
+        if (!this.gridManager.canMove(dir)) {
+            return false;
+        }
+
         // 执行移动
         const result = this.gridManager.moveTiles(dir);
         
         if (result.moved) {
-            // 添加新方块
+            // 启动移动动画
+            this.startMoveAnimations();
+            
+            // 记录移动前的状态（用于统计）
+            const preMoveStats = this.gridManager.getStats();
+            
+            // 添加新方块（延迟添加，让移动动画完成）
             setTimeout(() => {
-                this.gridManager.addRandomTile();
-            }, 150); // 延迟添加，让移动动画完成
+                const newTile = this.gridManager.addRandomTile();
+                if (newTile) {
+                    newTile.markAsNew(); // 标记为新方块以触发动画
+                }
+                
+                // 检查游戏状态变化
+                this.checkGameStateChanges(preMoveStats);
+            }, 150);
 
             // 触发移动事件
             this.emit('move', {
                 direction,
                 score: result.score,
-                merged: result.merged
+                merged: result.merged,
+                moveCount: this.gameState.moves,
+                gridStats: this.gridManager.getStats()
             });
 
             console.log(`移动${direction}, 得分:${result.score}, 合并:${result.merged.length}个`);
@@ -592,11 +641,74 @@ class GameEngine {
     }
 
     /**
+     * 检查游戏状态变化
+     * @param {Object} preStats - 移动前的统计信息
+     */
+    checkGameStateChanges(preStats) {
+        const currentStats = this.gridManager.getStats();
+        
+        // 检查填充率变化
+        if (currentStats.fillRate > 0.8 && preStats.fillRate <= 0.8) {
+            this.emit('gridAlmostFull', { fillRate: currentStats.fillRate });
+        }
+        
+        // 检查最大方块值变化
+        if (currentStats.maxValue > preStats.maxValue) {
+            this.emit('newMaxTile', { 
+                oldMax: preStats.maxValue, 
+                newMax: currentStats.maxValue 
+            });
+        }
+        
+        // 检查可用移动数量
+        if (currentStats.availableMoves <= 1 && preStats.availableMoves > 1) {
+            this.emit('limitedMoves', { availableMoves: currentStats.availableMoves });
+        }
+    }
+
+    /**
      * 获取网格管理器
      * @returns {GridManager} 网格管理器
      */
     getGridManager() {
         return this.gridManager;
+    }
+
+    /**
+     * 获取输入管理器
+     * @returns {InputManager} 输入管理器
+     */
+    getInputManager() {
+        return this.inputManager;
+    }
+
+    /**
+     * 获取主题管理器
+     * @returns {ThemeManager} 主题管理器
+     */
+    getThemeManager() {
+        return this.themeManager;
+    }
+
+    /**
+     * 启动移动动画
+     */
+    startMoveAnimations() {
+        const tiles = this.gameState.getAllTiles();
+        
+        tiles.forEach(tile => {
+            tile.startMoveAnimation();
+        });
+    }
+
+    /**
+     * 检查所有动画是否完成
+     * @returns {boolean} 是否所有动画都完成
+     */
+    areAnimationsComplete() {
+        const tiles = this.gameState.getAllTiles();
+        
+        return tiles.every(tile => tile.isAnimationComplete());
     }
 
     /**
@@ -613,6 +725,16 @@ class GameEngine {
     destroy() {
         this.stop();
         this.eventListeners.clear();
+        
+        // 销毁输入管理器
+        if (this.inputManager) {
+            this.inputManager.destroy();
+        }
+        
+        // 销毁主题管理器
+        if (this.themeManager) {
+            this.themeManager.destroy();
+        }
         
         // 清理Canvas
         if (this.ctx) {

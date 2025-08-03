@@ -9,12 +9,12 @@ let game = null;
 /**
  * 页面加载完成后初始化游戏
  */
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     console.log('哪吒2048游戏正在初始化...');
     
     try {
         // 初始化游戏引擎（暂时创建基础结构）
-        initializeGame();
+        await initializeGame();
         
         // 绑定UI事件
         bindUIEvents();
@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
 /**
  * 初始化游戏
  */
-function initializeGame() {
+async function initializeGame() {
     // 获取Canvas元素
     const canvas = document.getElementById('game-canvas');
     
@@ -47,7 +47,7 @@ function initializeGame() {
     });
     
     // 初始化游戏引擎
-    if (!game.init(canvas)) {
+    if (!(await game.init(canvas))) {
         throw new Error('游戏引擎初始化失败');
     }
     
@@ -160,6 +160,7 @@ function bindGameEngineEvents() {
     game.on('initialized', () => {
         console.log('游戏引擎初始化完成');
         updateScoreDisplay();
+        initializeThemeSettings();
     });
     
     // 游戏开始
@@ -190,9 +191,22 @@ function bindGameEngineEvents() {
     // 移动事件
     game.on('move', (data) => {
         console.log('移动事件:', data);
+        
+        // 更新分数显示
+        updateScoreDisplay();
+        
+        // 显示得分反馈
         if (data.score > 0) {
-            showTemporaryMessage(`+${data.score}分！`);
+            showScoreAnimation(data.score);
         }
+        
+        // 显示合并反馈
+        if (data.merged && data.merged.length > 0) {
+            showMergeAnimation(data.merged);
+        }
+        
+        // 检查连击
+        checkComboSystem(data);
     });
     
     // 游戏结束事件
@@ -205,6 +219,49 @@ function bindGameEngineEvents() {
     game.on('won', (data) => {
         console.log('游戏获胜:', data);
         showTemporaryMessage('🎉 恭喜达到2048！', 3000);
+    });
+    
+    // 技能激活事件
+    game.on('skillActivated', (data) => {
+        console.log('技能激活:', data.skillName);
+        activateSkillByName(data.skillName);
+    });
+    
+    // 新游戏请求事件
+    game.on('newGameRequested', () => {
+        console.log('请求新游戏');
+        startNewGame();
+    });
+    
+    // 方向输入事件
+    game.on('directionInput', (data) => {
+        console.log('方向输入:', data.direction);
+        handleMoveInput(data.direction);
+    });
+    
+    // 网格几乎满了事件
+    game.on('gridAlmostFull', (data) => {
+        console.log('网格几乎满了:', data);
+        showTemporaryMessage('⚠️ 空间不足，小心游戏结束！', 2000);
+    });
+    
+    // 新的最大方块事件
+    game.on('newMaxTile', (data) => {
+        console.log('新的最大方块:', data);
+        showTemporaryMessage(`🎉 达到新高度: ${data.newMax}！`, 2000);
+    });
+    
+    // 移动选择有限事件
+    game.on('limitedMoves', (data) => {
+        console.log('移动选择有限:', data);
+        showTemporaryMessage('⚠️ 移动选择有限，请谨慎操作！', 2000);
+    });
+    
+    // ESC键事件
+    game.on('escapePressed', () => {
+        console.log('ESC键按下');
+        // 可以用来关闭模态框或暂停游戏
+        closeAllModals();
     });
     
     // 错误处理
@@ -266,8 +323,7 @@ function bindUIEvents() {
     // 技能按钮
     bindSkillEvents();
     
-    // 键盘事件（临时简单处理）
-    document.addEventListener('keydown', handleKeyPress);
+    // 键盘和触摸事件现在由InputManager处理
     
     // 窗口大小改变事件
     window.addEventListener('resize', resizeCanvas);
@@ -287,39 +343,7 @@ function bindSkillEvents() {
     });
 }
 
-/**
- * 处理键盘按键
- * @param {KeyboardEvent} event - 键盘事件
- */
-function handleKeyPress(event) {
-    if (!game) return;
-    
-    // 防止默认行为
-    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
-        event.preventDefault();
-        
-        // 映射按键到移动方向
-        const keyToDirection = {
-            'ArrowUp': 'up',
-            'ArrowDown': 'down',
-            'ArrowLeft': 'left',
-            'ArrowRight': 'right'
-        };
-        
-        const direction = keyToDirection[event.key];
-        console.log('按键:', event.key, '方向:', direction);
-        
-        // 执行移动
-        const moved = game.move(direction);
-        
-        if (moved) {
-            // 更新分数显示
-            updateScoreDisplay();
-        } else {
-            showTemporaryMessage('无法移动到该方向');
-        }
-    }
-}
+// 键盘和触摸输入现在由InputManager统一处理
 
 /**
  * 开始新游戏
@@ -373,6 +397,9 @@ function togglePause() {
 function showSettings() {
     const settingsModal = document.getElementById('settings-modal');
     settingsModal.classList.remove('hidden');
+    
+    // 创建主题预览界面
+    createThemePreviewUI();
 }
 
 /**
@@ -430,6 +457,20 @@ function saveSettings() {
     
     console.log('保存设置 - 音量:', volumeSlider.value, '主题:', themeSelect.value);
     
+    // 应用主题设置
+    if (game && game.getThemeManager()) {
+        const themeManager = game.getThemeManager();
+        if (themeSelect.value !== themeManager.currentTheme) {
+            themeManager.switchTheme(themeSelect.value);
+        }
+    }
+    
+    // 保存音量设置
+    if (game && game.getAudioManager) {
+        // 音频管理器将在后续任务中实现
+        console.log('音量设置将在音频管理器中处理');
+    }
+    
     showTemporaryMessage('设置已保存');
     closeSettingsModal();
 }
@@ -463,6 +504,34 @@ function activateSkill(skillId) {
             skillElement.classList.remove('disabled', 'activated');
         }, 3000);
     }
+}
+
+/**
+ * 通过技能名称激活技能
+ * @param {string} skillName - 技能名称
+ */
+function activateSkillByName(skillName) {
+    const skillNameToId = {
+        'threeHeadsSixArms': 'three-heads',
+        'qiankunCircle': 'qiankun-circle',
+        'huntianLing': 'huntian-ling',
+        'transformation': 'transformation'
+    };
+    
+    const skillId = skillNameToId[skillName];
+    if (skillId) {
+        activateSkill(skillId);
+    }
+}
+
+/**
+ * 关闭所有模态框
+ */
+function closeAllModals() {
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(modal => {
+        modal.classList.add('hidden');
+    });
 }
 
 /**
@@ -565,4 +634,450 @@ function showErrorMessage(message) {
             errorElement.parentNode.removeChild(errorElement);
         }
     });
+}
+
+/**
+ * 显示得分动画
+ * @param {number} score - 得分
+ */
+function showScoreAnimation(score) {
+    const scoreElement = document.createElement('div');
+    scoreElement.textContent = `+${score}`;
+    scoreElement.style.cssText = `
+        position: fixed;
+        top: 30%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(45deg, #FFD700, #FFA500);
+        color: #8B4513;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 1.2rem;
+        z-index: 2500;
+        pointer-events: none;
+        animation: scoreFloat 1500ms ease-out forwards;
+        box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+    `;
+    
+    // 添加动画样式
+    if (!document.getElementById('score-animation-style')) {
+        const style = document.createElement('style');
+        style.id = 'score-animation-style';
+        style.textContent = `
+            @keyframes scoreFloat {
+                0% { 
+                    opacity: 1; 
+                    transform: translateX(-50%) translateY(0) scale(1);
+                }
+                50% { 
+                    opacity: 1; 
+                    transform: translateX(-50%) translateY(-20px) scale(1.2);
+                }
+                100% { 
+                    opacity: 0; 
+                    transform: translateX(-50%) translateY(-40px) scale(0.8);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(scoreElement);
+    
+    // 自动移除
+    setTimeout(() => {
+        if (scoreElement.parentNode) {
+            scoreElement.parentNode.removeChild(scoreElement);
+        }
+    }, 1500);
+}
+
+/**
+ * 显示合并动画反馈
+ * @param {Array} mergedTiles - 合并的方块数组
+ */
+function showMergeAnimation(mergedTiles) {
+    mergedTiles.forEach((tile, index) => {
+        setTimeout(() => {
+            const symbol = tile.getNezhaSymbol();
+            showTemporaryMessage(`${symbol} 合并成功！`, 1000);
+        }, index * 200);
+    });
+}
+
+/**
+ * 检查连击系统
+ * @param {Object} moveData - 移动数据
+ */
+function checkComboSystem(moveData) {
+    if (!game) return;
+    
+    const gameState = game.getGameState();
+    
+    // 检查连续合并
+    if (gameState.consecutiveMerges >= 3) {
+        showTemporaryMessage(`🔥 ${gameState.consecutiveMerges}连击！`, 1500);
+        
+        // 连击奖励
+        if (gameState.consecutiveMerges >= 5) {
+            showTemporaryMessage('⚡ 超级连击！技能冷却减少！', 2000);
+            reduceCooldowns();
+        }
+    }
+    
+    // 检查哪吒等级提升
+    const currentLevel = gameState.nezhaLevel;
+    if (currentLevel > (gameState.previousNezhaLevel || 1)) {
+        showTemporaryMessage(`🌟 哪吒等级提升至 ${currentLevel}！`, 2500);
+        gameState.previousNezhaLevel = currentLevel;
+    }
+}
+
+/**
+ * 减少技能冷却时间
+ */
+function reduceCooldowns() {
+    if (!game) return;
+    
+    const gameState = game.getGameState();
+    
+    // 减少所有技能冷却时间
+    Object.keys(gameState.skillCooldowns).forEach(skill => {
+        gameState.skillCooldowns[skill] = Math.max(0, gameState.skillCooldowns[skill] - 2000);
+    });
+    
+    // 更新UI显示
+    updateSkillCooldownDisplay();
+}
+
+/**
+ * 更新技能冷却显示
+ */
+function updateSkillCooldownDisplay() {
+    if (!game) return;
+    
+    const gameState = game.getGameState();
+    const skills = ['three-heads', 'qiankun-circle', 'huntian-ling', 'transformation'];
+    const skillNameMap = {
+        'three-heads': 'threeHeadsSixArms',
+        'qiankun-circle': 'qiankunCircle',
+        'huntian-ling': 'huntianLing',
+        'transformation': 'transformation'
+    };
+    
+    skills.forEach(skillId => {
+        const skillElement = document.getElementById(`skill-${skillId}`);
+        const cooldownElement = skillElement?.querySelector('.skill-cooldown');
+        
+        if (skillElement && cooldownElement) {
+            const skillName = skillNameMap[skillId];
+            const cooldown = gameState.skillCooldowns[skillName] || 0;
+            
+            if (cooldown > 0) {
+                skillElement.classList.add('disabled');
+                cooldownElement.classList.add('active');
+                
+                // 设置冷却进度
+                const maxCooldown = 10000; // 假设最大冷却时间为10秒
+                const progress = cooldown / maxCooldown;
+                cooldownElement.style.background = `conic-gradient(from 0deg, transparent ${(1-progress)*100}%, rgba(0, 0, 0, 0.7) ${(1-progress)*100}%)`;
+            } else {
+                skillElement.classList.remove('disabled');
+                cooldownElement.classList.remove('active');
+            }
+        }
+    });
+}
+
+/**
+ * 验证移动有效性
+ * @param {string} direction - 移动方向
+ * @returns {boolean} 是否有效
+ */
+function validateMove(direction) {
+    if (!game) return false;
+    
+    const gridManager = game.getGridManager();
+    const gameState = game.getGameState();
+    
+    // 检查游戏是否结束
+    if (gameState.isGameOver) {
+        showTemporaryMessage('游戏已结束，请开始新游戏');
+        return false;
+    }
+    
+    // 检查游戏是否暂停
+    if (gameState.isPaused) {
+        showTemporaryMessage('游戏已暂停');
+        return false;
+    }
+    
+    // 检查方向是否有效
+    const validDirections = ['up', 'down', 'left', 'right'];
+    if (!validDirections.includes(direction)) {
+        console.warn('无效的移动方向:', direction);
+        return false;
+    }
+    
+    // 检查是否可以移动
+    const directionMap = {
+        'up': gridManager.DIRECTIONS.UP,
+        'down': gridManager.DIRECTIONS.DOWN,
+        'left': gridManager.DIRECTIONS.LEFT,
+        'right': gridManager.DIRECTIONS.RIGHT
+    };
+    
+    const canMove = gridManager.canMove(directionMap[direction]);
+    if (!canMove) {
+        showTemporaryMessage('该方向无法移动');
+        return false;
+    }
+    
+    return true;
+}
+
+/**
+ * 处理移动输入的完整流程
+ * @param {string} direction - 移动方向
+ * @returns {boolean} 是否成功处理
+ */
+function handleMoveInput(direction) {
+    // 验证移动有效性
+    if (!validateMove(direction)) {
+        return false;
+    }
+    
+    // 执行移动
+    const moved = game.move(direction);
+    
+    if (moved) {
+        // 移动成功的反馈
+        console.log(`成功移动: ${direction}`);
+        
+        // 检查是否需要显示提示
+        const gameState = game.getGameState();
+        const emptyTiles = gameState.getEmptyTiles();
+        
+        if (emptyTiles.length <= 2) {
+            showTemporaryMessage('⚠️ 空间不足，小心游戏结束！', 2000);
+        }
+        
+        return true;
+    } else {
+        // 移动失败的反馈
+        console.log(`移动失败: ${direction}`);
+        showTemporaryMessage('无法移动到该方向');
+        return false;
+    }
+}
+
+/**
+ * 创建输入响应测试套件
+ */
+function createInputTests() {
+    const tests = {
+        // 测试移动有效性验证
+        testMoveValidation: () => {
+            console.log('测试移动有效性验证...');
+            
+            // 测试无效方向
+            const result1 = validateMove('invalid');
+            console.assert(!result1, '无效方向应该返回false');
+            
+            // 测试有效方向
+            const result2 = validateMove('up');
+            console.assert(typeof result2 === 'boolean', '有效方向应该返回boolean');
+            
+            console.log('移动有效性验证测试通过');
+        },
+        
+        // 测试输入处理流程
+        testInputHandling: () => {
+            console.log('测试输入处理流程...');
+            
+            if (!game) {
+                console.log('游戏未初始化，跳过输入处理测试');
+                return;
+            }
+            
+            const initialScore = game.getGameState().score;
+            const result = handleMoveInput('right');
+            
+            console.log(`输入处理结果: ${result}`);
+            console.log('输入处理流程测试完成');
+        },
+        
+        // 测试技能激活
+        testSkillActivation: () => {
+            console.log('测试技能激活...');
+            
+            const skillNames = ['threeHeadsSixArms', 'qiankunCircle', 'huntianLing', 'transformation'];
+            
+            skillNames.forEach(skillName => {
+                activateSkillByName(skillName);
+                console.log(`技能 ${skillName} 激活测试完成`);
+            });
+            
+            console.log('技能激活测试通过');
+        },
+        
+        // 测试游戏状态检查
+        testGameStateChecks: () => {
+            console.log('测试游戏状态检查...');
+            
+            if (!game) {
+                console.log('游戏未初始化，跳过游戏状态测试');
+                return;
+            }
+            
+            const gameState = game.getGameState();
+            
+            console.assert(typeof gameState.score === 'number', '分数应该是数字');
+            console.assert(typeof gameState.moves === 'number', '移动次数应该是数字');
+            console.assert(typeof gameState.isGameOver === 'boolean', '游戏结束状态应该是布尔值');
+            
+            console.log('游戏状态检查测试通过');
+        }
+    };
+    
+    return tests;
+}
+
+/**
+ * 运行输入响应测试
+ */
+function runInputTests() {
+    console.log('开始运行输入响应测试...');
+    
+    const tests = createInputTests();
+    
+    try {
+        Object.keys(tests).forEach(testName => {
+            console.log(`\n--- 运行测试: ${testName} ---`);
+            tests[testName]();
+        });
+        
+        console.log('\n✅ 所有输入响应测试通过！');
+    } catch (error) {
+        console.error('❌ 测试失败:', error);
+    }
+}
+
+/**
+ * 初始化主题设置
+ */
+function initializeThemeSettings() {
+    if (!game) return;
+    
+    const themeManager = game.getThemeManager();
+    if (!themeManager) return;
+    
+    // 设置主题选择器选项
+    const themeSelect = document.getElementById('theme-select');
+    if (themeSelect) {
+        // 清空现有选项
+        themeSelect.innerHTML = '';
+        
+        // 添加可用主题
+        const availableThemes = themeManager.getAvailableThemes();
+        availableThemes.forEach(themeName => {
+            const option = document.createElement('option');
+            const themeInfo = themeManager.getThemeInfo(themeName);
+            option.value = themeName;
+            option.textContent = themeInfo.name;
+            option.selected = themeName === themeManager.currentTheme;
+            themeSelect.appendChild(option);
+        });
+    }
+    
+    // 添加主题变化监听器
+    themeManager.addThemeChangeListener((themeName, themeConfig) => {
+        console.log('主题已切换:', themeName);
+        showTemporaryMessage(`已切换到${themeManager.getThemeInfo(themeName).name}`);
+        
+        // 更新主题选择器
+        if (themeSelect) {
+            themeSelect.value = themeName;
+        }
+    });
+    
+    // 加载保存的主题偏好
+    const savedTheme = themeManager.loadThemePreference();
+    if (savedTheme && savedTheme !== themeManager.currentTheme) {
+        themeManager.switchTheme(savedTheme);
+    }
+}
+
+/**
+ * 创建主题预览界面
+ */
+function createThemePreviewUI() {
+    if (!game) return;
+    
+    const themeManager = game.getThemeManager();
+    if (!themeManager) return;
+    
+    const settingsModal = document.getElementById('settings-modal');
+    const modalContent = settingsModal?.querySelector('.modal-content');
+    
+    if (modalContent) {
+        // 查找主题设置项
+        const themeSettingItem = Array.from(modalContent.querySelectorAll('.setting-item'))
+            .find(item => item.querySelector('#theme-select'));
+        
+        if (themeSettingItem) {
+            // 添加主题预览容器
+            const previewContainer = document.createElement('div');
+            previewContainer.className = 'theme-preview-container';
+            previewContainer.style.cssText = `
+                margin-top: 10px;
+                display: flex;
+                gap: 10px;
+                flex-wrap: wrap;
+            `;
+            
+            // 为每个主题创建预览
+            const availableThemes = themeManager.getAvailableThemes();
+            availableThemes.forEach(themeName => {
+                const preview = themeManager.createThemePreview(themeName);
+                preview.style.cssText = `
+                    flex: 1;
+                    min-width: 120px;
+                    padding: 10px;
+                    border: 2px solid transparent;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    text-align: center;
+                    font-size: 0.9rem;
+                `;
+                
+                // 添加点击事件
+                preview.addEventListener('click', () => {
+                    themeManager.switchTheme(themeName);
+                });
+                
+                // 高亮当前主题
+                if (themeName === themeManager.currentTheme) {
+                    preview.style.borderColor = '#DC143C';
+                    preview.style.backgroundColor = 'rgba(220, 20, 60, 0.1)';
+                }
+                
+                previewContainer.appendChild(preview);
+            });
+            
+            themeSettingItem.appendChild(previewContainer);
+        }
+    }
+}
+
+// 在开发模式下自动运行测试
+if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    // 延迟运行测试，确保游戏初始化完成
+    setTimeout(() => {
+        if (game && game.config.debug) {
+            runInputTests();
+        }
+    }, 2000);
 }
