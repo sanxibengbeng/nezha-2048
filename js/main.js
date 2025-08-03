@@ -33,30 +33,37 @@ document.addEventListener('DOMContentLoaded', function() {
  * 初始化游戏
  */
 function initializeGame() {
-    // 创建游戏画布上下文
+    // 获取Canvas元素
     const canvas = document.getElementById('game-canvas');
-    const ctx = canvas.getContext('2d');
     
-    if (!ctx) {
-        throw new Error('无法获取Canvas上下文');
+    if (!canvas) {
+        throw new Error('无法找到Canvas元素');
     }
     
-    // 设置画布尺寸
-    resizeCanvas();
+    // 创建游戏引擎
+    game = new GameEngine({
+        targetFPS: 60,
+        debug: true // 开发模式下启用调试信息
+    });
     
-    // 创建基础网格显示
+    // 初始化游戏引擎
+    if (!game.init(canvas)) {
+        throw new Error('游戏引擎初始化失败');
+    }
+    
+    // 绑定游戏引擎事件
+    bindGameEngineEvents();
+    
+    // 创建基础网格显示（用于HTML覆盖层）
     createGridCells();
     
-    // 初始化主题
-    const themeConfig = new ThemeConfig('nezha');
-    console.log('主题配置加载完成:', themeConfig.themeName);
+    // 添加一些测试方块到游戏状态
+    addTestTiles();
     
-    // 创建游戏状态
-    const gameState = new GameState();
-    console.log('游戏状态创建完成');
+    // 启动游戏
+    game.start();
     
-    // 暂时显示一些测试方块
-    createTestTiles();
+    console.log('游戏引擎初始化完成');
 }
 
 /**
@@ -90,10 +97,12 @@ function createGridCells() {
 }
 
 /**
- * 创建测试方块（临时用于验证显示）
+ * 添加测试方块到游戏状态
  */
-function createTestTiles() {
-    const grid = document.getElementById('game-grid');
+function addTestTiles() {
+    if (!game) return;
+    
+    const gameState = game.getGameState();
     
     // 创建几个测试方块
     const testTiles = [
@@ -105,8 +114,10 @@ function createTestTiles() {
     
     testTiles.forEach(tileData => {
         const tile = new Tile(tileData.x, tileData.y, tileData.value);
-        createTileElement(tile);
+        gameState.setTile(tileData.x, tileData.y, tile);
     });
+    
+    console.log('测试方块已添加到游戏状态');
 }
 
 /**
@@ -137,6 +148,89 @@ function createTileElement(tile) {
     
     // 保存元素引用
     tile.element = tileElement;
+}
+
+/**
+ * 绑定游戏引擎事件
+ */
+function bindGameEngineEvents() {
+    if (!game) return;
+    
+    // 游戏初始化完成
+    game.on('initialized', () => {
+        console.log('游戏引擎初始化完成');
+        updateScoreDisplay();
+    });
+    
+    // 游戏开始
+    game.on('started', () => {
+        console.log('游戏开始');
+        showTemporaryMessage('游戏开始！');
+    });
+    
+    // 游戏暂停
+    game.on('paused', () => {
+        console.log('游戏暂停');
+        showTemporaryMessage('游戏暂停');
+    });
+    
+    // 游戏恢复
+    game.on('resumed', () => {
+        console.log('游戏恢复');
+        showTemporaryMessage('游戏恢复');
+    });
+    
+    // 游戏重置
+    game.on('reset', () => {
+        console.log('游戏重置');
+        updateScoreDisplay();
+        showTemporaryMessage('游戏重置');
+    });
+    
+    // 移动事件
+    game.on('move', (data) => {
+        console.log('移动事件:', data);
+        if (data.score > 0) {
+            showTemporaryMessage(`+${data.score}分！`);
+        }
+    });
+    
+    // 游戏结束事件
+    game.on('gameOver', (data) => {
+        console.log('游戏结束:', data);
+        showGameOverModal(data);
+    });
+    
+    // 获胜事件
+    game.on('won', (data) => {
+        console.log('游戏获胜:', data);
+        showTemporaryMessage('🎉 恭喜达到2048！', 3000);
+    });
+    
+    // 错误处理
+    game.on('error', (data) => {
+        console.error('游戏引擎错误:', data);
+        showErrorMessage(`游戏错误: ${data.error.message}`);
+    });
+}
+
+/**
+ * 更新分数显示
+ */
+function updateScoreDisplay() {
+    if (!game) return;
+    
+    const gameState = game.getGameState();
+    const currentScoreElement = document.getElementById('current-score');
+    const highScoreElement = document.getElementById('high-score');
+    
+    if (currentScoreElement) {
+        currentScoreElement.textContent = gameState.score;
+    }
+    
+    if (highScoreElement) {
+        highScoreElement.textContent = gameState.highScore;
+    }
 }
 
 /**
@@ -198,14 +292,32 @@ function bindSkillEvents() {
  * @param {KeyboardEvent} event - 键盘事件
  */
 function handleKeyPress(event) {
+    if (!game) return;
+    
     // 防止默认行为
     if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
         event.preventDefault();
         
-        console.log('按键:', event.key);
+        // 映射按键到移动方向
+        const keyToDirection = {
+            'ArrowUp': 'up',
+            'ArrowDown': 'down',
+            'ArrowLeft': 'left',
+            'ArrowRight': 'right'
+        };
         
-        // 临时显示按键反馈
-        showTemporaryMessage(`按下了 ${event.key}`);
+        const direction = keyToDirection[event.key];
+        console.log('按键:', event.key, '方向:', direction);
+        
+        // 执行移动
+        const moved = game.move(direction);
+        
+        if (moved) {
+            // 更新分数显示
+            updateScoreDisplay();
+        } else {
+            showTemporaryMessage('无法移动到该方向');
+        }
     }
 }
 
@@ -213,25 +325,46 @@ function handleKeyPress(event) {
  * 开始新游戏
  */
 function startNewGame() {
+    if (!game) {
+        console.error('游戏引擎未初始化');
+        return;
+    }
+    
     console.log('开始新游戏');
-    showTemporaryMessage('新游戏开始！');
     
-    // 清除现有方块
-    const existingTiles = document.querySelectorAll('.tile');
-    existingTiles.forEach(tile => tile.remove());
+    // 重置游戏引擎
+    game.reset();
     
-    // 重新创建测试方块
+    // 添加初始方块
     setTimeout(() => {
-        createTestTiles();
-    }, 300);
+        const gridManager = game.getGridManager();
+        // 添加两个初始方块
+        gridManager.addRandomTile();
+        gridManager.addRandomTile();
+        
+        game.start();
+        updateScoreDisplay();
+    }, 100);
 }
 
 /**
  * 切换暂停状态
  */
 function togglePause() {
-    console.log('切换暂停状态');
-    showTemporaryMessage('游戏暂停/继续');
+    if (!game) {
+        console.error('游戏引擎未初始化');
+        return;
+    }
+    
+    const pauseBtn = document.getElementById('pause-btn');
+    
+    if (game.isPaused) {
+        game.resume();
+        pauseBtn.textContent = '暂停';
+    } else {
+        game.pause();
+        pauseBtn.textContent = '继续';
+    }
 }
 
 /**
@@ -240,6 +373,29 @@ function togglePause() {
 function showSettings() {
     const settingsModal = document.getElementById('settings-modal');
     settingsModal.classList.remove('hidden');
+}
+
+/**
+ * 显示游戏结束模态框
+ * @param {Object} data - 游戏结束数据
+ */
+function showGameOverModal(data) {
+    const gameOverModal = document.getElementById('game-over-modal');
+    const finalScoreElement = document.getElementById('final-score');
+    const newRecordElement = document.getElementById('new-record');
+    
+    if (finalScoreElement) {
+        finalScoreElement.textContent = data.score;
+    }
+    
+    // 检查是否是新纪录
+    if (data.score >= data.highScore && data.score > 0) {
+        newRecordElement.classList.remove('hidden');
+    } else {
+        newRecordElement.classList.add('hidden');
+    }
+    
+    gameOverModal.classList.remove('hidden');
 }
 
 /**
@@ -256,6 +412,13 @@ function closeGameOverModal() {
 function restartGame() {
     closeGameOverModal();
     startNewGame();
+}
+
+/**
+ * 获取游戏引擎实例（用于调试）
+ */
+function getGameEngine() {
+    return game;
 }
 
 /**
