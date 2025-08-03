@@ -197,8 +197,11 @@ class ThemeManager {
      */
     addBackgroundDecorations(decorations) {
         // 清除现有装饰
-        const existingDecorations = document.querySelectorAll('.theme-decoration');
+        const existingDecorations = document.querySelectorAll('.theme-decoration, .cloud-decoration');
         existingDecorations.forEach(el => el.remove());
+        
+        // 添加云朵装饰
+        this.addCloudDecorations();
         
         // 添加新装饰
         decorations.forEach((decoration, index) => {
@@ -206,6 +209,37 @@ class ThemeManager {
                 const element = this.createDecorationElement(decoration, index * decoration.count + i);
                 document.body.appendChild(element);
             }
+        });
+    }
+
+    /**
+     * 添加云朵装饰
+     */
+    addCloudDecorations() {
+        const cloudPositions = [
+            { top: '10%', left: '10%', delay: '0s' },
+            { top: '20%', right: '15%', delay: '5s' },
+            { bottom: '30%', left: '20%', delay: '10s' }
+        ];
+        
+        cloudPositions.forEach((pos, index) => {
+            const cloud = document.createElement('div');
+            cloud.className = 'cloud-decoration';
+            cloud.textContent = '☁️';
+            cloud.style.cssText = `
+                position: fixed;
+                color: rgba(255, 255, 255, 0.3);
+                font-size: 2rem;
+                pointer-events: none;
+                z-index: -1;
+                animation: float-cloud 15s ease-in-out infinite;
+                animation-delay: ${pos.delay};
+                ${pos.top ? `top: ${pos.top};` : ''}
+                ${pos.bottom ? `bottom: ${pos.bottom};` : ''}
+                ${pos.left ? `left: ${pos.left};` : ''}
+                ${pos.right ? `right: ${pos.right};` : ''}
+            `;
+            document.body.appendChild(cloud);
         });
     }
 
@@ -228,24 +262,116 @@ class ThemeManager {
             top: ${Math.random() * 100}%;
             animation: float ${5 + Math.random() * 10}s ease-in-out infinite;
             animation-delay: ${index * 0.5}s;
+            filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
         `;
         
-        // 设置装饰内容
+        // 设置装饰内容和特殊效果
         switch (decoration.type) {
             case 'cloud':
                 element.textContent = '☁️';
+                element.style.animation += ', cloud-drift 20s linear infinite';
                 break;
             case 'flame':
                 element.textContent = '🔥';
+                element.style.animation += ', flame-flicker 2s ease-in-out infinite alternate';
                 break;
             case 'lotus':
                 element.textContent = '🪷';
+                element.style.animation += ', lotus-glow 3s ease-in-out infinite alternate';
+                break;
+            case 'star':
+                element.textContent = '⭐';
+                element.style.animation += ', star-twinkle 1.5s ease-in-out infinite alternate';
                 break;
             default:
                 element.textContent = '✨';
         }
         
         return element;
+    }
+
+    /**
+     * 创建特效元素
+     * @param {string} effectType - 特效类型
+     * @param {number} x - X坐标
+     * @param {number} y - Y坐标
+     * @returns {HTMLElement} 特效元素
+     */
+    createEffectElement(effectType, x, y) {
+        const effect = document.createElement('div');
+        effect.className = `tile-merge-effect ${effectType}`;
+        effect.style.cssText = `
+            left: ${x}px;
+            top: ${y}px;
+            transform: translate(-50%, -50%);
+        `;
+        
+        // 根据特效类型创建不同的视觉效果
+        switch (effectType) {
+            case 'merge-fire':
+                this.createFireParticles(effect, 8);
+                break;
+            case 'merge-sparkle':
+                this.createSparkleParticles(effect, 12);
+                break;
+            case 'divine-aura':
+                effect.className += ' divine-aura';
+                break;
+            case 'lotus-bloom':
+                effect.className += ' lotus-bloom';
+                effect.textContent = '🪷';
+                break;
+        }
+        
+        // 自动清理
+        setTimeout(() => {
+            if (effect.parentNode) {
+                effect.parentNode.removeChild(effect);
+            }
+        }, 2000);
+        
+        return effect;
+    }
+
+    /**
+     * 创建火焰粒子
+     * @param {HTMLElement} container - 容器元素
+     * @param {number} count - 粒子数量
+     */
+    createFireParticles(container, count) {
+        for (let i = 0; i < count; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'fire-particle';
+            particle.style.cssText = `
+                left: ${Math.random() * 40 - 20}px;
+                top: ${Math.random() * 40 - 20}px;
+                animation-delay: ${Math.random() * 0.5}s;
+            `;
+            container.appendChild(particle);
+        }
+    }
+
+    /**
+     * 创建闪烁粒子
+     * @param {HTMLElement} container - 容器元素
+     * @param {number} count - 粒子数量
+     */
+    createSparkleParticles(container, count) {
+        for (let i = 0; i < count; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'merge-sparkle';
+            const angle = (360 / count) * i;
+            const distance = 30 + Math.random() * 20;
+            const x = Math.cos(angle * Math.PI / 180) * distance;
+            const y = Math.sin(angle * Math.PI / 180) * distance;
+            
+            particle.style.cssText = `
+                left: ${x}px;
+                top: ${y}px;
+                animation-delay: ${Math.random() * 0.3}s;
+            `;
+            container.appendChild(particle);
+        }
     }
 
     /**
@@ -561,6 +687,197 @@ class ThemeManager {
     }
 
     /**
+     * 触发合并特效
+     * @param {number} x - X坐标
+     * @param {number} y - Y坐标
+     * @param {number} value - 方块数值
+     */
+    triggerMergeEffect(x, y, value) {
+        const gameArea = document.querySelector('.game-area');
+        if (!gameArea) return;
+        
+        // 根据数值选择不同的特效
+        let effectType = 'merge-fire';
+        if (value >= 128) {
+            effectType = 'merge-sparkle';
+        }
+        if (value >= 1024) {
+            effectType = 'divine-aura';
+        }
+        if (value === 2048) {
+            effectType = 'lotus-bloom';
+        }
+        
+        const effect = this.createEffectElement(effectType, x, y);
+        gameArea.appendChild(effect);
+        
+        // 播放对应的音效
+        if (this.gameEngine && this.gameEngine.audioManager) {
+            this.gameEngine.audioManager.playSound('merge');
+        }
+    }
+
+    /**
+     * 触发技能激活特效
+     * @param {string} skillName - 技能名称
+     */
+    triggerSkillEffect(skillName) {
+        const skillElement = document.getElementById(`skill-${skillName.replace(/([A-Z])/g, '-$1').toLowerCase()}`);
+        if (!skillElement) return;
+        
+        // 添加激活动画类
+        const animationClass = `${skillName.toLowerCase()}-active`;
+        skillElement.classList.add(animationClass);
+        
+        // 创建技能特效
+        const rect = skillElement.getBoundingClientRect();
+        const gameArea = document.querySelector('.game-area');
+        if (gameArea) {
+            let effectType = 'divine-aura';
+            switch (skillName) {
+                case 'threeHeadsSixArms':
+                    effectType = 'merge-fire';
+                    break;
+                case 'qiankunCircle':
+                    this.createQiankunRingEffect(rect.left + rect.width/2, rect.top + rect.height/2);
+                    break;
+                case 'huntianLing':
+                    this.createHuntianRibbonEffect();
+                    break;
+                case 'transformation':
+                    this.createTransformationEffect();
+                    break;
+            }
+        }
+        
+        // 移除动画类
+        setTimeout(() => {
+            skillElement.classList.remove(animationClass);
+        }, 2000);
+    }
+
+    /**
+     * 创建乾坤圈特效
+     * @param {number} x - X坐标
+     * @param {number} y - Y坐标
+     */
+    createQiankunRingEffect(x, y) {
+        const ring = document.createElement('div');
+        ring.className = 'qiankun-ring';
+        ring.style.cssText = `
+            position: fixed;
+            left: ${x}px;
+            top: ${y}px;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            pointer-events: none;
+        `;
+        
+        document.body.appendChild(ring);
+        
+        setTimeout(() => {
+            if (ring.parentNode) {
+                ring.parentNode.removeChild(ring);
+            }
+        }, 1000);
+    }
+
+    /**
+     * 创建混天绫特效
+     */
+    createHuntianRibbonEffect() {
+        const gameArea = document.querySelector('.game-area');
+        if (!gameArea) return;
+        
+        for (let i = 0; i < 3; i++) {
+            const ribbon = document.createElement('div');
+            ribbon.className = 'huntian-ribbon';
+            ribbon.style.cssText = `
+                position: absolute;
+                top: ${Math.random() * 100}%;
+                left: 0;
+                z-index: 100;
+                animation-delay: ${i * 0.3}s;
+            `;
+            
+            gameArea.appendChild(ribbon);
+            
+            setTimeout(() => {
+                if (ribbon.parentNode) {
+                    ribbon.parentNode.removeChild(ribbon);
+                }
+            }, 2000);
+        }
+    }
+
+    /**
+     * 创建变身特效
+     */
+    createTransformationEffect() {
+        const gameContainer = document.getElementById('game-container');
+        if (!gameContainer) return;
+        
+        // 创建全屏光效
+        const aura = document.createElement('div');
+        aura.className = 'divine-aura';
+        aura.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 200px;
+            height: 200px;
+            transform: translate(-50%, -50%);
+            z-index: 999;
+            pointer-events: none;
+            border-width: 4px;
+            animation-duration: 3s;
+        `;
+        
+        document.body.appendChild(aura);
+        
+        // 添加容器特效
+        gameContainer.style.filter = 'brightness(1.2) saturate(1.5)';
+        gameContainer.style.transform = 'scale(1.02)';
+        
+        setTimeout(() => {
+            if (aura.parentNode) {
+                aura.parentNode.removeChild(aura);
+            }
+            gameContainer.style.filter = '';
+            gameContainer.style.transform = '';
+        }, 3000);
+    }
+
+    /**
+     * 创建胜利庆祝特效
+     */
+    createVictoryEffect() {
+        const celebration = document.createElement('div');
+        celebration.className = 'victory-celebration';
+        
+        // 创建烟花效果
+        for (let i = 0; i < 20; i++) {
+            const firework = document.createElement('div');
+            firework.className = 'victory-firework';
+            firework.style.cssText = `
+                left: ${Math.random() * 100}%;
+                top: ${Math.random() * 100}%;
+                animation-delay: ${Math.random() * 2}s;
+                background: ${['#FFD700', '#DC143C', '#00CED1', '#9370DB'][Math.floor(Math.random() * 4)]};
+            `;
+            celebration.appendChild(firework);
+        }
+        
+        document.body.appendChild(celebration);
+        
+        setTimeout(() => {
+            if (celebration.parentNode) {
+                celebration.parentNode.removeChild(celebration);
+            }
+        }, 3000);
+    }
+
+    /**
      * 销毁主题管理器
      */
     destroy() {
@@ -577,8 +894,12 @@ class ThemeManager {
         this.dynamicStyles.clear();
         
         // 清除装饰元素
-        const decorations = document.querySelectorAll('.theme-decoration');
+        const decorations = document.querySelectorAll('.theme-decoration, .cloud-decoration');
         decorations.forEach(el => el.remove());
+        
+        // 清除特效元素
+        const effects = document.querySelectorAll('.tile-merge-effect, .qiankun-ring, .huntian-ribbon, .victory-celebration');
+        effects.forEach(el => el.remove());
         
         // 清除监听器
         this.themeChangeListeners = [];

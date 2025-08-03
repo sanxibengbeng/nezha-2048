@@ -16,18 +16,74 @@ body {
     align-items: center;
     color: #2F1B14;
     overflow-x: hidden;
+    position: relative;
+}
+
+/* 哪吒主题背景装饰 */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(circle at 20% 20%, rgba(255, 215, 0, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(220, 20, 60, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 60%, rgba(0, 206, 209, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: -2;
+}
+
+/* 云朵装饰 */
+.cloud-decoration {
+    position: fixed;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 2rem;
+    pointer-events: none;
+    z-index: -1;
+    animation: float-cloud 15s ease-in-out infinite;
+}
+
+.cloud-decoration:nth-child(1) { top: 10%; left: 10%; animation-delay: 0s; }
+.cloud-decoration:nth-child(2) { top: 20%; right: 15%; animation-delay: 5s; }
+.cloud-decoration:nth-child(3) { bottom: 30%; left: 20%; animation-delay: 10s; }
+
+@keyframes float-cloud {
+    0%, 100% { transform: translateY(0px) translateX(0px); opacity: 0.3; }
+    25% { transform: translateY(-20px) translateX(10px); opacity: 0.5; }
+    50% { transform: translateY(-10px) translateX(-5px); opacity: 0.4; }
+    75% { transform: translateY(-30px) translateX(15px); opacity: 0.6; }
 }
 
 /* 游戏容器 */
 #game-container {
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 20px;
-    padding: 20px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    max-width: 500px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(250, 248, 239, 0.9));
+    border-radius: 25px;
+    padding: 25px;
+    box-shadow: 
+        0 15px 35px rgba(0, 0, 0, 0.3),
+        inset 0 2px 4px rgba(255, 255, 255, 0.8),
+        0 0 0 3px rgba(220, 20, 60, 0.2);
+    max-width: 520px;
     width: 90vw;
     text-align: center;
     position: relative;
+    border: 2px solid rgba(255, 215, 0, 0.3);
+}
+
+/* 游戏容器装饰边框 */
+#game-container::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: -5px;
+    right: -5px;
+    bottom: -5px;
+    background: linear-gradient(45deg, #DC143C, #FFD700, #00CED1, #9370DB);
+    border-radius: 30px;
+    z-index: -1;
+    opacity: 0.3;
 }
 
 /* 游戏标题 */
@@ -36,15 +92,37 @@ body {
 }
 
 .game-title {
-    font-size: 2.5rem;
+    font-size: 2.8rem;
     font-weight: 700;
-    color: #DC143C;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-    margin-bottom: 15px;
-    background: linear-gradient(45deg, #DC143C, #FFD700);
+    margin-bottom: 20px;
+    background: linear-gradient(45deg, #DC143C 0%, #FFD700 25%, #00CED1 50%, #9370DB 75%, #DC143C 100%);
+    background-size: 200% 200%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    animation: title-gradient 3s ease-in-out infinite;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+.game-title::after {
+    content: '⚡🔥⚡';
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1rem;
+    animation: title-sparkle 2s ease-in-out infinite alternate;
+}
+
+@keyframes title-gradient {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+@keyframes title-sparkle {
+    0% { opacity: 0.6; transform: translateX(-50%) scale(0.8); }
+    100% { opacity: 1; transform: translateX(-50%) scale(1.2); }
 }
 
 /* 分数容器 */
@@ -56,11 +134,33 @@ body {
 }
 
 .score-box {
-    background: linear-gradient(135deg, #FFD700, #FFA500);
-    border-radius: 10px;
-    padding: 10px 20px;
-    min-width: 100px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    background: linear-gradient(135deg, #FFD700, #FFA500, #FF8C00);
+    border-radius: 15px;
+    padding: 12px 24px;
+    min-width: 110px;
+    box-shadow: 
+        0 6px 12px rgba(0, 0, 0, 0.3),
+        inset 0 2px 4px rgba(255, 255, 255, 0.4);
+    border: 2px solid rgba(220, 20, 60, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.score-box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: score-shine 3s ease-in-out infinite;
+}
+
+@keyframes score-shine {
+    0% { left: -100%; }
+    50% { left: 100%; }
+    100% { left: 100%; }
 }
 
 .score-label {
@@ -82,15 +182,17 @@ body {
     justify-content: center;
     gap: 15px;
     margin-bottom: 20px;
-    padding: 10px;
-    background: rgba(220, 20, 60, 0.1);
-    border-radius: 15px;
+    padding: 15px;
+    background: linear-gradient(135deg, rgba(220, 20, 60, 0.15), rgba(255, 215, 0, 0.1));
+    border-radius: 20px;
+    border: 2px solid rgba(220, 20, 60, 0.3);
+    box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.2), 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .skill-item {
     position: relative;
-    width: 60px;
-    height: 60px;
+    width: 65px;
+    height: 65px;
     background: linear-gradient(135deg, #DC143C, #B22222);
     border-radius: 50%;
     display: flex;
@@ -98,22 +200,54 @@ body {
     justify-content: center;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.2);
+    border: 3px solid rgba(255, 215, 0, 0.6);
 }
 
 .skill-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 215, 0, 0.9);
 }
 
 .skill-item.disabled {
-    opacity: 0.5;
+    opacity: 0.4;
     cursor: not-allowed;
+    filter: grayscale(0.7);
+}
+
+.skill-item.disabled:hover {
+    transform: none;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.2);
+}
+
+/* 特定技能的主题色彩 */
+#skill-three-heads {
+    background: linear-gradient(135deg, #FF4500, #DC143C);
+}
+
+#skill-qiankun-circle {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+}
+
+#skill-huntian-ling {
+    background: linear-gradient(135deg, #00CED1, #4682B4);
+}
+
+#skill-transformation {
+    background: linear-gradient(135deg, #9370DB, #8A2BE2);
 }
 
 .skill-icon {
-    font-size: 1.5rem;
-    filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.5));
+    font-size: 1.8rem;
+    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.7));
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    transition: all 0.3s ease;
+}
+
+.skill-item:hover .skill-icon {
+    font-size: 2rem;
+    filter: drop-shadow(3px 3px 6px rgba(0, 0, 0, 0.8));
 }
 
 .skill-cooldown {
@@ -148,9 +282,12 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    border-radius: 10px;
-    background: #BBADA0;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 15px;
+    background: linear-gradient(135deg, #BBADA0, #A0522D, #8B4513);
+    box-shadow: 
+        0 8px 16px rgba(0, 0, 0, 0.3),
+        inset 0 2px 4px rgba(255, 255, 255, 0.2);
+    border: 3px solid rgba(220, 20, 60, 0.4);
 }
 
 .game-grid {
@@ -169,8 +306,8 @@ body {
 }
 
 .grid-cell {
-    background: rgba(238, 228, 218, 0.35);
-    border-radius: 6px;
+    background: linear-gradient(135deg, rgba(238, 228, 218, 0.4), rgba(205, 133, 63, 0.3));
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -178,6 +315,8 @@ body {
     font-weight: 700;
     color: #776E65;
     transition: all 0.3s ease;
+    border: 1px solid rgba(139, 69, 19, 0.2);
+    box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.3);
 }
 
 .tile {
@@ -192,18 +331,146 @@ body {
     z-index: 10;
 }
 
-/* 方块颜色主题 */
-.tile-2 { background: #EEE4DA; color: #776E65; }
-.tile-4 { background: #EDE0C8; color: #776E65; }
-.tile-8 { background: #F2B179; color: #F9F6F2; }
-.tile-16 { background: #F59563; color: #F9F6F2; }
-.tile-32 { background: #F67C5F; color: #F9F6F2; }
-.tile-64 { background: #F65E3B; color: #F9F6F2; }
-.tile-128 { background: #EDCF72; color: #F9F6F2; font-size: 1.8rem; }
-.tile-256 { background: #EDCC61; color: #F9F6F2; font-size: 1.8rem; }
-.tile-512 { background: #EDC850; color: #F9F6F2; font-size: 1.8rem; }
-.tile-1024 { background: #EDC53F; color: #F9F6F2; font-size: 1.6rem; }
-.tile-2048 { background: #EDC22E; color: #F9F6F2; font-size: 1.6rem; }
+/* 哪吒主题方块样式 */
+.tile-2 { 
+    background: linear-gradient(135deg, #EEE4DA, #F5F5DC); 
+    color: #776E65; 
+    box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.3), 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 2px solid rgba(255, 192, 203, 0.3);
+}
+
+.tile-4 { 
+    background: linear-gradient(135deg, #EDE0C8, #F0E68C); 
+    color: #776E65; 
+    box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.3), 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 2px solid rgba(255, 140, 0, 0.3);
+}
+
+.tile-8 { 
+    background: linear-gradient(135deg, #F2B179, #FF8C00); 
+    color: #F9F6F2; 
+    box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.2), 0 2px 4px rgba(0, 0, 0, 0.2);
+    border: 2px solid rgba(255, 69, 0, 0.4);
+}
+
+.tile-16 { 
+    background: linear-gradient(135deg, #F59563, #FF6347); 
+    color: #F9F6F2; 
+    box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.2), 0 2px 4px rgba(0, 0, 0, 0.2);
+    border: 2px solid rgba(220, 20, 60, 0.4);
+}
+
+.tile-32 { 
+    background: linear-gradient(135deg, #F67C5F, #DC143C); 
+    color: #F9F6F2; 
+    box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.2), 0 2px 4px rgba(0, 0, 0, 0.2);
+    border: 2px solid rgba(139, 0, 0, 0.5);
+}
+
+.tile-64 { 
+    background: linear-gradient(135deg, #F65E3B, #B22222); 
+    color: #F9F6F2; 
+    box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.2), 0 2px 4px rgba(0, 0, 0, 0.3);
+    border: 2px solid rgba(128, 0, 0, 0.6);
+}
+
+.tile-128 { 
+    background: linear-gradient(135deg, #EDCF72, #FFD700); 
+    color: #F9F6F2; 
+    font-size: 1.8rem; 
+    box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.3), 0 4px 8px rgba(255, 215, 0, 0.4);
+    border: 2px solid rgba(255, 215, 0, 0.8);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.tile-256 { 
+    background: linear-gradient(135deg, #EDCC61, #FFA500); 
+    color: #F9F6F2; 
+    font-size: 1.8rem; 
+    box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.3), 0 4px 8px rgba(255, 165, 0, 0.4);
+    border: 2px solid rgba(255, 140, 0, 0.8);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.tile-512 { 
+    background: linear-gradient(135deg, #EDC850, #FF8C00); 
+    color: #F9F6F2; 
+    font-size: 1.8rem; 
+    box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.3), 0 4px 8px rgba(255, 140, 0, 0.5);
+    border: 2px solid rgba(255, 69, 0, 0.8);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.tile-1024 { 
+    background: linear-gradient(135deg, #EDC53F, #DAA520); 
+    color: #F9F6F2; 
+    font-size: 1.6rem; 
+    box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.3), 0 6px 12px rgba(218, 165, 32, 0.6);
+    border: 3px solid rgba(184, 134, 11, 0.9);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+}
+
+.tile-2048 { 
+    background: linear-gradient(135deg, #EDC22E, #B8860B); 
+    color: #F9F6F2; 
+    font-size: 1.6rem; 
+    box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.4), 0 8px 16px rgba(184, 134, 11, 0.8);
+    border: 3px solid rgba(255, 215, 0, 1);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    animation: nezha-glow 2s ease-in-out infinite alternate;
+}
+
+.tile-4096 {
+    background: linear-gradient(135deg, #DC143C, #8B0000);
+    color: #F9F6F2;
+    font-size: 1.4rem;
+    box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.3), 0 8px 16px rgba(220, 20, 60, 0.8);
+    border: 3px solid rgba(255, 0, 0, 1);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9);
+    animation: divine-power 3s ease-in-out infinite;
+}
+
+.tile-8192 {
+    background: linear-gradient(135deg, #9370DB, #4B0082);
+    color: #F9F6F2;
+    font-size: 1.4rem;
+    box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.3), 0 10px 20px rgba(147, 112, 219, 0.9);
+    border: 3px solid rgba(138, 43, 226, 1);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 1);
+    animation: mythical-aura 4s ease-in-out infinite;
+}
+
+/* 哪吒主题动画效果 */
+@keyframes nezha-glow {
+    0% { box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.4), 0 8px 16px rgba(184, 134, 11, 0.8); }
+    100% { box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.6), 0 12px 24px rgba(255, 215, 0, 1); }
+}
+
+@keyframes divine-power {
+    0%, 100% { 
+        box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.3), 0 8px 16px rgba(220, 20, 60, 0.8);
+        transform: scale(1);
+    }
+    50% { 
+        box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.5), 0 12px 24px rgba(255, 0, 0, 1);
+        transform: scale(1.02);
+    }
+}
+
+@keyframes mythical-aura {
+    0%, 100% { 
+        box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.3), 0 10px 20px rgba(147, 112, 219, 0.9);
+        filter: hue-rotate(0deg);
+    }
+    33% { 
+        box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.4), 0 15px 30px rgba(138, 43, 226, 1);
+        filter: hue-rotate(30deg);
+    }
+    66% { 
+        box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.5), 0 20px 40px rgba(75, 0, 130, 1);
+        filter: hue-rotate(-30deg);
+    }
+}
 
 /* 游戏控制按钮 */
 .game-controls {
@@ -460,4 +727,527 @@ body {
 
 .skill-item.activated {
     animation: skillActivate 0.5s ease-in-out;
+}
+/* 哪吒主题特殊
+视觉效果 */
+
+/* 火焰粒子效果 */
+.fire-particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: radial-gradient(circle, #FF4500, #DC143C);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: fire-rise 1s ease-out forwards;
+}
+
+@keyframes fire-rise {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.5);
+    }
+}
+
+/* 神力光环效果 */
+.divine-aura {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    border: 2px solid rgba(255, 215, 0, 0.6);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: divine-pulse 2s ease-in-out infinite;
+}
+
+@keyframes divine-pulse {
+    0%, 100% {
+        transform: scale(0.8);
+        opacity: 0.8;
+        border-color: rgba(255, 215, 0, 0.6);
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 0.4;
+        border-color: rgba(255, 215, 0, 0.2);
+    }
+}
+
+/* 莲花绽放效果 */
+.lotus-bloom {
+    position: absolute;
+    font-size: 2rem;
+    color: rgba(255, 192, 203, 0.8);
+    pointer-events: none;
+    animation: lotus-bloom-animation 1.5s ease-out forwards;
+}
+
+@keyframes lotus-bloom-animation {
+    0% {
+        opacity: 0;
+        transform: scale(0.5) rotate(0deg);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.2) rotate(180deg);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.8) rotate(360deg);
+    }
+}
+
+/* 混天绫飘带效果 */
+.huntian-ribbon {
+    position: absolute;
+    width: 200px;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, #00CED1, #4682B4, transparent);
+    pointer-events: none;
+    animation: ribbon-flow 2s ease-in-out infinite;
+}
+
+@keyframes ribbon-flow {
+    0%, 100% {
+        transform: translateX(-100px) rotate(0deg);
+        opacity: 0;
+    }
+    50% {
+        transform: translateX(100px) rotate(360deg);
+        opacity: 1;
+    }
+}
+
+/* 乾坤圈旋转效果 */
+.qiankun-ring {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    border: 4px solid rgba(255, 215, 0, 0.8);
+    border-radius: 50%;
+    border-top-color: transparent;
+    border-right-color: transparent;
+    pointer-events: none;
+    animation: ring-spin 1s linear infinite;
+}
+
+@keyframes ring-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 技能激活时的特殊效果 */
+.skill-item.three-heads-active {
+    animation: three-heads-effect 0.5s ease-in-out;
+}
+
+.skill-item.qiankun-active {
+    animation: qiankun-effect 0.8s ease-in-out;
+}
+
+.skill-item.huntian-active {
+    animation: huntian-effect 1s ease-in-out;
+}
+
+.skill-item.transformation-active {
+    animation: transformation-effect 2s ease-in-out;
+}
+
+@keyframes three-heads-effect {
+    0%, 100% { transform: scale(1); filter: hue-rotate(0deg); }
+    25% { transform: scale(1.1); filter: hue-rotate(90deg); }
+    50% { transform: scale(1.2); filter: hue-rotate(180deg); }
+    75% { transform: scale(1.1); filter: hue-rotate(270deg); }
+}
+
+@keyframes qiankun-effect {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    50% { transform: scale(1.3) rotate(360deg); }
+}
+
+@keyframes huntian-effect {
+    0%, 100% { transform: scale(1); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); }
+    25% { transform: scale(1.1); box-shadow: 0 8px 16px rgba(0, 206, 209, 0.6); }
+    50% { transform: scale(1.2); box-shadow: 0 12px 24px rgba(70, 130, 180, 0.8); }
+    75% { transform: scale(1.1); box-shadow: 0 8px 16px rgba(0, 206, 209, 0.6); }
+}
+
+@keyframes transformation-effect {
+    0%, 100% { 
+        transform: scale(1); 
+        filter: brightness(1) saturate(1);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+    25% { 
+        transform: scale(1.2); 
+        filter: brightness(1.5) saturate(1.5);
+        box-shadow: 0 8px 16px rgba(147, 112, 219, 0.6);
+    }
+    50% { 
+        transform: scale(1.4); 
+        filter: brightness(2) saturate(2);
+        box-shadow: 0 16px 32px rgba(138, 43, 226, 0.8);
+    }
+    75% { 
+        transform: scale(1.2); 
+        filter: brightness(1.5) saturate(1.5);
+        box-shadow: 0 8px 16px rgba(147, 112, 219, 0.6);
+    }
+}
+
+/* 合并时的特殊效果 */
+.tile-merge-effect {
+    position: absolute;
+    pointer-events: none;
+    z-index: 100;
+}
+
+.merge-fire {
+    width: 20px;
+    height: 20px;
+    background: radial-gradient(circle, #FF4500, transparent);
+    border-radius: 50%;
+    animation: merge-fire-burst 0.5s ease-out forwards;
+}
+
+@keyframes merge-fire-burst {
+    0% {
+        opacity: 1;
+        transform: scale(0.5);
+    }
+    50% {
+        opacity: 0.8;
+        transform: scale(2);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(3);
+    }
+}
+
+.merge-sparkle {
+    width: 6px;
+    height: 6px;
+    background: #FFD700;
+    border-radius: 50%;
+    animation: merge-sparkle-burst 0.8s ease-out forwards;
+}
+
+@keyframes merge-sparkle-burst {
+    0% {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.2) rotate(720deg) translateY(-100px);
+    }
+}
+
+/* 游戏胜利时的庆祝效果 */
+.victory-celebration {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.victory-firework {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: #FFD700;
+    border-radius: 50%;
+    animation: firework-explosion 2s ease-out forwards;
+}
+
+@keyframes firework-explosion {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.8;
+        transform: scale(10);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(20);
+    }
+}
+
+/* 主题切换过渡效果 */
+.theme-transition {
+    transition: all 0.5s ease-in-out;
+}
+
+.theme-transition.changing {
+    opacity: 0.7;
+    transform: scale(0.98);
+    filter: blur(1px);
+}
+
+/* 响应式调整 - 保持哪吒主题特色 */
+@media (max-width: 768px) {
+    .game-title::after {
+        font-size: 0.8rem;
+        top: -8px;
+    }
+    
+    .skill-icon {
+        font-size: 1.4rem;
+    }
+    
+    .skill-item:hover .skill-icon {
+        font-size: 1.6rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .game-title::after {
+        font-size: 0.6rem;
+        top: -6px;
+    }
+    
+    .skill-icon {
+        font-size: 1.2rem;
+    }
+    
+    .skill-item:hover .skill-icon {
+        font-size: 1.3rem;
+    }
+}/* 额
+外的装饰动画 */
+@keyframes cloud-drift {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(50px); }
+}
+
+@keyframes flame-flicker {
+    0%, 100% { 
+        filter: brightness(1) hue-rotate(0deg);
+        transform: scale(1);
+    }
+    50% { 
+        filter: brightness(1.3) hue-rotate(10deg);
+        transform: scale(1.1);
+    }
+}
+
+@keyframes lotus-glow {
+    0%, 100% { 
+        filter: brightness(1) drop-shadow(0 0 5px rgba(255, 192, 203, 0.5));
+        transform: scale(1);
+    }
+    50% { 
+        filter: brightness(1.4) drop-shadow(0 0 15px rgba(255, 192, 203, 0.8));
+        transform: scale(1.05);
+    }
+}
+
+@keyframes star-twinkle {
+    0%, 100% { 
+        opacity: 0.6;
+        transform: scale(0.8) rotate(0deg);
+    }
+    50% { 
+        opacity: 1;
+        transform: scale(1.2) rotate(180deg);
+    }
+}
+
+/* 主题切换时的过渡动画 */
+.theme-switching {
+    animation: theme-switch-transition 0.8s ease-in-out;
+}
+
+@keyframes theme-switch-transition {
+    0% { 
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+        filter: blur(0px);
+    }
+    50% { 
+        opacity: 0.3;
+        transform: scale(0.95) rotate(5deg);
+        filter: blur(3px);
+    }
+    100% { 
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+        filter: blur(0px);
+    }
+}
+
+/* 高分数方块的特殊光效 */
+.tile-4096,
+.tile-8192 {
+    position: relative;
+    overflow: visible;
+}
+
+.tile-4096::before,
+.tile-8192::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: -5px;
+    right: -5px;
+    bottom: -5px;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    border-radius: inherit;
+    z-index: -1;
+    animation: high-score-glow 2s linear infinite;
+}
+
+@keyframes high-score-glow {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 技能冷却视觉效果增强 */
+.skill-cooldown.active {
+    background: conic-gradient(from 0deg, rgba(0, 0, 0, 0.8) var(--cooldown-progress, 0%), transparent var(--cooldown-progress, 0%));
+    animation: cooldown-pulse 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes cooldown-pulse {
+    0% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+/* 游戏网格的呼吸效果 */
+.game-grid.breathing {
+    animation: grid-breathe 4s ease-in-out infinite;
+}
+
+@keyframes grid-breathe {
+    0%, 100% { 
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% { 
+        transform: scale(1.01);
+        opacity: 0.95;
+    }
+}
+
+/* 分数增加时的动画 */
+.score-increase {
+    animation: score-pop 0.6s ease-out;
+}
+
+@keyframes score-pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* 新纪录时的特殊效果 */
+.new-record {
+    animation: new-record-celebration 2s ease-in-out infinite;
+}
+
+@keyframes new-record-celebration {
+    0%, 100% { 
+        color: #FFD700;
+        text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        transform: scale(1);
+    }
+    25% { 
+        color: #FF6B6B;
+        text-shadow: 0 0 15px rgba(255, 107, 107, 0.7);
+        transform: scale(1.05);
+    }
+    50% { 
+        color: #4ECDC4;
+        text-shadow: 0 0 20px rgba(78, 205, 196, 0.8);
+        transform: scale(1.1);
+    }
+    75% { 
+        color: #45B7D1;
+        text-shadow: 0 0 15px rgba(69, 183, 209, 0.7);
+        transform: scale(1.05);
+    }
+}/* 特效
+容器 */
+.effects-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 50;
+    overflow: hidden;
+    border-radius: 15px;
+}
+
+/* 确保方块在特效之上 */
+.tile {
+    z-index: 60;
+}
+
+/* 游戏区域的整体视觉增强 */
+.game-area {
+    position: relative;
+    margin: 20px auto;
+    width: 400px;
+    height: 400px;
+    max-width: 90vw;
+    max-height: 90vw;
+    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2));
+}
+
+/* 为不同主题提供不同的视觉效果 */
+body[data-theme="nezha"] .game-area {
+    filter: drop-shadow(0 8px 16px rgba(220, 20, 60, 0.3));
+}
+
+body[data-theme="classic"] .game-area {
+    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2));
+}
+
+/* 主题数据属性的样式变化 */
+body[data-theme="nezha"] {
+    background: linear-gradient(135deg, #8B4513 0%, #A0522D 50%, #CD853F 100%);
+}
+
+body[data-theme="classic"] {
+    background: linear-gradient(135deg, #FAF8EF 0%, #F5F5DC 100%);
+}
+
+/* 确保装饰元素在正确的层级 */
+.theme-decoration {
+    z-index: -1;
+}
+
+.cloud-decoration {
+    z-index: -1;
+}
+
+/* 方块内容的居中对齐优化 */
+.tile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1;
+}
+
+/* 确保emoji和文字都能正确显示 */
+.tile-content {
+    display: block;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }

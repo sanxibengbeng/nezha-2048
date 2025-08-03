@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>哪吒主题视觉元素测试</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body data-theme="nezha">
+    <!-- 云朵装饰 -->
+    <div class="cloud-decoration">☁️</div>
+    <div class="cloud-decoration">☁️</div>
+    <div class="cloud-decoration">☁️</div>
+
+    <div id="game-container">
+        <!-- 游戏标题和UI -->
+        <header class="game-header">
+            <h1 class="game-title">哪吒2048</h1>
+            <div class="score-container">
+                <div class="score-box">
+                    <div class="score-label">分数</div>
+                    <div id="current-score" class="score-value">12800</div>
+                </div>
+                <div class="score-box">
+                    <div class="score-label">最高分</div>
+                    <div id="high-score" class="score-value">25600</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 技能栏 -->
+        <div class="skills-container">
+            <div class="skill-item" id="skill-three-heads" title="三头六臂">
+                <div class="skill-icon">🔥</div>
+                <div class="skill-cooldown"></div>
+            </div>
+            <div class="skill-item" id="skill-qiankun-circle" title="乾坤圈">
+                <div class="skill-icon">⭕</div>
+                <div class="skill-cooldown"></div>
+            </div>
+            <div class="skill-item" id="skill-huntian-ling" title="混天绫">
+                <div class="skill-icon">🌊</div>
+                <div class="skill-cooldown"></div>
+            </div>
+            <div class="skill-item" id="skill-transformation" title="哪吒变身">
+                <div class="skill-icon">⚡</div>
+                <div class="skill-cooldown"></div>
+            </div>
+        </div>
+
+        <!-- 游戏主区域 -->
+        <div class="game-area">
+            <canvas id="game-canvas" width="400" height="400"></canvas>
+            <div id="game-grid" class="game-grid breathing">
+                <!-- 示例方块 -->
+                <div class="tile tile-2" style="position: absolute; left: 2%; top: 2%; width: 21%; height: 21%;">
+                    <div class="tile-content">🪷</div>
+                </div>
+                <div class="tile tile-4" style="position: absolute; left: 27%; top: 2%; width: 21%; height: 21%;">
+                    <div class="tile-content">🔥</div>
+                </div>
+                <div class="tile tile-8" style="position: absolute; left: 52%; top: 2%; width: 21%; height: 21%;">
+                    <div class="tile-content">🌊</div>
+                </div>
+                <div class="tile tile-16" style="position: absolute; left: 77%; top: 2%; width: 21%; height: 21%;">
+                    <div class="tile-content">⭕</div>
+                </div>
+                
+                <div class="tile tile-32" style="position: absolute; left: 2%; top: 27%; width: 21%; height: 21%;">
+                    <div class="tile-content">⚡</div>
+                </div>
+                <div class="tile tile-64" style="position: absolute; left: 27%; top: 27%; width: 21%; height: 21%;">
+                    <div class="tile-content">🗡️</div>
+                </div>
+                <div class="tile tile-128" style="position: absolute; left: 52%; top: 27%; width: 21%; height: 21%;">
+                    <div class="tile-content">👑</div>
+                </div>
+                <div class="tile tile-256" style="position: absolute; left: 77%; top: 27%; width: 21%; height: 21%;">
+                    <div class="tile-content">🐉</div>
+                </div>
+                
+                <div class="tile tile-512" style="position: absolute; left: 2%; top: 52%; width: 21%; height: 21%;">
+                    <div class="tile-content">🔱</div>
+                </div>
+                <div class="tile tile-1024" style="position: absolute; left: 27%; top: 52%; width: 21%; height: 21%;">
+                    <div class="tile-content">🌟</div>
+                </div>
+                <div class="tile tile-2048" style="position: absolute; left: 52%; top: 52%; width: 21%; height: 21%;">
+                    <div class="tile-content">👼</div>
+                </div>
+                <div class="tile tile-4096" style="position: absolute; left: 77%; top: 52%; width: 21%; height: 21%;">
+                    <div class="tile-content">🌈</div>
+                </div>
+                
+                <div class="tile tile-8192" style="position: absolute; left: 2%; top: 77%; width: 21%; height: 21%;">
+                    <div class="tile-content">✨</div>
+                </div>
+            </div>
+            <!-- 特效容器 -->
+            <div id="effects-container" class="effects-container"></div>
+        </div>
+
+        <!-- 游戏控制按钮 -->
+        <div class="game-controls">
+            <button id="new-game-btn" class="control-btn primary">新游戏</button>
+            <button id="pause-btn" class="control-btn">暂停</button>
+            <button id="settings-btn" class="control-btn">设置</button>
+        </div>
+
+        <!-- 移动设备操作提示 -->
+        <div class="mobile-instructions">
+            <p>滑动屏幕移动方块，合并相同数字！</p>
+        </div>
+    </div>
+
+    <script>
+        // 简单的测试脚本
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('哪吒主题视觉元素测试页面加载完成');
+            
+            // 测试技能按钮点击效果
+            const skillItems = document.querySelectorAll('.skill-item');
+            skillItems.forEach((item, index) => {
+                item.addEventListener('click', function() {
+                    const skillNames = ['three-heads-active', 'qiankun-active', 'huntian-active', 'transformation-active'];
+                    const className = skillNames[index];
+                    
+                    item.classList.add(className);
+                    setTimeout(() => {
+                        item.classList.remove(className);
+                    }, 2000);
+                });
+            });
+            
+            // 测试分数动画
+            const scoreElement = document.getElementById('current-score');
+            setInterval(() => {
+                scoreElement.classList.add('score-increase');
+                setTimeout(() => {
+                    scoreElement.classList.remove('score-increase');
+                }, 600);
+            }, 3000);
+            
+            // 测试合并特效
+            const gameArea = document.querySelector('.game-area');
+            setInterval(() => {
+                createTestMergeEffect();
+            }, 5000);
+            
+            function createTestMergeEffect() {
+                const effect = document.createElement('div');
+                effect.className = 'tile-merge-effect merge-fire';
+                effect.style.cssText = `
+                    left: ${200 + Math.random() * 100}px;
+                    top: ${200 + Math.random() * 100}px;
+                    transform: translate(-50%, -50%);
+                `;
+                
+                // 创建火焰粒子
+                for (let i = 0; i < 8; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'fire-particle';
+                    particle.style.cssText = `
+                        left: ${Math.random() * 40 - 20}px;
+                        top: ${Math.random() * 40 - 20}px;
+                        animation-delay: ${Math.random() * 0.5}s;
+                    `;
+                    effect.appendChild(particle);
+                }
+                
+                gameArea.appendChild(effect);
+                
+                setTimeout(() => {
+                    if (effect.parentNode) {
+                        effect.parentNode.removeChild(effect);
+                    }
+                }, 2000);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -126,8 +126,32 @@ function addTestTiles() {
  */
 function createTileElement(tile) {
     const tileElement = document.createElement('div');
-    tileElement.className = tile.getCSSClass();
-    tileElement.textContent = tile.getNezhaSymbol();
+    
+    // 获取主题管理器
+    const themeManager = game?.getThemeManager();
+    
+    // 设置基础类名
+    tileElement.className = `tile tile-${tile.value}`;
+    
+    // 设置方块内容
+    if (themeManager) {
+        const sprite = themeManager.getTileSprite(tile.value);
+        tileElement.textContent = sprite;
+        
+        // 如果是emoji，添加特殊样式
+        if (sprite.length > 1 && /[\u{1F000}-\u{1F9FF}]/u.test(sprite)) {
+            tileElement.style.fontSize = '1.8rem';
+        }
+    } else {
+        tileElement.textContent = tile.value.toString();
+    }
+    
+    // 创建内容容器以确保居中
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'tile-content';
+    contentDiv.textContent = tileElement.textContent;
+    tileElement.textContent = '';
+    tileElement.appendChild(contentDiv);
     
     // 设置位置
     const cellSize = 100 / 4; // 每个格子占25%
@@ -146,8 +170,15 @@ function createTileElement(tile) {
     // 添加出现动画
     tileElement.classList.add('tile-new');
     
+    // 移除动画类
+    setTimeout(() => {
+        tileElement.classList.remove('tile-new');
+    }, 300);
+    
     // 保存元素引用
     tile.element = tileElement;
+    
+    return tileElement;
 }
 
 /**
@@ -161,6 +192,7 @@ function bindGameEngineEvents() {
         console.log('游戏引擎初始化完成');
         updateScoreDisplay();
         initializeThemeSettings();
+        initializeVisualElements();
     });
     
     // 游戏开始
@@ -1000,13 +1032,154 @@ function initializeThemeSettings() {
         if (themeSelect) {
             themeSelect.value = themeName;
         }
+        
+        // 更新body的主题数据属性
+        document.body.setAttribute('data-theme', themeName);
     });
     
     // 加载保存的主题偏好
     const savedTheme = themeManager.loadThemePreference();
     if (savedTheme && savedTheme !== themeManager.currentTheme) {
         themeManager.switchTheme(savedTheme);
+    } else {
+        // 设置默认主题数据属性
+        document.body.setAttribute('data-theme', themeManager.currentTheme);
     }
+}
+
+/**
+ * 初始化视觉元素
+ */
+function initializeVisualElements() {
+    if (!game) return;
+    
+    const themeManager = game.getThemeManager();
+    if (!themeManager) return;
+    
+    // 应用当前主题的视觉效果
+    themeManager.applyThemeToDOM();
+    
+    // 初始化方块渲染
+    initializeTileRendering();
+    
+    // 设置技能图标
+    updateSkillIcons();
+    
+    // 添加视觉反馈事件监听
+    bindVisualFeedbackEvents();
+    
+    console.log('视觉元素初始化完成');
+}
+
+/**
+ * 初始化方块渲染
+ */
+function initializeTileRendering() {
+    if (!game) return;
+    
+    const gameState = game.getGameState();
+    const themeManager = game.getThemeManager();
+    
+    // 清除现有方块元素
+    const existingTiles = document.querySelectorAll('.tile');
+    existingTiles.forEach(tile => tile.remove());
+    
+    // 渲染当前游戏状态中的方块
+    for (let x = 0; x < 4; x++) {
+        for (let y = 0; y < 4; y++) {
+            const tile = gameState.getTile(x, y);
+            if (tile) {
+                createTileElement(tile);
+            }
+        }
+    }
+}
+
+/**
+ * 更新技能图标
+ */
+function updateSkillIcons() {
+    if (!game) return;
+    
+    const themeManager = game.getThemeManager();
+    if (!themeManager) return;
+    
+    const skills = [
+        { id: 'skill-three-heads', name: 'threeHeadsSixArms' },
+        { id: 'skill-qiankun-circle', name: 'qiankunCircle' },
+        { id: 'skill-huntian-ling', name: 'huntianLing' },
+        { id: 'skill-transformation', name: 'transformation' }
+    ];
+    
+    skills.forEach(skill => {
+        const skillElement = document.getElementById(skill.id);
+        const iconElement = skillElement?.querySelector('.skill-icon');
+        
+        if (iconElement) {
+            const icon = themeManager.getSkillIcon(skill.name);
+            iconElement.textContent = icon;
+        }
+    });
+}
+
+/**
+ * 绑定视觉反馈事件
+ */
+function bindVisualFeedbackEvents() {
+    if (!game) return;
+    
+    // 监听方块合并事件
+    game.on('tileMerged', (data) => {
+        const themeManager = game.getThemeManager();
+        if (themeManager && data.position) {
+            // 计算屏幕坐标
+            const gameArea = document.querySelector('.game-area');
+            const rect = gameArea.getBoundingClientRect();
+            const cellSize = rect.width / 4;
+            const x = rect.left + (data.position.x + 0.5) * cellSize;
+            const y = rect.top + (data.position.y + 0.5) * cellSize;
+            
+            themeManager.triggerMergeEffect(x, y, data.value);
+        }
+    });
+    
+    // 监听技能激活事件
+    game.on('skillActivated', (data) => {
+        const themeManager = game.getThemeManager();
+        if (themeManager) {
+            themeManager.triggerSkillEffect(data.skillName);
+        }
+    });
+    
+    // 监听游戏胜利事件
+    game.on('won', () => {
+        const themeManager = game.getThemeManager();
+        if (themeManager) {
+            themeManager.createVictoryEffect();
+        }
+    });
+    
+    // 监听分数更新事件
+    game.on('scoreUpdated', (data) => {
+        if (data.isNewRecord) {
+            const scoreElement = document.getElementById('current-score');
+            if (scoreElement) {
+                scoreElement.classList.add('new-record');
+                setTimeout(() => {
+                    scoreElement.classList.remove('new-record');
+                }, 3000);
+            }
+        }
+        
+        // 添加分数增加动画
+        const scoreElement = document.getElementById('current-score');
+        if (scoreElement) {
+            scoreElement.classList.add('score-increase');
+            setTimeout(() => {
+                scoreElement.classList.remove('score-increase');
+            }, 600);
+        }
+    });
 }
 
 /**
