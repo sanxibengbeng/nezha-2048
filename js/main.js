@@ -43,7 +43,7 @@ async function initializeGame() {
     // 创建游戏引擎
     game = new GameEngine({
         targetFPS: 60,
-        debug: true // 开发模式下启用调试信息
+        debug: false// 开发模式下启用调试信息
     });
     
     // 初始化游戏引擎
