@@ -18,6 +18,82 @@ class GameEngine {
         this.gridManager = new GridManager(4);
         this.inputManager = new InputManager(this);
         this.themeManager = new ThemeManager(this);
+        this.animationSystem = new AnimationSystem();
+        
+        // 调试 StateManager 创建
+        console.log('准备创建 StateManager...');
+        console.log('StateManager 类型:', typeof StateManager);
+        
+        try {
+            this.stateManager = new StateManager();
+            console.log('StateManager 创建成功');
+            console.log('stateManager 实例:', this.stateManager);
+            console.log('stateManager.on 类型:', typeof this.stateManager.on);
+            
+            // 验证 StateManager 是否正常工作
+            if (typeof this.stateManager.on !== 'function') {
+                throw new Error('StateManager.on 方法不存在');
+            }
+            
+        } catch (error) {
+            console.error('StateManager 创建失败:', error);
+            console.log('尝试使用备用 StateManager 实现...');
+            
+            // 使用备用实现
+            this.stateManager = {
+                eventListeners: new Map(),
+                
+                on: function(event, callback) {
+                    if (!this.eventListeners.has(event)) {
+                        this.eventListeners.set(event, []);
+                    }
+                    this.eventListeners.get(event).push(callback);
+                },
+                
+                emit: function(event, data = null) {
+                    if (this.eventListeners.has(event)) {
+                        this.eventListeners.get(event).forEach(callback => {
+                            try {
+                                callback(data);
+                            } catch (error) {
+                                console.error(`事件处理器错误 (${event}):`, error);
+                            }
+                        });
+                    }
+                },
+                
+                saveGameState: function(gameState) {
+                    console.log('保存游戏状态（简化实现）');
+                },
+                
+                loadGameState: function() {
+                    console.log('加载游戏状态（简化实现）');
+                    return null;
+                },
+                
+                clearGameState: function() {
+                    console.log('清除游戏状态（简化实现）');
+                },
+                
+                getHighScore: function() {
+                    return 0;
+                },
+                
+                updateStatistics: function(gameData) {
+                    this.emit('statisticsUpdated', { statistics: {} });
+                },
+                
+                calculateMergeScore: function(value, comboMultiplier = 1, skillMultiplier = 1) {
+                    return value * comboMultiplier * skillMultiplier;
+                },
+                
+                destroy: function() {
+                    this.eventListeners.clear();
+                }
+            };
+            
+            console.log('备用 StateManager 创建成功');
+        }
         
         // 渲染相关
         this.canvas = null;
@@ -74,6 +150,15 @@ class GameEngine {
             
             // 初始化主题管理器
             await this.themeManager.init('nezha');
+            
+            // 启动动画系统
+            this.animationSystem.start();
+            
+            // 绑定状态管理器事件
+            this.bindStateManagerEvents();
+            
+            // 尝试加载保存的游戏状态
+            this.loadSavedGame();
             
             // 绑定输入管理器事件
             this.bindInputEvents();
@@ -185,8 +270,19 @@ class GameEngine {
         // 停止当前游戏
         this.stop();
         
+        // 保存当前游戏统计（如果游戏进行中）
+        if (this.gameState.moves > 0 && !this.gameState.isGameOver) {
+            this.updateGameStatistics();
+        }
+        
         // 重置游戏状态
         this.gameState.reset();
+        
+        // 加载最高分
+        this.gameState.highScore = this.stateManager.getHighScore();
+        
+        // 清除保存的游戏状态
+        this.stateManager.clearGameState();
         
         // 清空Canvas
         this.clearCanvas();
@@ -281,10 +377,13 @@ class GameEngine {
      * @param {number} deltaTime - 时间差（毫秒）
      */
     updateTileAnimations(deltaTime) {
+        // 动画系统会自动更新，这里可以处理其他动画相关逻辑
         const tiles = this.gameState.getAllTiles();
         
         tiles.forEach(tile => {
-            tile.updateAnimation(deltaTime);
+            if (tile.updateAnimation) {
+                tile.updateAnimation(deltaTime);
+            }
         });
     }
 
@@ -412,10 +511,18 @@ class GameEngine {
         // 使用GridManager检查游戏结束
         if (this.gridManager.isGameOver() && !this.gameState.isGameOver) {
             this.gameState.isGameOver = true;
+            
+            // 更新统计数据
+            this.updateGameStatistics();
+            
+            // 清除保存的游戏状态
+            this.stateManager.clearGameState();
+            
             this.emit('gameOver', {
                 score: this.gameState.score,
                 highScore: this.gameState.highScore,
-                moves: this.gameState.moves
+                moves: this.gameState.moves,
+                playTime: this.gameState.playTime
             });
             console.log('游戏结束');
         }
@@ -423,11 +530,39 @@ class GameEngine {
         // 检查是否获胜
         if (this.gridManager.isWon() && !this.gameState.isWon) {
             this.gameState.isWon = true;
+            
+            // 更新统计数据
+            this.updateGameStatistics();
+            
             this.emit('won', {
                 score: this.gameState.score,
-                moves: this.gameState.moves
+                moves: this.gameState.moves,
+                playTime: this.gameState.playTime
             });
             console.log('恭喜获胜！');
+        }
+    }
+
+    /**
+     * 更新游戏统计数据
+     */
+    updateGameStatistics() {
+        try {
+            const gameData = {
+                score: this.gameState.score,
+                moves: this.gameState.moves,
+                playTime: this.gameState.playTime,
+                isWon: this.gameState.isWon,
+                isGameOver: this.gameState.isGameOver,
+                maxTile: this.gridManager.getMaxTileValue(),
+                maxCombo: this.gameState.maxConsecutiveMerges || 0,
+                skillsUsed: this.gameState.skillsUsed || {}
+            };
+            
+            this.stateManager.updateStatistics(gameData);
+            
+        } catch (error) {
+            console.error('更新统计数据失败:', error);
         }
     }
 
@@ -462,6 +597,112 @@ class GameEngine {
         };
         this.frameCount = 0;
         this.fps = 0;
+    }
+
+    /**
+     * 绑定状态管理器事件
+     */
+    bindStateManagerEvents() {
+        console.log('绑定 StateManager 事件...');
+        
+        if (!this.stateManager || typeof this.stateManager.on !== 'function') {
+            console.error('StateManager 不可用，跳过事件绑定');
+            return;
+        }
+        
+        try {
+            // 新最高分事件
+            this.stateManager.on('newHighScore', (data) => {
+                this.gameState.highScore = data.newScore;
+                this.emit('newHighScore', data);
+                console.log('新的最高分:', data.newScore);
+            });
+            
+            // 成就解锁事件
+            this.stateManager.on('achievementUnlocked', (data) => {
+                this.emit('achievementUnlocked', data);
+                console.log('成就解锁:', data.achievement);
+            });
+            
+            // 统计更新事件
+            this.stateManager.on('statisticsUpdated', (data) => {
+                this.emit('statisticsUpdated', data);
+            });
+            
+            // 存储错误事件
+            this.stateManager.on('storageError', (data) => {
+                console.warn('存储错误:', data);
+                this.emit('storageError', data);
+            });
+            
+            console.log('StateManager 事件绑定完成');
+            
+        } catch (error) {
+            console.error('绑定 StateManager 事件失败:', error);
+            // 不抛出错误，允许游戏继续运行
+        }
+    }
+
+    /**
+     * 加载保存的游戏
+     */
+    loadSavedGame() {
+        try {
+            const savedState = this.stateManager.loadGameState();
+            
+            if (savedState && !savedState.isGameOver) {
+                // 恢复游戏状态
+                this.gameState.score = savedState.score || 0;
+                this.gameState.moves = savedState.moves || 0;
+                this.gameState.playTime = savedState.playTime || 0;
+                this.gameState.skillCooldowns = savedState.skillCooldowns || {};
+                this.gameState.nezhaLevel = savedState.nezhaLevel || 1;
+                this.gameState.consecutiveMerges = savedState.consecutiveMerges || 0;
+                
+                // 恢复网格状态
+                if (savedState.grid) {
+                    this.gridManager.restoreGrid(savedState.grid);
+                }
+                
+                // 加载最高分
+                this.gameState.highScore = this.stateManager.getHighScore();
+                
+                this.emit('gameStateRestored', { savedState });
+                console.log('游戏状态已恢复');
+            } else {
+                // 加载最高分
+                this.gameState.highScore = this.stateManager.getHighScore();
+            }
+        } catch (error) {
+            console.error('加载保存的游戏失败:', error);
+        }
+    }
+
+    /**
+     * 保存当前游戏状态
+     */
+    saveCurrentGame() {
+        try {
+            // 准备游戏状态数据
+            const gameStateData = {
+                grid: this.gridManager.getGridData(),
+                score: this.gameState.score,
+                moves: this.gameState.moves,
+                playTime: this.gameState.playTime,
+                isGameOver: this.gameState.isGameOver,
+                isWon: this.gameState.isWon,
+                skillCooldowns: this.gameState.skillCooldowns,
+                nezhaLevel: this.gameState.nezhaLevel,
+                consecutiveMerges: this.gameState.consecutiveMerges
+            };
+            
+            this.stateManager.saveGameState(gameStateData);
+            this.emit('gameSaved', { gameState: gameStateData });
+            
+        } catch (error) {
+            console.error('保存游戏失败:', error);
+            this.emit('error', { type: 'saveGame', error });
+        }
     }
 
     /**
@@ -610,10 +851,15 @@ class GameEngine {
             // 启动移动动画
             this.startMoveAnimations();
             
+            // 处理合并动画
+            if (result.merged && result.merged.length > 0) {
+                this.startMergeAnimations(result.merged);
+            }
+            
             // 记录移动前的状态（用于统计）
             const preMoveStats = this.gridManager.getStats();
             
-            // 添加新方块（延迟添加，让移动动画完成）
+            // 添加新方块（延迟添加，让移动和合并动画完成）
             setTimeout(() => {
                 const newTile = this.gridManager.addRandomTile();
                 if (newTile) {
@@ -622,7 +868,7 @@ class GameEngine {
                 
                 // 检查游戏状态变化
                 this.checkGameStateChanges(preMoveStats);
-            }, 150);
+            }, 300); // 增加延迟以等待合并动画完成
 
             // 触发移动事件
             this.emit('move', {
@@ -691,13 +937,225 @@ class GameEngine {
     }
 
     /**
+     * 获取动画系统
+     * @returns {AnimationSystem} 动画系统
+     */
+    getAnimationSystem() {
+        return this.animationSystem;
+    }
+
+    /**
+     * 获取状态管理器
+     * @returns {StateManager} 状态管理器
+     */
+    getStateManager() {
+        return this.stateManager;
+    }
+
+    /**
      * 启动移动动画
      */
     startMoveAnimations() {
         const tiles = this.gameState.getAllTiles();
         
         tiles.forEach(tile => {
-            tile.startMoveAnimation();
+            if (tile.needsMoveAnimation && tile.needsMoveAnimation()) {
+                // 使用动画系统创建移动动画
+                const fromPos = tile.getPreviousPosition();
+                const toPos = tile.getCurrentPosition();
+                
+                this.animationSystem.createTileAnimation(tile, fromPos, toPos, () => {
+                    tile.onMoveAnimationComplete();
+                });
+            }
+            
+            if (tile.isNew) {
+                // 为新方块创建出现动画
+                this.animationSystem.createTileAppearAnimation(tile, () => {
+                    tile.isNew = false;
+                });
+            }
+        });
+    }
+
+    /**
+     * 启动合并动画
+     * @param {Array} mergedTiles - 合并的方块数组
+     */
+    startMergeAnimations(mergedTiles) {
+        if (!mergedTiles || mergedTiles.length === 0) {
+            return;
+        }
+
+        // 准备合并动画数据
+        const mergeData = mergedTiles.map(mergeInfo => {
+            const tile = mergeInfo.tile;
+            const newValue = mergeInfo.newValue;
+            
+            // 计算方块在屏幕上的位置
+            const position = this.getTileScreenPosition(tile);
+            
+            return {
+                tile: tile,
+                newValue: newValue,
+                position: position
+            };
+        });
+
+        // 检查是否有连锁合并
+        if (mergedTiles.length > 1 && this.isChainMerge(mergedTiles)) {
+            // 创建连锁合并动画
+            this.animationSystem.createChainMergeAnimation(mergeData, () => {
+                this.onMergeAnimationComplete(mergedTiles);
+            });
+        } else {
+            // 创建同步合并动画
+            this.animationSystem.createSynchronizedMergeAnimation(mergeData, () => {
+                this.onMergeAnimationComplete(mergedTiles);
+            });
+        }
+
+        // 触发合并事件
+        this.emit('tilesmerged', {
+            mergedTiles: mergedTiles,
+            totalScore: mergedTiles.reduce((sum, merge) => sum + merge.score, 0)
+        });
+    }
+
+    /**
+     * 获取方块在屏幕上的位置
+     * @param {Object} tile - 方块对象
+     * @returns {Object} 屏幕位置 {x, y}
+     */
+    getTileScreenPosition(tile) {
+        const gameArea = document.querySelector('.game-area');
+        if (!gameArea) {
+            return { x: 0, y: 0 };
+        }
+
+        const rect = gameArea.getBoundingClientRect();
+        const cellSize = rect.width / 4;
+        
+        return {
+            x: rect.left + (tile.x + 0.5) * cellSize,
+            y: rect.top + (tile.y + 0.5) * cellSize
+        };
+    }
+
+    /**
+     * 检查是否为连锁合并
+     * @param {Array} mergedTiles - 合并的方块数组
+     * @returns {boolean} 是否为连锁合并
+     */
+    isChainMerge(mergedTiles) {
+        // 如果有多个合并且它们的值相关联，则认为是连锁
+        if (mergedTiles.length <= 1) {
+            return false;
+        }
+
+        // 检查合并是否在相邻位置或形成链条
+        for (let i = 0; i < mergedTiles.length - 1; i++) {
+            const current = mergedTiles[i];
+            const next = mergedTiles[i + 1];
+            
+            // 检查是否相邻或值相关
+            const isAdjacent = Math.abs(current.tile.x - next.tile.x) <= 1 && 
+                              Math.abs(current.tile.y - next.tile.y) <= 1;
+            const isValueRelated = current.newValue === next.newValue || 
+                                  current.newValue * 2 === next.newValue ||
+                                  next.newValue * 2 === current.newValue;
+            
+            if (isAdjacent && isValueRelated) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * 合并动画完成回调
+     * @param {Array} mergedTiles - 合并的方块数组
+     */
+    onMergeAnimationComplete(mergedTiles) {
+        // 计算合并分数
+        let totalScore = 0;
+        mergedTiles.forEach(mergeInfo => {
+            const score = this.stateManager.calculateMergeScore(
+                mergeInfo.newValue,
+                this.gameState.consecutiveMerges || 1,
+                this.gameState.currentSkill || null
+            );
+            totalScore += score;
+        });
+        
+        // 更新游戏分数
+        this.gameState.score += totalScore;
+        
+        // 更新分数显示
+        this.updateScoreDisplay();
+        
+        // 检查是否达成特殊成就
+        this.checkMergeAchievements(mergedTiles);
+        
+        // 自动保存游戏状态
+        if (!this.gameState.isGameOver) {
+            this.saveCurrentGame();
+        }
+        
+        // 触发合并完成事件
+        this.emit('mergeAnimationComplete', {
+            mergedTiles: mergedTiles,
+            scoreGained: totalScore
+        });
+        
+        console.log('合并动画完成:', mergedTiles.length, '个方块，得分:', totalScore);
+    }
+
+    /**
+     * 检查合并成就
+     * @param {Array} mergedTiles - 合并的方块数组
+     */
+    checkMergeAchievements(mergedTiles) {
+        const maxValue = Math.max(...mergedTiles.map(m => m.newValue));
+        
+        // 检查是否达到特殊数值
+        if (maxValue >= 2048 && !this.gameState.achieved2048) {
+            this.gameState.achieved2048 = true;
+            this.emit('achievement', {
+                type: '2048',
+                message: '🎉 恭喜达到2048！'
+            });
+        }
+        
+        if (maxValue >= 4096 && !this.gameState.achieved4096) {
+            this.gameState.achieved4096 = true;
+            this.emit('achievement', {
+                type: '4096',
+                message: '🌟 超越极限！达到4096！'
+            });
+        }
+        
+        // 检查连击
+        if (mergedTiles.length >= 3) {
+            this.gameState.consecutiveMerges = (this.gameState.consecutiveMerges || 0) + 1;
+            this.emit('comboAchievement', {
+                combo: this.gameState.consecutiveMerges,
+                message: `🔥 ${this.gameState.consecutiveMerges}连击！`
+            });
+        } else {
+            this.gameState.consecutiveMerges = 0;
+        }
+    }
+
+    /**
+     * 更新分数显示
+     */
+    updateScoreDisplay() {
+        this.emit('scoreUpdated', {
+            score: this.gameState.score,
+            highScore: this.gameState.highScore,
+            isNewRecord: this.gameState.score > this.gameState.highScore
         });
     }
 
@@ -706,9 +1164,7 @@ class GameEngine {
      * @returns {boolean} 是否所有动画都完成
      */
     areAnimationsComplete() {
-        const tiles = this.gameState.getAllTiles();
-        
-        return tiles.every(tile => tile.isAnimationComplete());
+        return !this.animationSystem.hasActiveAnimations();
     }
 
     /**
@@ -734,6 +1190,21 @@ class GameEngine {
         // 销毁主题管理器
         if (this.themeManager) {
             this.themeManager.destroy();
+        }
+        
+        // 停止动画系统
+        if (this.animationSystem) {
+            this.animationSystem.stop();
+            this.animationSystem.clearAllAnimations();
+        }
+        
+        // 销毁状态管理器
+        if (this.stateManager) {
+            // 保存最终游戏状态
+            if (this.gameState.moves > 0 && !this.gameState.isGameOver) {
+                this.saveCurrentGame();
+            }
+            this.stateManager.destroy();
         }
         
         // 清理Canvas
