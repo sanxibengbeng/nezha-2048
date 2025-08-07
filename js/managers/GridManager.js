@@ -131,7 +131,7 @@ class GridManager {
                     if (moveResult.moved) {
                         moved = true;
                     }
-                    if (moveResult.merged) {
+                    if (moveResult.merged && moveResult.mergedTile) {
                         mergedTiles.push(moveResult.mergedTile);
                         totalScore += moveResult.score;
                     }

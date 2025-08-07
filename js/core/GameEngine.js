@@ -370,6 +370,11 @@ class GameEngine {
         
         // 触发更新事件
         this.emit('update', { deltaTime });
+        
+        // 定期更新游戏信息显示（每秒更新一次）
+        if (this.frameCount % 60 === 0) {
+            this.emit('gameInfoUpdate');
+        }
     }
 
     /**
@@ -515,16 +520,24 @@ class GameEngine {
             // 更新统计数据
             this.updateGameStatistics();
             
+            // 检查是否创造新纪录
+            const isNewRecord = this.stateManager.updateHighScore(this.gameState.score);
+            
             // 清除保存的游戏状态
             this.stateManager.clearGameState();
             
+            // 触发游戏结束事件，包含详细信息
             this.emit('gameOver', {
                 score: this.gameState.score,
                 highScore: this.gameState.highScore,
                 moves: this.gameState.moves,
-                playTime: this.gameState.playTime
+                playTime: this.gameState.playTime,
+                maxTile: this.gridManager.getMaxTileValue(),
+                isNewRecord: isNewRecord,
+                statistics: this.getGameStatistics()
             });
-            console.log('游戏结束');
+            
+            console.log('游戏结束 - 分数:', this.gameState.score, '移动次数:', this.gameState.moves);
         }
         
         // 检查是否获胜
@@ -537,10 +550,47 @@ class GameEngine {
             this.emit('won', {
                 score: this.gameState.score,
                 moves: this.gameState.moves,
-                playTime: this.gameState.playTime
+                playTime: this.gameState.playTime,
+                maxTile: this.gridManager.getMaxTileValue()
             });
-            console.log('恭喜获胜！');
+            console.log('恭喜获胜！达到2048');
         }
+    }
+
+    /**
+     * 获取游戏统计信息
+     * @returns {Object} 游戏统计
+     */
+    getGameStatistics() {
+        return {
+            totalMoves: this.gameState.moves,
+            totalMerges: this.gameState.mergeCount,
+            maxConsecutiveMerges: this.gameState.consecutiveMerges,
+            skillsUsed: { ...this.gameState.skillUsageCount },
+            nezhaLevel: this.gameState.nezhaLevel,
+            playTimeFormatted: this.formatPlayTime(this.gameState.playTime),
+            efficiency: this.calculateEfficiency()
+        };
+    }
+
+    /**
+     * 格式化游戏时间
+     * @param {number} seconds - 秒数
+     * @returns {string} 格式化的时间字符串
+     */
+    formatPlayTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = Math.floor(seconds % 60);
+        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+
+    /**
+     * 计算游戏效率
+     * @returns {number} 效率分数
+     */
+    calculateEfficiency() {
+        if (this.gameState.moves === 0) return 0;
+        return Math.floor(this.gameState.score / this.gameState.moves);
     }
 
     /**
@@ -868,6 +918,11 @@ class GameEngine {
                 
                 // 检查游戏状态变化
                 this.checkGameStateChanges(preMoveStats);
+                
+                // 在添加新方块后检查游戏结束条件
+                setTimeout(() => {
+                    this.checkGameOver();
+                }, 100);
             }, 300); // 增加延迟以等待合并动画完成
 
             // 触发移动事件
@@ -987,20 +1042,31 @@ class GameEngine {
             return;
         }
 
-        // 准备合并动画数据
-        const mergeData = mergedTiles.map(mergeInfo => {
-            const tile = mergeInfo.tile;
-            const newValue = mergeInfo.newValue;
-            
-            // 计算方块在屏幕上的位置
-            const position = this.getTileScreenPosition(tile);
-            
-            return {
-                tile: tile,
-                newValue: newValue,
-                position: position
-            };
-        });
+        // 过滤掉 null 值并准备合并动画数据
+        const mergeData = mergedTiles
+            .filter(tile => tile !== null && tile !== undefined)
+            .map(tile => {
+                // 检查 tile 是否有必要的属性
+                if (!tile || typeof tile.x === 'undefined' || typeof tile.y === 'undefined') {
+                    console.warn('无效的 tile 对象:', tile);
+                    return null;
+                }
+                
+                // 计算方块在屏幕上的位置
+                const position = this.getTileScreenPosition(tile);
+                
+                return {
+                    tile: tile,
+                    newValue: tile.value,
+                    position: position
+                };
+            })
+            .filter(data => data !== null); // 过滤掉无效的数据
+
+        if (mergeData.length === 0) {
+            console.warn('没有有效的合并数据');
+            return;
+        }
 
         // 检查是否有连锁合并
         if (mergedTiles.length > 1 && this.isChainMerge(mergedTiles)) {
@@ -1028,8 +1094,15 @@ class GameEngine {
      * @returns {Object} 屏幕位置 {x, y}
      */
     getTileScreenPosition(tile) {
+        // 检查 tile 参数
+        if (!tile || typeof tile.x === 'undefined' || typeof tile.y === 'undefined') {
+            console.error('getTileScreenPosition: 无效的 tile 参数', tile);
+            return { x: 0, y: 0 };
+        }
+        
         const gameArea = document.querySelector('.game-area');
         if (!gameArea) {
+            console.warn('getTileScreenPosition: 找不到 .game-area 元素');
             return { x: 0, y: 0 };
         }
 
