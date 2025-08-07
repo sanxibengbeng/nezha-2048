@@ -711,7 +711,7 @@ class GameEngine {
                 
                 // 恢复网格状态
                 if (savedState.grid) {
-                    this.gridManager.restoreGrid(savedState.grid);
+                    this.gridManager.restoreFromGridData(savedState.grid);
                 }
                 
                 // 加载最高分

@@ -429,6 +429,57 @@ class GridManager {
     }
 
     /**
+     * 获取网格数据（用于保存游戏状态）
+     * @returns {Array} 可序列化的网格数据
+     */
+    getGridData() {
+        const gridData = [];
+        for (let x = 0; x < this.size; x++) {
+            gridData[x] = [];
+            for (let y = 0; y < this.size; y++) {
+                const tile = this.getTile(x, y);
+                if (tile) {
+                    // 只保存必要的数据，避免循环引用
+                    gridData[x][y] = {
+                        x: tile.x,
+                        y: tile.y,
+                        value: tile.value,
+                        id: tile.id,
+                        isNew: tile.isNew || false,
+                        isMerged: tile.isMerged || false
+                    };
+                } else {
+                    gridData[x][y] = null;
+                }
+            }
+        }
+        return gridData;
+    }
+
+    /**
+     * 从网格数据恢复网格状态
+     * @param {Array} gridData - 网格数据
+     */
+    restoreFromGridData(gridData) {
+        if (!gridData || !this.gameState) return;
+
+        for (let x = 0; x < this.size; x++) {
+            for (let y = 0; y < this.size; y++) {
+                const tileData = gridData[x] && gridData[x][y];
+                if (tileData) {
+                    const tile = new Tile(tileData.x, tileData.y, tileData.value);
+                    tile.id = tileData.id;
+                    if (tileData.isNew) tile.markAsNew();
+                    if (tileData.isMerged) tile.markAsMerged();
+                    this.gameState.setTile(x, y, tile);
+                } else {
+                    this.gameState.setTile(x, y, null);
+                }
+            }
+        }
+    }
+
+    /**
      * 克隆当前网格状态
      * @returns {Array} 网格副本
      */
