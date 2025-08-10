@@ -1069,6 +1069,14 @@ class GameEngine {
     }
 
     /**
+     * 获取Canvas元素
+     * @returns {HTMLCanvasElement|null} Canvas元素
+     */
+    getCanvas() {
+        return this.canvas;
+    }
+
+    /**
      * 获取特效管理器
      * @returns {EffectsManager|null} 特效管理器
      */

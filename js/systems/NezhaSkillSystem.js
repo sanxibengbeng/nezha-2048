@@ -1964,12 +1964,35 @@ class NezhaSkillSystem {
      * 创建变身粒子效果
      */
     createTransformationParticles() {
-        if (!this.gameEngine || !this.gameEngine.getEffectsManager) return;
+        // 检查游戏引擎是否存在
+        if (!this.gameEngine) {
+            console.warn('游戏引擎未初始化，无法创建变身粒子效果');
+            return;
+        }
+        
+        // 检查特效管理器方法是否存在
+        if (!this.gameEngine.getEffectsManager) {
+            console.warn('特效管理器方法不存在，无法创建变身粒子效果');
+            return;
+        }
+        
+        // 检查 getCanvas 方法是否存在
+        if (!this.gameEngine.getCanvas) {
+            console.warn('getCanvas 方法不存在，无法创建变身粒子效果');
+            return;
+        }
         
         const effectsManager = this.gameEngine.getEffectsManager();
-        const canvas = this.gameEngine.getCanvas();
+        if (!effectsManager) {
+            console.warn('特效管理器未初始化，无法创建变身粒子效果');
+            return;
+        }
         
-        if (!canvas) return;
+        const canvas = this.gameEngine.getCanvas();
+        if (!canvas) {
+            console.warn('Canvas 未初始化，无法创建变身粒子效果');
+            return;
+        }
         
         const centerX = canvas.width / 2;
         const centerY = canvas.height / 2;
