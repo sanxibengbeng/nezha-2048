@@ -47,6 +47,13 @@ class InputManager {
             'KeyR': 'transformation'
         };
         
+        // 三头六臂多方向操作模式
+        this.multiDirectionMode = false;
+        this.multiDirectionBuffer = [];
+        this.multiDirectionTimeout = null;
+        this.multiDirectionDelay = 200; // 多方向操作的延迟时间（毫秒）
+        this.maxSimultaneousDirections = 3; // 最大同时方向数
+        
         console.log('InputManager 初始化完成');
     }
 
@@ -384,10 +391,119 @@ class InputManager {
         
         console.log('输入方向:', direction);
         
+        if (this.multiDirectionMode) {
+            // 三头六臂模式：支持多方向操作
+            this.processMultiDirectionInput(direction);
+        } else {
+            // 普通模式：单方向操作
+            this.processSingleDirectionInput(direction);
+        }
+    }
+
+    /**
+     * 处理单方向输入
+     * @param {string} direction - 方向
+     */
+    processSingleDirectionInput(direction) {
         if (this.gameEngine) {
-            // 触发输入事件，让main.js处理具体逻辑
             this.gameEngine.emit('directionInput', { direction });
             this.lastInputTime = Date.now();
+        }
+    }
+
+    /**
+     * 处理多方向输入（三头六臂模式）
+     * @param {string} direction - 方向
+     */
+    processMultiDirectionInput(direction) {
+        // 检查是否已经在缓冲区中
+        if (this.multiDirectionBuffer.includes(direction)) {
+            return;
+        }
+        
+        // 添加到缓冲区
+        this.multiDirectionBuffer.push(direction);
+        
+        // 限制最大同时方向数
+        if (this.multiDirectionBuffer.length > this.maxSimultaneousDirections) {
+            this.multiDirectionBuffer.shift(); // 移除最早的方向
+        }
+        
+        console.log('🔥 多方向输入缓冲:', this.multiDirectionBuffer);
+        
+        // 清除之前的超时
+        if (this.multiDirectionTimeout) {
+            clearTimeout(this.multiDirectionTimeout);
+        }
+        
+        // 设置延迟执行，允许收集更多方向
+        this.multiDirectionTimeout = setTimeout(() => {
+            this.executeMultiDirectionMoves();
+        }, this.multiDirectionDelay);
+        
+        // 更新多方向指示器
+        this.updateMultiDirectionIndicator();
+    }
+
+    /**
+     * 执行多方向移动
+     */
+    executeMultiDirectionMoves() {
+        if (this.multiDirectionBuffer.length === 0) return;
+        
+        console.log('🔥 执行多方向移动:', this.multiDirectionBuffer);
+        
+        if (this.gameEngine) {
+            // 发送多方向输入事件
+            this.gameEngine.emit('multiDirectionInput', { 
+                directions: [...this.multiDirectionBuffer],
+                isThreeHeadsSixArms: true
+            });
+            
+            this.lastInputTime = Date.now();
+        }
+        
+        // 清除缓冲区
+        this.clearMultiDirectionBuffer();
+        this.updateMultiDirectionIndicator();
+    }
+
+    /**
+     * 更新多方向操作指示器
+     */
+    updateMultiDirectionIndicator() {
+        const indicator = document.getElementById('multi-direction-indicator');
+        if (!indicator) return;
+        
+        const content = indicator.querySelector('.indicator-content');
+        if (!content) return;
+        
+        // 显示当前缓冲的方向
+        if (this.multiDirectionBuffer.length > 0) {
+            const directionIcons = {
+                'up': '⬆️',
+                'down': '⬇️',
+                'left': '⬅️',
+                'right': '➡️'
+            };
+            
+            const icons = this.multiDirectionBuffer.map(dir => directionIcons[dir] || '❓').join(' ');
+            
+            content.innerHTML = `
+                <div class="indicator-icon">🔥</div>
+                <div class="indicator-text">三头六臂模式</div>
+                <div class="indicator-desc">准备执行: ${icons}</div>
+            `;
+            
+            indicator.classList.add('charging');
+        } else {
+            content.innerHTML = `
+                <div class="indicator-icon">🔥</div>
+                <div class="indicator-text">三头六臂模式</div>
+                <div class="indicator-desc">可同时多方向操作</div>
+            `;
+            
+            indicator.classList.remove('charging');
         }
     }
 
@@ -521,6 +637,72 @@ class InputManager {
     }
 
     /**
+     * 启用/禁用多方向操作模式（三头六臂技能）
+     * @param {boolean} enabled - 是否启用
+     */
+    enableMultiDirectionMode(enabled) {
+        this.multiDirectionMode = enabled;
+        
+        if (enabled) {
+            console.log('🔥 三头六臂模式已激活 - 支持多方向同时操作');
+            this.showMultiDirectionIndicator();
+        } else {
+            console.log('三头六臂模式已关闭');
+            this.hideMultiDirectionIndicator();
+            this.clearMultiDirectionBuffer();
+        }
+    }
+
+    /**
+     * 显示多方向操作指示器
+     */
+    showMultiDirectionIndicator() {
+        // 创建或显示多方向操作提示
+        let indicator = document.getElementById('multi-direction-indicator');
+        
+        if (!indicator) {
+            indicator = document.createElement('div');
+            indicator.id = 'multi-direction-indicator';
+            indicator.className = 'multi-direction-indicator';
+            indicator.innerHTML = `
+                <div class="indicator-content">
+                    <div class="indicator-icon">🔥</div>
+                    <div class="indicator-text">三头六臂模式</div>
+                    <div class="indicator-desc">可同时多方向操作</div>
+                </div>
+            `;
+            document.body.appendChild(indicator);
+        }
+        
+        indicator.classList.add('active');
+        
+        // 添加脉冲动画
+        indicator.classList.add('pulse-animation');
+    }
+
+    /**
+     * 隐藏多方向操作指示器
+     */
+    hideMultiDirectionIndicator() {
+        const indicator = document.getElementById('multi-direction-indicator');
+        if (indicator) {
+            indicator.classList.remove('active', 'pulse-animation');
+        }
+    }
+
+    /**
+     * 清除多方向操作缓冲区
+     */
+    clearMultiDirectionBuffer() {
+        this.multiDirectionBuffer = [];
+        
+        if (this.multiDirectionTimeout) {
+            clearTimeout(this.multiDirectionTimeout);
+            this.multiDirectionTimeout = null;
+        }
+    }
+
+    /**
      * 获取输入统计信息
      * @returns {Object} 统计信息
      */
@@ -547,6 +729,16 @@ class InputManager {
         
         this.eventListeners = [];
         this.pressedKeys.clear();
+        
+        // 清理多方向模式资源
+        this.clearMultiDirectionBuffer();
+        this.hideMultiDirectionIndicator();
+        
+        // 移除多方向指示器元素
+        const indicator = document.getElementById('multi-direction-indicator');
+        if (indicator && indicator.parentNode) {
+            indicator.parentNode.removeChild(indicator);
+        }
         
         console.log('InputManager 已销毁');
     }

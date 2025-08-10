@@ -1250,4 +1250,1384 @@ body[data-theme="classic"] {
     display: flex;
     align-items: center;
     justify-content: center;
+}/*
+ 合并动画效果样式 */
+.tile-merge {
+    animation: tilemerge 0.3s ease-out;
+}
+
+.tile-flash {
+    animation: tileflash 0.15s ease-out;
+}
+
+.fire-effect {
+    position: absolute;
+    pointer-events: none;
+    z-index: 1000;
+    border-radius: 50%;
+    background: radial-gradient(circle, #FF4500 0%, #FF6347 30%, #FFD700 60%, transparent 100%);
+}
+
+.fire-effect.fire-low {
+    width: 32px;
+    height: 32px;
+}
+
+.fire-effect.fire-medium {
+    width: 40px;
+    height: 40px;
+}
+
+.fire-effect.fire-high {
+    width: 60px;
+    height: 60px;
+}
+
+/* 合并动画关键帧 */
+@keyframes tilemerge {
+    0% {
+        transform: scale(1);
+        filter: brightness(1);
+        box-shadow: none;
+    }
+    50% {
+        transform: scale(1.2);
+        filter: brightness(1.5);
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+    }
+    100% {
+        transform: scale(1);
+        filter: brightness(1);
+        box-shadow: none;
+    }
+}
+
+@keyframes tileflash {
+    0%, 100% {
+        opacity: 1;
+        background-color: transparent;
+    }
+    16.67%, 50%, 83.33% {
+        opacity: 0.3;
+        background-color: rgba(255, 215, 0, 0.5);
+    }
+    33.33%, 66.67% {
+        opacity: 1;
+        background-color: transparent;
+    }
+}
+
+/* 火焰特效动画 */
+@keyframes fireEffect {
+    0% {
+        transform: scale(0.5) rotate(0deg);
+        opacity: 1;
+        filter: hue-rotate(0deg) brightness(1.5);
+    }
+    50% {
+        transform: scale(1.5) rotate(180deg);
+        opacity: 0.8;
+        filter: hue-rotate(30deg) brightness(1.2);
+    }
+    100% {
+        transform: scale(2) rotate(360deg);
+        opacity: 0;
+        filter: hue-rotate(60deg) brightness(1);
+    }
+}
+
+/* 连锁合并特效 */
+.chain-merge-effect {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: linear-gradient(45deg, #FFD700, #FFA500);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 999;
+    animation: chainSpark 0.5s ease-out forwards;
+}
+
+@keyframes chainSpark {
+    0% {
+        transform: scale(0);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(3);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(0);
+        opacity: 0;
+    }
+}
+
+/* 分数增加动画 */
+.score-increase {
+    animation: scoreIncrease 0.6s ease-out;
+}
+
+@keyframes scoreIncrease {
+    0% {
+        transform: scale(1);
+        color: inherit;
+    }
+    50% {
+        transform: scale(1.2);
+        color: #FFD700;
+        text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+    }
+    100% {
+        transform: scale(1);
+        color: inherit;
+        text-shadow: none;
+    }
+}
+
+/* 新纪录动画 */
+.new-record {
+    animation: newRecord 3s ease-in-out;
+}
+
+@keyframes newRecord {
+    0%, 100% {
+        transform: scale(1);
+        color: inherit;
+        text-shadow: none;
+    }
+    10%, 30%, 50%, 70%, 90% {
+        transform: scale(1.1);
+        color: #FFD700;
+        text-shadow: 0 0 15px rgba(255, 215, 0, 0.9);
+    }
+    20%, 40%, 60%, 80% {
+        transform: scale(1.05);
+        color: #FFA500;
+        text-shadow: 0 0 10px rgba(255, 165, 0, 0.7);
+    }
+}
+
+/* 成就提示动画 */
+.achievement-popup {
+    position: fixed;
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(45deg, #FFD700, #FFA500);
+    color: #8B4513;
+    padding: 15px 25px;
+    border-radius: 25px;
+    font-weight: 700;
+    font-size: 1.2rem;
+    z-index: 3000;
+    pointer-events: none;
+    animation: achievementPopup 3s ease-in-out forwards;
+    box-shadow: 0 8px 25px rgba(255, 215, 0, 0.5);
+}
+
+@keyframes achievementPopup {
+    0% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px) scale(0.8);
+    }
+    15% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0) scale(1.1);
+    }
+    85% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px) scale(0.8);
+    }
+}
+
+/* 连击效果 */
+.combo-effect {
+    position: fixed;
+    top: 35%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(45deg, #DC143C, #FF6347);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    z-index: 2800;
+    pointer-events: none;
+    animation: comboEffect 2s ease-out forwards;
+    box-shadow: 0 6px 20px rgba(220, 20, 60, 0.4);
+}
+
+@keyframes comboEffect {
+    0% {
+        opacity: 0;
+        transform: translateX(-50%) scale(0.5);
+    }
+    20% {
+        opacity: 1;
+        transform: translateX(-50%) scale(1.2);
+    }
+    80% {
+        opacity: 1;
+        transform: translateX(-50%) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(-50%) scale(0.8);
+    }
+}
+
+/* 方块发光效果（用于高值方块） */
+.tile-glow {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+    animation: tileGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes tileGlow {
+    0% {
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+    }
+    100% {
+        box-shadow: 0 0 30px rgba(255, 215, 0, 0.9);
+    }
+}
+
+/* 性能优化 - 使用transform和opacity进行动画 */
+.tile {
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    perspective: 1000px;
+}
+
+/* 减少重绘的动画优化 */
+.fire-effect,
+.chain-merge-effect,
+.achievement-popup,
+.combo-effect {
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+}
+/* 模态框样式
+ */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.modal.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.modal-content {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(250, 248, 239, 0.95));
+    border-radius: 20px;
+    padding: 30px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 
+        0 20px 40px rgba(0, 0, 0, 0.4),
+        inset 0 2px 4px rgba(255, 255, 255, 0.8),
+        0 0 0 3px rgba(220, 20, 60, 0.3);
+    border: 2px solid rgba(255, 215, 0, 0.4);
+    transform: scale(0.8);
+    transition: transform 0.3s ease;
+}
+
+.modal.show .modal-content {
+    transform: scale(1);
+}
+
+.modal-content h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    background: linear-gradient(45deg, #DC143C, #FFD700);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.modal-content p {
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+    color: #2F1B14;
+}
+
+#final-score {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #DC143C;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#new-record {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #FFD700;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+    margin: 10px 0;
+    animation: recordGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes recordGlow {
+    0% { text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3), 0 0 10px rgba(255, 215, 0, 0.5); }
+    100% { text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 215, 0, 0.8); }
+}
+
+/* 游戏统计样式 */
+.game-stats {
+    margin: 20px 0;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 12px;
+    border: 1px solid rgba(220, 20, 60, 0.2);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #DC143C;
+}
+
+/* 模态框按钮 */
+.modal-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 25px;
+}
+
+.modal-buttons .control-btn {
+    flex: 1;
+    max-width: 120px;
+}
+
+/* 控制按钮样式增强 */
+.control-btn {
+    background: linear-gradient(135deg, #DC143C 0%, #B91C3C 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 
+        0 4px 12px rgba(220, 20, 60, 0.3),
+        inset 0 1px 2px rgba(255, 255, 255, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.control-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.control-btn:hover::before {
+    left: 100%;
+}
+
+.control-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+        0 6px 16px rgba(220, 20, 60, 0.4),
+        inset 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+.control-btn:active {
+    transform: translateY(0);
+    box-shadow: 
+        0 2px 8px rgba(220, 20, 60, 0.3),
+        inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.control-btn.primary {
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    color: #8B4513;
+    box-shadow: 
+        0 4px 12px rgba(255, 215, 0, 0.3),
+        inset 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+.control-btn.primary:hover {
+    box-shadow: 
+        0 6px 16px rgba(255, 215, 0, 0.4),
+        inset 0 1px 2px rgba(255, 255, 255, 0.4);
+}
+
+/* 庆祝动画样式 */
+@keyframes celebrationBounce {
+    0% { 
+        opacity: 0; 
+        transform: translate(-50%, -50%) scale(0.5) rotate(0deg);
+    }
+    25% { 
+        opacity: 1; 
+        transform: translate(-50%, -50%) scale(1.2) rotate(10deg);
+    }
+    50% { 
+        opacity: 1; 
+        transform: translate(-50%, -50%) scale(1.1) rotate(-5deg);
+    }
+    75% { 
+        opacity: 1; 
+        transform: translate(-50%, -50%) scale(1.15) rotate(5deg);
+    }
+    100% { 
+        opacity: 0; 
+        transform: translate(-50%, -50%) scale(1) rotate(0deg);
+    }
+}
+
+.celebration-effect {
+    animation: celebrationBounce 2s ease-out;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* 响应式设计 */
+@media (max-width: 480px) {
+    .modal-content {
+        padding: 20px;
+        max-width: 350px;
+    }
+    
+    .modal-content h2 {
+        font-size: 1.6rem;
+    }
+    
+    #final-score {
+        font-size: 2rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .modal-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .modal-buttons .control-btn {
+        max-width: none;
+    }
+}
+
+/* 游戏结束时的视觉反馈 */
+.game-over-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(220, 20, 60, 0.1);
+    border-radius: 15px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.game-over-overlay.active {
+    opacity: 1;
+}
+
+/* 分数增加动画 */
+.score-increase {
+    animation: scoreIncrease 0.6s ease-out;
+}
+
+@keyframes scoreIncrease {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); color: #FFD700; }
+    100% { transform: scale(1); }
+}
+
+/* 新纪录样式 */
+.new-record {
+    animation: newRecordPulse 1s ease-in-out infinite;
+}
+
+@keyframes newRecordPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}/* 游
+戏信息显示 */
+.game-info {
+    display: flex;
+    justify-content: space-around;
+    margin: 15px 0;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 12px;
+    border: 1px solid rgba(220, 20, 60, 0.2);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.info-item {
+    text-align: center;
+    flex: 1;
+}
+
+.info-label {
+    display: block;
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 4px;
+}
+
+.info-value {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #DC143C;
+}
+
+/* 响应式游戏信息 */
+@media (max-width: 480px) {
+    .game-info {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .info-label {
+        display: inline;
+        margin-bottom: 0;
+    }
+    
+    .info-value {
+        display: inline;
+    }
+}/* 
+等级提升动画 */
+.level-up {
+    animation: levelUpGlow 1s ease-in-out;
+}
+
+@keyframes levelUpGlow {
+    0% { 
+        color: #DC143C; 
+        transform: scale(1);
+    }
+    50% { 
+        color: #FFD700; 
+        transform: scale(1.2);
+        text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+    }
+    100% { 
+        color: #DC143C; 
+        transform: scale(1);
+    }
+}/* 技能按钮
+状态样式 */
+.skill-item.locked {
+    opacity: 0.5;
+    filter: grayscale(100%);
+    cursor: not-allowed;
+}
+
+.skill-item.locked .skill-icon {
+    color: #999;
+}
+
+.skill-item.available {
+    opacity: 1;
+    filter: none;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.skill-item.active {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+    transform: scale(1.05);
+}
+
+.skill-item.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* 技能解锁动画 */
+.skill-item.unlocked-animation {
+    animation: skillUnlock 2s ease-out;
+}
+
+@keyframes skillUnlock {
+    0% { 
+        transform: scale(1);
+        box-shadow: 0 0 0 rgba(255, 215, 0, 0);
+    }
+    25% { 
+        transform: scale(1.2);
+        box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+    }
+    50% { 
+        transform: scale(1.1);
+        box-shadow: 0 0 25px rgba(255, 215, 0, 0.6);
+    }
+    75% { 
+        transform: scale(1.15);
+        box-shadow: 0 0 35px rgba(255, 215, 0, 0.9);
+    }
+    100% { 
+        transform: scale(1);
+        box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+    }
+}
+
+/* 技能准备就绪脉冲动画 */
+.skill-item.ready-pulse {
+    animation: readyPulse 1s ease-in-out;
+}
+
+@keyframes readyPulse {
+    0% { 
+        box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+    }
+    50% { 
+        box-shadow: 0 0 25px rgba(0, 255, 0, 0.8);
+        transform: scale(1.05);
+    }
+    100% { 
+        box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+        transform: scale(1);
+    }
+}
+
+/* 技能激活状态 */
+.skill-item.activated {
+    animation: skillActivated 0.5s ease-out;
+}
+
+@keyframes skillActivated {
+    0% { 
+        transform: scale(1);
+        background: linear-gradient(135deg, #DC143C, #B91C3C);
+    }
+    50% { 
+        transform: scale(1.1);
+        background: linear-gradient(135deg, #FFD700, #FFA500);
+        box-shadow: 0 0 30px rgba(255, 215, 0, 1);
+    }
+    100% { 
+        transform: scale(1.05);
+        background: linear-gradient(135deg, #FFD700, #FFA500);
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+    }
+}
+
+/* 技能冷却指示器增强 */
+.skill-cooldown.active {
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+}
+
+/* 技能提示文本 */
+.skill-item::after {
+    content: attr(title);
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 1000;
+}
+
+.skill-item:hover::after {
+    opacity: 1;
+}
+
+/* 技能容器增强 */
+.skills-container {
+    position: relative;
+    padding: 10px 0;
+}
+
+/* 响应式技能按钮 */
+@media (max-width: 480px) {
+    .skill-item {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .skill-icon {
+        font-size: 1.2rem;
+    }
+    
+    .skill-item::after {
+        font-size: 0.7rem;
+        bottom: -25px;
+    }
+}/* 三头六臂多方
+向操作指示器 */
+.multi-direction-indicator {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #DC143C, #FFD700);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(220, 20, 60, 0.4);
+    z-index: 2000;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.3s ease;
+    border: 2px solid rgba(255, 215, 0, 0.6);
+    min-width: 200px;
+}
+
+.multi-direction-indicator.active {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.multi-direction-indicator.pulse-animation {
+    animation: indicatorPulse 2s ease-in-out infinite;
+}
+
+.multi-direction-indicator.charging {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #8B4513;
+    box-shadow: 0 8px 25px rgba(255, 215, 0, 0.6);
+}
+
+@keyframes indicatorPulse {
+    0% { 
+        box-shadow: 0 8px 25px rgba(220, 20, 60, 0.4);
+        transform: translateX(0) scale(1);
+    }
+    50% { 
+        box-shadow: 0 12px 35px rgba(220, 20, 60, 0.6);
+        transform: translateX(0) scale(1.05);
+    }
+    100% { 
+        box-shadow: 0 8px 25px rgba(220, 20, 60, 0.4);
+        transform: translateX(0) scale(1);
+    }
+}
+
+.indicator-content {
+    text-align: center;
+}
+
+.indicator-icon {
+    font-size: 1.5rem;
+    margin-bottom: 5px;
+}
+
+.indicator-text {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 3px;
+}
+
+.indicator-desc {
+    font-size: 0.8rem;
+    opacity: 0.9;
+}
+
+/* 三头六臂技能效果 */
+.three-heads-six-arms-effect {
+    animation: skillEffectGlow 1.5s ease-out;
+}
+
+@keyframes skillEffectGlow {
+    0% { 
+        background: rgba(255, 215, 0, 0);
+    }
+    25% { 
+        background: rgba(255, 215, 0, 0.1);
+    }
+    50% { 
+        background: rgba(255, 215, 0, 0.2);
+    }
+    100% { 
+        background: rgba(255, 215, 0, 0);
+    }
+}
+
+.direction-effect {
+    font-weight: 700;
+    pointer-events: none;
+}
+
+/* 方向效果动画 */
+@keyframes effectUp {
+    0% { 
+        opacity: 0;
+        transform: translateX(-50%) translateY(20px) scale(0.5);
+    }
+    50% { 
+        opacity: 1;
+        transform: translateX(-50%) translateY(-10px) scale(1.2);
+    }
+    100% { 
+        opacity: 0;
+        transform: translateX(-50%) translateY(-30px) scale(1);
+    }
+}
+
+@keyframes effectDown {
+    0% { 
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px) scale(0.5);
+    }
+    50% { 
+        opacity: 1;
+        transform: translateX(-50%) translateY(10px) scale(1.2);
+    }
+    100% { 
+        opacity: 0;
+        transform: translateX(-50%) translateY(30px) scale(1);
+    }
+}
+
+@keyframes effectLeft {
+    0% { 
+        opacity: 0;
+        transform: translateY(-50%) translateX(20px) scale(0.5);
+    }
+    50% { 
+        opacity: 1;
+        transform: translateY(-50%) translateX(-10px) scale(1.2);
+    }
+    100% { 
+        opacity: 0;
+        transform: translateY(-50%) translateX(-30px) scale(1);
+    }
+}
+
+@keyframes effectRight {
+    0% { 
+        opacity: 0;
+        transform: translateY(-50%) translateX(-20px) scale(0.5);
+    }
+    50% { 
+        opacity: 1;
+        transform: translateY(-50%) translateX(10px) scale(1.2);
+    }
+    100% { 
+        opacity: 0;
+        transform: translateY(-50%) translateX(30px) scale(1);
+    }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .multi-direction-indicator {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        min-width: auto;
+        padding: 12px 15px;
+    }
+    
+    .indicator-icon {
+        font-size: 1.2rem;
+    }
+    
+    .indicator-text {
+        font-size: 0.9rem;
+    }
+    
+    .indicator-desc {
+        font-size: 0.7rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .multi-direction-indicator {
+        padding: 10px 12px;
+    }
+    
+    .direction-effect {
+        font-size: 1.5rem;
+    }
+}/* 乾坤圈技能动画 *
+/
+@keyframes qiankunPreview {
+    0% { 
+        opacity: 0;
+        transform: scale(0.5) rotate(0deg);
+        box-shadow: 0 0 0 rgba(255, 215, 0, 0);
+    }
+    50% { 
+        opacity: 1;
+        transform: scale(1.1) rotate(180deg);
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+    }
+    100% { 
+        opacity: 0.8;
+        transform: scale(1) rotate(360deg);
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+    }
+}
+
+@keyframes qiankunClear {
+    0% { 
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+    }
+    50% { 
+        opacity: 1;
+        transform: scale(1.5) rotate(180deg);
+        box-shadow: 0 0 40px rgba(255, 215, 0, 1);
+    }
+    100% { 
+        opacity: 0;
+        transform: scale(2) rotate(360deg);
+        box-shadow: 0 0 60px rgba(255, 215, 0, 0.4);
+    }
+}
+
+@keyframes qiankunParticle {
+    0% { 
+        opacity: 1;
+        transform: translate(0, 0) scale(1);
+        background: #FFD700;
+    }
+    50% { 
+        opacity: 0.8;
+        transform: translate(calc(var(--end-x) - 50%), calc(var(--end-y) - 50%)) scale(1.2);
+        background: #FFA500;
+    }
+    100% { 
+        opacity: 0;
+        transform: translate(calc(var(--end-x) - 50%), calc(var(--end-y) - 50%)) scale(0.5);
+        background: #FF8C00;
+    }
+}
+
+.qiankun-circle-preview {
+    animation: qiankunGlow 0.8s ease-in-out;
+}
+
+@keyframes qiankunGlow {
+    0% { 
+        background: rgba(255, 215, 0, 0);
+    }
+    50% { 
+        background: rgba(255, 215, 0, 0.1);
+    }
+    100% { 
+        background: rgba(255, 215, 0, 0);
+    }
+}
+
+.qiankun-preview-tile {
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+}
+
+.qiankun-clear-tile {
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* 乾坤圈技能指示器 */
+.qiankun-circle-indicator {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #8B4513;
+    padding: 12px 18px;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+    z-index: 2000;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.3s ease;
+    border: 2px solid rgba(255, 165, 0, 0.8);
+    min-width: 180px;
+}
+
+.qiankun-circle-indicator.active {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.qiankun-circle-indicator.ready {
+    animation: qiankunReady 1.5s ease-in-out infinite;
+}
+
+@keyframes qiankunReady {
+    0% { 
+        box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+        transform: translateX(0) scale(1);
+    }
+    50% { 
+        box-shadow: 0 8px 30px rgba(255, 215, 0, 0.8);
+        transform: translateX(0) scale(1.05);
+    }
+    100% { 
+        box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+        transform: translateX(0) scale(1);
+    }
+}
+
+.qiankun-indicator-content {
+    text-align: center;
+}
+
+.qiankun-indicator-icon {
+    font-size: 1.3rem;
+    margin-bottom: 4px;
+}
+
+.qiankun-indicator-text {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.qiankun-indicator-desc {
+    font-size: 0.7rem;
+    opacity: 0.8;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .qiankun-circle-indicator {
+        top: 60px;
+        right: 10px;
+        left: 10px;
+        min-width: auto;
+        padding: 10px 15px;
+    }
+    
+    .qiankun-indicator-icon {
+        font-size: 1.1rem;
+    }
+    
+    .qiankun-indicator-text {
+        font-size: 0.8rem;
+    }
+    
+    .qiankun-indicator-desc {
+        font-size: 0.65rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .qiankun-circle-indicator {
+        padding: 8px 12px;
+    }
+    
+    .qiankun-preview-tile {
+        font-size: 1.2rem;
+    }
+    
+    .qiankun-clear-tile {
+        font-size: 1rem;
+    }
+}/*
+ 混天绫技能动画 */
+@keyframes huntianPreview {
+    0% { 
+        opacity: 0;
+        transform: scale(0.5) rotate(0deg);
+        box-shadow: 0 0 0 rgba(0, 206, 209, 0);
+    }
+    50% { 
+        opacity: 1;
+        transform: scale(1.1) rotate(180deg);
+        box-shadow: 0 0 20px rgba(0, 206, 209, 0.8);
+    }
+    100% { 
+        opacity: 0.8;
+        transform: scale(1) rotate(360deg);
+        box-shadow: 0 0 15px rgba(0, 206, 209, 0.6);
+    }
+}
+
+@keyframes huntianChain {
+    0% { 
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+        box-shadow: 0 0 20px rgba(0, 206, 209, 0.8);
+    }
+    25% { 
+        opacity: 1;
+        transform: scale(1.3) rotate(90deg);
+        box-shadow: 0 0 30px rgba(0, 206, 209, 1);
+    }
+    50% { 
+        opacity: 1;
+        transform: scale(1.5) rotate(180deg);
+        box-shadow: 0 0 40px rgba(64, 224, 208, 1);
+    }
+    75% { 
+        opacity: 0.8;
+        transform: scale(1.2) rotate(270deg);
+        box-shadow: 0 0 35px rgba(0, 206, 209, 0.8);
+    }
+    100% { 
+        opacity: 0;
+        transform: scale(2) rotate(360deg);
+        box-shadow: 0 0 60px rgba(0, 206, 209, 0.4);
+    }
+}
+
+@keyframes huntianRipple {
+    0% { 
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+        background: rgba(0, 206, 209, 0.6);
+    }
+    50% { 
+        opacity: 0.8;
+        transform: translate(-50%, -50%) scale(3);
+        background: rgba(64, 224, 208, 0.4);
+    }
+    100% { 
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(6);
+        background: rgba(0, 206, 209, 0.1);
+    }
+}
+
+.huntian-ling-preview {
+    animation: huntianGlow 1s ease-in-out;
+}
+
+@keyframes huntianGlow {
+    0% { 
+        background: rgba(0, 206, 209, 0);
+    }
+    50% { 
+        background: rgba(0, 206, 209, 0.1);
+    }
+    100% { 
+        background: rgba(0, 206, 209, 0);
+    }
+}
+
+.huntian-preview-tile {
+    box-shadow: 0 0 15px rgba(0, 206, 209, 0.6);
+}
+
+.huntian-chain-tile {
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* 混天绫技能指示器 */
+.huntian-ling-indicator {
+    position: fixed;
+    top: 120px;
+    right: 20px;
+    background: linear-gradient(135deg, #00CED1, #40E0D0);
+    color: white;
+    padding: 12px 18px;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0, 206, 209, 0.4);
+    z-index: 2000;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.3s ease;
+    border: 2px solid rgba(64, 224, 208, 0.8);
+    min-width: 180px;
+}
+
+.huntian-ling-indicator.active {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.huntian-ling-indicator.ready {
+    animation: huntianReady 1.5s ease-in-out infinite;
+}
+
+@keyframes huntianReady {
+    0% { 
+        box-shadow: 0 6px 20px rgba(0, 206, 209, 0.4);
+        transform: translateX(0) scale(1);
+    }
+    50% { 
+        box-shadow: 0 8px 30px rgba(0, 206, 209, 0.8);
+        transform: translateX(0) scale(1.05);
+    }
+    100% { 
+        box-shadow: 0 6px 20px rgba(0, 206, 209, 0.4);
+        transform: translateX(0) scale(1);
+    }
+}
+
+.huntian-indicator-content {
+    text-align: center;
+}
+
+.huntian-indicator-icon {
+    font-size: 1.3rem;
+    margin-bottom: 4px;
+}
+
+.huntian-indicator-text {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.huntian-indicator-desc {
+    font-size: 0.7rem;
+    opacity: 0.9;
+}
+
+/* 混天绫连锁效果 */
+.huntian-chain-effect {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 180;
+    animation: chainWave 2s ease-out;
+}
+
+@keyframes chainWave {
+    0% { 
+        background: radial-gradient(circle at center, rgba(0, 206, 209, 0.3) 0%, transparent 50%);
+    }
+    50% { 
+        background: radial-gradient(circle at center, rgba(0, 206, 209, 0.5) 0%, rgba(64, 224, 208, 0.2) 30%, transparent 70%);
+    }
+    100% { 
+        background: radial-gradient(circle at center, rgba(0, 206, 209, 0.1) 0%, transparent 80%);
+    }
+}
+
+/* 模式类型指示器 */
+.pattern-type-indicator {
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 206, 209, 0.9);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    white-space: nowrap;
+    animation: patternIndicator 1s ease-out;
+}
+
+@keyframes patternIndicator {
+    0% { 
+        opacity: 0;
+        transform: translateX(-50%) translateY(10px) scale(0.8);
+    }
+    50% { 
+        opacity: 1;
+        transform: translateX(-50%) translateY(-5px) scale(1.1);
+    }
+    100% { 
+        opacity: 0.8;
+        transform: translateX(-50%) translateY(0) scale(1);
+    }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .huntian-ling-indicator {
+        top: 110px;
+        right: 10px;
+        left: 10px;
+        min-width: auto;
+        padding: 10px 15px;
+    }
+    
+    .huntian-indicator-icon {
+        font-size: 1.1rem;
+    }
+    
+    .huntian-indicator-text {
+        font-size: 0.8rem;
+    }
+    
+    .huntian-indicator-desc {
+        font-size: 0.65rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .huntian-ling-indicator {
+        padding: 8px 12px;
+    }
+    
+    .huntian-preview-tile {
+        font-size: 1.2rem;
+    }
+    
+    .huntian-chain-tile {
+        font-size: 0.9rem;
+    }
 }

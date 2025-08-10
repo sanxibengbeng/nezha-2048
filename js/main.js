@@ -199,6 +199,14 @@ function bindGameEngineEvents() {
     game.on('started', () => {
         console.log('游戏开始');
         showTemporaryMessage('游戏开始！');
+        
+        // 播放游戏开始音效
+        if (game && game.getAudioManager) {
+            const audioManager = game.getAudioManager();
+            if (audioManager && audioManager.playButtonClickSound) {
+                audioManager.playButtonClickSound();
+            }
+        }
     });
     
     // 游戏暂停
@@ -244,12 +252,53 @@ function bindGameEngineEvents() {
     // 游戏结束事件
     game.on('gameOver', (data) => {
         console.log('游戏结束:', data);
-        showGameOverModal(data);
+        
+        // 播放游戏结束音效
+        if (game && game.getAudioManager) {
+            const audioManager = game.getAudioManager();
+            if (audioManager && audioManager.playGameOverSound) {
+                audioManager.playGameOverSound();
+            }
+        }
+        
+        // 添加游戏结束视觉反馈
+        addGameOverVisualFeedback();
+        
+        // 延迟显示模态框，让用户看到游戏结束状态
+        setTimeout(() => {
+            showGameOverModal(data);
+        }, 1000);
     });
     
     // 获胜事件
     game.on('won', (data) => {
         console.log('游戏获胜:', data);
+        
+        // 播放胜利音效和音乐
+        if (game && game.getAudioManager) {
+            const audioManager = game.getAudioManager();
+            if (audioManager && audioManager.playVictorySound) {
+                audioManager.playVictorySound();
+                // 播放胜利背景音乐
+                setTimeout(() => {
+                    audioManager.playVictoryMusic();
+                }, 1000);
+            }
+        }
+        
+        // 创建胜利特效
+        if (game && game.getEffectsManager) {
+            const effectsManager = game.getEffectsManager();
+            if (effectsManager) {
+                const gameArea = document.querySelector('.game-area');
+                const rect = gameArea.getBoundingClientRect();
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                effectsManager.createNezhaEffect('victoryBurst', centerX, centerY);
+            }
+        }
+        
         showTemporaryMessage('🎉 恭喜达到2048！', 3000);
     });
     
@@ -258,6 +307,12 @@ function bindGameEngineEvents() {
         console.log('技能激活:', data.skillName);
         activateSkillByName(data.skillName);
     });
+    
+    // 绑定哪吒技能系统事件
+    bindNezhaSkillSystemEvents();
+    
+    // 绑定音频管理器事件
+    bindAudioManagerEvents();
     
     // 新游戏请求事件
     game.on('newGameRequested', () => {
@@ -271,22 +326,52 @@ function bindGameEngineEvents() {
         handleMoveInput(data.direction);
     });
     
+    // 多方向输入事件（三头六臂模式）
+    game.on('multiDirectionInput', (data) => {
+        console.log('多方向输入:', data.directions);
+        handleMultiDirectionInput(data.directions);
+    });
+    
     // 网格几乎满了事件
     game.on('gridAlmostFull', (data) => {
         console.log('网格几乎满了:', data);
         showTemporaryMessage('⚠️ 空间不足，小心游戏结束！', 2000);
+        
+        // 播放警告音效
+        if (game && game.getAudioManager) {
+            const audioManager = game.getAudioManager();
+            if (audioManager && audioManager.playErrorSound) {
+                audioManager.playErrorSound();
+            }
+        }
     });
     
     // 新的最大方块事件
     game.on('newMaxTile', (data) => {
         console.log('新的最大方块:', data);
         showTemporaryMessage(`🎉 达到新高度: ${data.newMax}！`, 2000);
+        
+        // 播放成就音效
+        if (game && game.getAudioManager) {
+            const audioManager = game.getAudioManager();
+            if (audioManager && audioManager.playVictorySound) {
+                audioManager.playVictorySound();
+            }
+        }
     });
     
     // 移动选择有限事件
     game.on('limitedMoves', (data) => {
         console.log('移动选择有限:', data);
         showTemporaryMessage('⚠️ 移动选择有限，请谨慎操作！', 2000);
+        
+        // 播放警告音效
+        if (game && game.getAudioManager) {
+            const audioManager = game.getAudioManager();
+            if (audioManager && audioManager.playErrorSound) {
+                audioManager.playErrorSound();
+            }
+        }
     });
     
     // ESC键事件
@@ -294,6 +379,11 @@ function bindGameEngineEvents() {
         console.log('ESC键按下');
         // 可以用来关闭模态框或暂停游戏
         closeAllModals();
+    });
+    
+    // 游戏信息更新事件
+    game.on('gameInfoUpdate', () => {
+        updateGameInfoDisplay();
     });
     
     // 错误处理
@@ -320,6 +410,47 @@ function updateScoreDisplay() {
     if (highScoreElement) {
         highScoreElement.textContent = gameState.highScore;
     }
+    
+    // 同时更新游戏信息显示
+    updateGameInfoDisplay();
+}
+
+/**
+ * 更新游戏信息显示
+ */
+function updateGameInfoDisplay() {
+    if (!game) return;
+    
+    const gameState = game.getGameState();
+    
+    // 更新移动次数
+    const movesElement = document.getElementById('moves-count');
+    if (movesElement) {
+        movesElement.textContent = gameState.moves;
+    }
+    
+    // 更新游戏时间
+    const playTimeElement = document.getElementById('play-time');
+    if (playTimeElement) {
+        const minutes = Math.floor(gameState.playTime / 60);
+        const seconds = Math.floor(gameState.playTime % 60);
+        playTimeElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+    
+    // 更新哪吒等级
+    const nezhaLevelElement = document.getElementById('nezha-level');
+    if (nezhaLevelElement) {
+        nezhaLevelElement.textContent = gameState.nezhaLevel;
+        
+        // 如果等级提升，添加动画效果
+        if (gameState.nezhaLevel > (gameState.previousNezhaLevel || 1)) {
+            nezhaLevelElement.classList.add('level-up');
+            setTimeout(() => {
+                nezhaLevelElement.classList.remove('level-up');
+            }, 1000);
+            gameState.previousNezhaLevel = gameState.nezhaLevel;
+        }
+    }
 }
 
 /**
@@ -328,15 +459,24 @@ function updateScoreDisplay() {
 function bindUIEvents() {
     // 新游戏按钮
     const newGameBtn = document.getElementById('new-game-btn');
-    newGameBtn.addEventListener('click', startNewGame);
+    newGameBtn.addEventListener('click', () => {
+        playButtonClickSound();
+        confirmRestartGame();
+    });
     
     // 暂停按钮
     const pauseBtn = document.getElementById('pause-btn');
-    pauseBtn.addEventListener('click', togglePause);
+    pauseBtn.addEventListener('click', () => {
+        playButtonClickSound();
+        togglePause();
+    });
     
     // 设置按钮
     const settingsBtn = document.getElementById('settings-btn');
-    settingsBtn.addEventListener('click', showSettings);
+    settingsBtn.addEventListener('click', () => {
+        playButtonClickSound();
+        showSettings();
+    });
     
     // 模态框关闭按钮
     const closeModalBtn = document.getElementById('close-modal-btn');
@@ -375,6 +515,159 @@ function bindSkillEvents() {
     });
 }
 
+/**
+ * 绑定哪吒技能系统事件
+ */
+function bindNezhaSkillSystemEvents() {
+    if (!game || !game.getNezhaSkillSystem) return;
+    
+    const skillSystem = game.getNezhaSkillSystem();
+    
+    // 技能解锁事件
+    skillSystem.on('skillUnlocked', (data) => {
+        console.log('技能解锁:', data.skill.name);
+        showTemporaryMessage(`🎉 技能解锁: ${data.skill.name}`, 3000);
+        
+        // 播放技能解锁音效
+        if (game && game.getAudioManager) {
+            const audioManager = game.getAudioManager();
+            if (audioManager && audioManager.playVictorySound) {
+                audioManager.playVictorySound();
+            }
+        }
+        
+        // 更新技能按钮状态
+        updateSkillButtonState(data.skillId, 'unlocked');
+    });
+    
+    // 技能激活事件
+    skillSystem.on('skillActivated', (data) => {
+        console.log('技能激活:', data.skill.name);
+        showTemporaryMessage(`⚡ ${data.skill.name} 激活！`, 2000);
+        
+        // 更新技能按钮状态
+        updateSkillButtonState(data.skillId, 'activated');
+        
+        // 播放技能音效（如果音频管理器可用）
+        playSkillSound(data.skillId);
+        
+        // 创建技能激活特效
+        createSkillActivationEffect(data.skillId);
+    });
+    
+    // 技能停用事件
+    skillSystem.on('skillDeactivated', (data) => {
+        console.log('技能停用:', data.skill.name);
+        
+        // 更新技能按钮状态
+        updateSkillButtonState(data.skillId, 'deactivated');
+    });
+    
+    // 技能准备就绪事件
+    skillSystem.on('skillReady', (data) => {
+        console.log('技能准备就绪:', data.skill.name);
+        showTemporaryMessage(`✨ ${data.skill.name} 准备就绪`, 1500);
+        
+        // 播放技能准备音效
+        if (game && game.getAudioManager) {
+            const audioManager = game.getAudioManager();
+            if (audioManager && audioManager.playSkillReadySound) {
+                audioManager.playSkillReadySound();
+            }
+        }
+        
+        // 更新技能按钮状态
+        updateSkillButtonState(data.skillId, 'ready');
+        
+        // 乾坤圈技能特殊处理
+        if (data.skillId === 'qiankunCircle') {
+            showQiankunCircleReadyIndicator();
+        }
+        
+        // 混天绫技能特殊处理
+        if (data.skillId === 'huntianLing') {
+            showHuntianLingReadyIndicator();
+        }
+        
+        // 哪吒变身技能特殊处理
+        if (data.skillId === 'transformation') {
+            showTransformationReadyIndicator();
+        }
+    });
+    
+    // 乾坤圈清除完成事件
+    skillSystem.on('qiankunCircleCleared', (data) => {
+        console.log('乾坤圈清除完成:', data);
+        
+        const message = `⭕ 乾坤圈清除 ${data.clearedTiles.length} 个方块，获得 ${data.score} 分！`;
+        showTemporaryMessage(message, 3000);
+        
+        // 更新分数显示
+        updateScoreDisplay();
+        
+        // 创建特殊的分数飞行效果
+        createQiankunScoreEffect(data.score);
+    });
+    
+    // 混天绫连锁完成事件
+    skillSystem.on('huntianLingCompleted', (data) => {
+        console.log('混天绫连锁完成:', data);
+        
+        const message = `🌊 混天绫连锁: ${data.patterns.length} 个模式，清除 ${data.totalCleared} 个方块，获得 ${data.totalScore} 分！`;
+        showTemporaryMessage(message, 4000);
+        
+        // 更新分数显示
+        updateScoreDisplay();
+        
+        // 创建混天绫连锁分数效果
+        createHuntianLingScoreEffect(data);
+    });
+    
+    // 哪吒变身开始事件
+    skillSystem.on('transformationStarted', (data) => {
+        console.log('哪吒变身开始:', data);
+        
+        const message = `⚡ 哪吒变身激活！${data.enhancements.description}`;
+        showTemporaryMessage(message, 5000);
+        
+        // 播放变身音效和音乐
+        if (game && game.getAudioManager) {
+            const audioManager = game.getAudioManager();
+            if (audioManager) {
+                audioManager.playTransformationSound();
+                // 延迟播放变身背景音乐
+                setTimeout(() => {
+                    audioManager.playTransformationMusic();
+                }, 1000);
+            }
+        }
+        
+        // 显示增强效果提示
+        showTransformationEnhancement(data.enhancements);
+    });
+    
+    // 哪吒变身结束事件
+    skillSystem.on('transformationEnded', (data) => {
+        console.log('哪吒变身结束:', data);
+        
+        showTemporaryMessage('⚡ 哪吒变身结束，能力恢复正常', 3000);
+        
+        // 恢复背景音乐
+        if (game && game.getAudioManager) {
+            const audioManager = game.getAudioManager();
+            if (audioManager && audioManager.playBackgroundMusic) {
+                // 淡入淡出切换回背景音乐
+                setTimeout(() => {
+                    audioManager.playBackgroundMusic();
+                }, 500);
+            }
+        }
+        
+        // 隐藏增强效果提示
+        hideTransformationEnhancement();
+    });
+}
+
 // 键盘和触摸输入现在由InputManager统一处理
 
 /**
@@ -388,6 +681,9 @@ function startNewGame() {
     
     console.log('开始新游戏');
     
+    // 重置游戏状态显示
+    resetGameStateDisplay();
+    
     // 重置游戏引擎
     game.reset();
     
@@ -400,6 +696,8 @@ function startNewGame() {
         
         game.start();
         updateScoreDisplay();
+        
+        console.log('新游戏已开始，初始方块已添加');
     }, 100);
 }
 
@@ -448,13 +746,147 @@ function showGameOverModal(data) {
     }
     
     // 检查是否是新纪录
-    if (data.score >= data.highScore && data.score > 0) {
+    if (data.isNewRecord) {
         newRecordElement.classList.remove('hidden');
+        newRecordElement.textContent = '🎉 新纪录！';
+        
+        // 播放新纪录庆祝动画
+        showNewRecordCelebration();
     } else {
         newRecordElement.classList.add('hidden');
     }
     
+    // 更新游戏结束模态框的详细信息
+    updateGameOverDetails(data);
+    
+    // 显示模态框
     gameOverModal.classList.remove('hidden');
+    
+    // 添加显示动画
+    setTimeout(() => {
+        gameOverModal.classList.add('show');
+    }, 10);
+    
+    console.log('游戏结束模态框已显示');
+}
+
+/**
+ * 更新游戏结束详细信息
+ * @param {Object} data - 游戏结束数据
+ */
+function updateGameOverDetails(data) {
+    // 创建或更新详细统计信息
+    const modalContent = document.querySelector('#game-over-modal .modal-content');
+    
+    // 移除现有的统计信息
+    const existingStats = modalContent.querySelector('.game-stats');
+    if (existingStats) {
+        existingStats.remove();
+    }
+    
+    // 创建新的统计信息元素
+    const statsElement = document.createElement('div');
+    statsElement.className = 'game-stats';
+    statsElement.innerHTML = `
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-label">移动次数</div>
+                <div class="stat-value">${data.moves}</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">游戏时间</div>
+                <div class="stat-value">${data.statistics?.playTimeFormatted || '0:00'}</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">最大方块</div>
+                <div class="stat-value">${data.maxTile}</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">效率</div>
+                <div class="stat-value">${data.statistics?.efficiency || 0}</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">合并次数</div>
+                <div class="stat-value">${data.statistics?.totalMerges || 0}</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">哪吒等级</div>
+                <div class="stat-value">${data.statistics?.nezhaLevel || 1}</div>
+            </div>
+        </div>
+    `;
+    
+    // 插入到最终分数后面
+    const finalScoreElement = document.getElementById('final-score');
+    if (finalScoreElement && finalScoreElement.parentNode) {
+        finalScoreElement.parentNode.insertBefore(statsElement, finalScoreElement.parentNode.querySelector('.modal-buttons'));
+    }
+}
+
+/**
+ * 显示新纪录庆祝动画
+ */
+function showNewRecordCelebration() {
+    // 创建庆祝特效
+    const celebration = document.createElement('div');
+    celebration.className = 'celebration-effect';
+    celebration.innerHTML = '🎉✨🎊';
+    celebration.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 3rem;
+        z-index: 3000;
+        pointer-events: none;
+        animation: celebrationBounce 2s ease-out;
+    `;
+    
+    // 添加庆祝动画样式
+    if (!document.getElementById('celebration-style')) {
+        const style = document.createElement('style');
+        style.id = 'celebration-style';
+        style.textContent = `
+            @keyframes celebrationBounce {
+                0% { 
+                    opacity: 0; 
+                    transform: translate(-50%, -50%) scale(0.5);
+                }
+                50% { 
+                    opacity: 1; 
+                    transform: translate(-50%, -50%) scale(1.2);
+                }
+                100% { 
+                    opacity: 0; 
+                    transform: translate(-50%, -50%) scale(1);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(celebration);
+    
+    // 自动移除
+    setTimeout(() => {
+        if (celebration.parentNode) {
+            celebration.parentNode.removeChild(celebration);
+        }
+    }, 2000);
+    
+    // 播放新纪录音效（如果音频管理器可用）
+    if (game && game.getAudioManager) {
+        try {
+            const audioManager = game.getAudioManager();
+            if (audioManager && audioManager.playNewRecordSound) {
+                audioManager.playNewRecordSound();
+            } else if (audioManager && audioManager.playVictorySound) {
+                audioManager.playVictorySound();
+            }
+        } catch (error) {
+            console.log('音频管理器尚未实现，跳过音效播放');
+        }
+    }
 }
 
 /**
@@ -462,15 +894,60 @@ function showGameOverModal(data) {
  */
 function closeGameOverModal() {
     const gameOverModal = document.getElementById('game-over-modal');
-    gameOverModal.classList.add('hidden');
+    gameOverModal.classList.remove('show');
+    
+    // 延迟隐藏以播放动画
+    setTimeout(() => {
+        gameOverModal.classList.add('hidden');
+    }, 300);
 }
 
 /**
  * 重新开始游戏
  */
 function restartGame() {
+    console.log('重新开始游戏');
+    
+    // 关闭游戏结束模态框
     closeGameOverModal();
-    startNewGame();
+    
+    // 显示重新开始提示
+    showTemporaryMessage('正在重新开始游戏...', 1000);
+    
+    // 延迟一点时间让用户看到提示
+    setTimeout(() => {
+        startNewGame();
+        showTemporaryMessage('新游戏开始！', 1500);
+    }, 500);
+}
+
+/**
+ * 确认重新开始游戏（如果游戏进行中）
+ */
+function confirmRestartGame() {
+    if (!game) {
+        startNewGame();
+        return;
+    }
+    
+    const gameState = game.getGameState();
+    
+    // 如果游戏已结束，直接重新开始
+    if (gameState.isGameOver) {
+        restartGame();
+        return;
+    }
+    
+    // 如果游戏进行中且有分数，询问确认
+    if (gameState.score > 0 && gameState.moves > 0) {
+        const confirmed = confirm('当前游戏正在进行中，确定要重新开始吗？这将丢失当前进度。');
+        if (confirmed) {
+            restartGame();
+        }
+    } else {
+        // 游戏刚开始，直接重新开始
+        restartGame();
+    }
 }
 
 /**
@@ -499,8 +976,11 @@ function saveSettings() {
     
     // 保存音量设置
     if (game && game.getAudioManager) {
-        // 音频管理器将在后续任务中实现
-        console.log('音量设置将在音频管理器中处理');
+        const audioManager = game.getAudioManager();
+        if (audioManager && volumeSlider) {
+            const volume = parseInt(volumeSlider.value) / 100;
+            audioManager.setMasterVolume(volume);
+        }
     }
     
     showTemporaryMessage('设置已保存');
@@ -522,19 +1002,645 @@ function closeSettingsModal() {
 function activateSkill(skillId) {
     console.log('激活技能:', skillId);
     
-    const skillElement = document.getElementById(`skill-${skillId}`);
-    if (skillElement && !skillElement.classList.contains('disabled')) {
-        // 添加激活动画
-        skillElement.classList.add('activated');
-        
-        // 显示技能效果
-        showTemporaryMessage(`激活了${getSkillName(skillId)}！`);
-        
-        // 模拟冷却
-        skillElement.classList.add('disabled');
+    if (!game || !game.getNezhaSkillSystem) {
+        console.warn('技能系统不可用');
+        return;
+    }
+    
+    const skillSystem = game.getNezhaSkillSystem();
+    
+    // 将UI技能ID转换为系统技能ID
+    const systemSkillId = convertUISkillIdToSystemId(skillId);
+    
+    // 尝试触发技能
+    const success = skillSystem.triggerSkill(systemSkillId);
+    
+    if (!success) {
+        // 技能无法激活，显示原因
+        const skillInfo = skillSystem.getSkillInfo(systemSkillId);
+        if (!skillInfo.unlocked) {
+            showTemporaryMessage('技能尚未解锁');
+        } else if (skillInfo.state.cooldownRemaining > 0) {
+            const remainingSeconds = Math.ceil(skillInfo.state.cooldownRemaining / 1000);
+            showTemporaryMessage(`技能冷却中，还需 ${remainingSeconds} 秒`);
+        } else {
+            showTemporaryMessage('技能暂时无法使用');
+        }
+    }
+}
+
+/**
+ * 将UI技能ID转换为系统技能ID
+ * @param {string} uiSkillId - UI技能ID
+ * @returns {string} 系统技能ID
+ */
+function convertUISkillIdToSystemId(uiSkillId) {
+    const mapping = {
+        'three-heads': 'threeHeadsSixArms',
+        'qiankun-circle': 'qiankunCircle',
+        'huntian-ling': 'huntianLing',
+        'transformation': 'transformation'
+    };
+    
+    return mapping[uiSkillId] || uiSkillId;
+}
+
+/**
+ * 更新技能按钮状态
+ * @param {string} skillId - 技能ID
+ * @param {string} state - 状态
+ */
+function updateSkillButtonState(skillId, state) {
+    // 将系统技能ID转换为UI技能ID
+    const uiSkillId = convertSystemSkillIdToUIId(skillId);
+    const skillElement = document.getElementById(`skill-${uiSkillId}`);
+    
+    if (!skillElement) return;
+    
+    switch (state) {
+        case 'unlocked':
+            skillElement.classList.remove('locked');
+            skillElement.classList.add('unlocked-animation');
+            setTimeout(() => {
+                skillElement.classList.remove('unlocked-animation');
+            }, 2000);
+            break;
+            
+        case 'activated':
+            skillElement.classList.add('activated');
+            break;
+            
+        case 'deactivated':
+            skillElement.classList.remove('activated');
+            break;
+            
+        case 'ready':
+            skillElement.classList.add('ready-pulse');
+            setTimeout(() => {
+                skillElement.classList.remove('ready-pulse');
+            }, 1000);
+            break;
+    }
+}
+
+/**
+ * 将系统技能ID转换为UI技能ID
+ * @param {string} systemSkillId - 系统技能ID
+ * @returns {string} UI技能ID
+ */
+function convertSystemSkillIdToUIId(systemSkillId) {
+    const mapping = {
+        'threeHeadsSixArms': 'three-heads',
+        'qiankunCircle': 'qiankun-circle',
+        'huntianLing': 'huntian-ling',
+        'transformation': 'transformation'
+    };
+    
+    return mapping[systemSkillId] || systemSkillId;
+}
+
+/**
+ * 播放按钮点击音效
+ */
+function playButtonClickSound() {
+    if (game && game.getAudioManager) {
+        const audioManager = game.getAudioManager();
+        if (audioManager && audioManager.playButtonClickSound) {
+            audioManager.playButtonClickSound();
+        }
+    }
+}
+
+/**
+ * 创建技能激活特效
+ * @param {string} skillId - 技能ID
+ */
+function createSkillActivationEffect(skillId) {
+    if (!game || !game.getEffectsManager) return;
+    
+    const effectsManager = game.getEffectsManager();
+    if (!effectsManager) return;
+    
+    // 获取技能按钮位置
+    const skillButton = document.getElementById(`skill-${skillId.replace(/([A-Z])/g, '-$1').toLowerCase()}`);
+    if (!skillButton) return;
+    
+    const rect = skillButton.getBoundingClientRect();
+    const gameArea = document.querySelector('.game-area');
+    const gameRect = gameArea.getBoundingClientRect();
+    
+    // 计算相对于游戏区域的坐标
+    const x = rect.left + rect.width / 2 - gameRect.left;
+    const y = rect.top + rect.height / 2 - gameRect.top;
+    
+    // 根据技能类型创建不同的特效
+    let effectName = '';
+    switch (skillId) {
+        case 'threeHeadsSixArms':
+            effectName = 'threeHeadsActivation';
+            break;
+        case 'qiankunCircle':
+            effectName = 'qiankunCircleCharge';
+            break;
+        case 'huntianLing':
+            effectName = 'huntianLingFlow';
+            break;
+        case 'transformation':
+            effectName = 'transformationAura';
+            break;
+        default:
+            effectName = 'spark'; // 默认特效
+    }
+    
+    effectsManager.createNezhaEffect(effectName, x, y);
+}
+
+/**
+ * 创建新方块特效
+ */
+function createNewTileEffect() {
+    if (!game || !game.getEffectsManager) return;
+    
+    const effectsManager = game.getEffectsManager();
+    const gameState = game.getGameState();
+    if (!effectsManager || !gameState) return;
+    
+    // 获取最新添加的方块位置
+    const tiles = gameState.getAllTiles();
+    if (tiles.length === 0) return;
+    
+    // 找到最新的方块（通常是最后添加的）
+    const newestTile = tiles[tiles.length - 1];
+    if (!newestTile) return;
+    
+    // 计算屏幕坐标
+    const gameArea = document.querySelector('.game-area');
+    const rect = gameArea.getBoundingClientRect();
+    const cellSize = rect.width / 4;
+    const x = (newestTile.x + 0.5) * cellSize;
+    const y = (newestTile.y + 0.5) * cellSize;
+    
+    effectsManager.createNezhaEffect('tileSpawn', x, y);
+}
+
+/**
+ * 播放技能音效
+ * @param {string} skillId - 技能ID
+ */
+function playSkillSound(skillId) {
+    // 如果音频管理器可用，播放对应的技能音效
+    if (game && game.getAudioManager) {
+        try {
+            const audioManager = game.getAudioManager();
+            if (audioManager) {
+                // 根据技能ID播放对应的音效
+                switch (skillId) {
+                    case 'threeHeadsSixArms':
+                        audioManager.playThreeHeadsSound();
+                        break;
+                    case 'qiankunCircle':
+                        audioManager.playQiankunCircleSound();
+                        break;
+                    case 'huntianLing':
+                        audioManager.playHuntianLingSound();
+                        break;
+                    case 'transformation':
+                        audioManager.playTransformationSound();
+                        // 播放变身背景音乐
+                        setTimeout(() => {
+                            audioManager.playTransformationMusic();
+                        }, 500);
+                        break;
+                    default:
+                        console.log(`未知技能音效: ${skillId}`);
+                }
+            }
+        } catch (error) {
+            console.log('技能音效播放失败:', error);
+        }
+    }
+}
+
+/**
+ * 显示乾坤圈准备就绪指示器
+ */
+function showQiankunCircleReadyIndicator() {
+    // 创建或显示乾坤圈准备指示器
+    let indicator = document.getElementById('qiankun-circle-indicator');
+    
+    if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.id = 'qiankun-circle-indicator';
+        indicator.className = 'qiankun-circle-indicator';
+        indicator.innerHTML = `
+            <div class="qiankun-indicator-content">
+                <div class="qiankun-indicator-icon">⭕</div>
+                <div class="qiankun-indicator-text">乾坤圈准备就绪</div>
+                <div class="qiankun-indicator-desc">连击达成，可清除区域</div>
+            </div>
+        `;
+        document.body.appendChild(indicator);
+    }
+    
+    indicator.classList.add('active', 'ready');
+    
+    // 5秒后自动隐藏
+    setTimeout(() => {
+        indicator.classList.remove('active', 'ready');
+    }, 5000);
+}
+
+/**
+ * 创建乾坤圈分数效果
+ * @param {number} score - 获得的分数
+ */
+function createQiankunScoreEffect(score) {
+    const scoreElement = document.createElement('div');
+    scoreElement.className = 'qiankun-score-effect';
+    scoreElement.textContent = `+${score}`;
+    scoreElement.style.cssText = `
+        position: fixed;
+        top: 40%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(45deg, #FFD700, #FFA500);
+        color: #8B4513;
+        padding: 12px 24px;
+        border-radius: 25px;
+        font-weight: 700;
+        font-size: 1.5rem;
+        z-index: 3000;
+        pointer-events: none;
+        animation: qiankunScoreFloat 2s ease-out forwards;
+        box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6);
+        border: 2px solid rgba(255, 165, 0, 0.8);
+    `;
+    
+    // 添加分数飞行动画样式
+    if (!document.getElementById('qiankun-score-style')) {
+        const style = document.createElement('style');
+        style.id = 'qiankun-score-style';
+        style.textContent = `
+            @keyframes qiankunScoreFloat {
+                0% { 
+                    opacity: 0; 
+                    transform: translateX(-50%) translateY(20px) scale(0.8) rotate(-5deg);
+                }
+                25% { 
+                    opacity: 1; 
+                    transform: translateX(-50%) translateY(-10px) scale(1.2) rotate(2deg);
+                }
+                50% { 
+                    opacity: 1; 
+                    transform: translateX(-50%) translateY(-20px) scale(1.1) rotate(-1deg);
+                }
+                75% { 
+                    opacity: 1; 
+                    transform: translateX(-50%) translateY(-30px) scale(1) rotate(1deg);
+                }
+                100% { 
+                    opacity: 0; 
+                    transform: translateX(-50%) translateY(-50px) scale(0.9) rotate(0deg);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(scoreElement);
+    
+    // 自动移除
+    setTimeout(() => {
+        if (scoreElement.parentNode) {
+            scoreElement.parentNode.removeChild(scoreElement);
+        }
+    }, 2000);
+}
+
+/**
+ * 显示混天绫准备就绪指示器
+ */
+function showHuntianLingReadyIndicator() {
+    // 创建或显示混天绫准备指示器
+    let indicator = document.getElementById('huntian-ling-indicator');
+    
+    if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.id = 'huntian-ling-indicator';
+        indicator.className = 'huntian-ling-indicator';
+        indicator.innerHTML = `
+            <div class="huntian-indicator-content">
+                <div class="huntian-indicator-icon">🌊</div>
+                <div class="huntian-indicator-text">混天绫准备就绪</div>
+                <div class="huntian-indicator-desc">发现数字组合模式</div>
+            </div>
+        `;
+        document.body.appendChild(indicator);
+    }
+    
+    indicator.classList.add('active', 'ready');
+    
+    // 5秒后自动隐藏
+    setTimeout(() => {
+        indicator.classList.remove('active', 'ready');
+    }, 5000);
+}
+
+/**
+ * 创建混天绫连锁分数效果
+ * @param {Object} data - 连锁数据
+ */
+function createHuntianLingScoreEffect(data) {
+    const scoreElement = document.createElement('div');
+    scoreElement.className = 'huntian-ling-score-effect';
+    
+    // 创建多层分数显示
+    const mainScore = document.createElement('div');
+    mainScore.textContent = `+${data.totalScore}`;
+    mainScore.style.cssText = `
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: white;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        margin-bottom: 5px;
+    `;
+    
+    const chainInfo = document.createElement('div');
+    chainInfo.textContent = `${data.patterns.length}连锁`;
+    chainInfo.style.cssText = `
+        font-size: 1rem;
+        font-weight: 600;
+        color: #E0FFFF;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+    `;
+    
+    scoreElement.appendChild(mainScore);
+    scoreElement.appendChild(chainInfo);
+    
+    scoreElement.style.cssText = `
+        position: fixed;
+        top: 35%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(45deg, #00CED1, #40E0D0);
+        color: white;
+        padding: 15px 25px;
+        border-radius: 20px;
+        z-index: 3000;
+        pointer-events: none;
+        animation: huntianScoreFloat 2.5s ease-out forwards;
+        box-shadow: 0 8px 25px rgba(0, 206, 209, 0.6);
+        border: 2px solid rgba(64, 224, 208, 0.8);
+        text-align: center;
+    `;
+    
+    // 添加混天绫分数飞行动画样式
+    if (!document.getElementById('huntian-score-style')) {
+        const style = document.createElement('style');
+        style.id = 'huntian-score-style';
+        style.textContent = `
+            @keyframes huntianScoreFloat {
+                0% { 
+                    opacity: 0; 
+                    transform: translateX(-50%) translateY(30px) scale(0.7) rotate(-10deg);
+                }
+                20% { 
+                    opacity: 1; 
+                    transform: translateX(-50%) translateY(0px) scale(1.3) rotate(5deg);
+                }
+                40% { 
+                    opacity: 1; 
+                    transform: translateX(-50%) translateY(-15px) scale(1.1) rotate(-3deg);
+                }
+                60% { 
+                    opacity: 1; 
+                    transform: translateX(-50%) translateY(-25px) scale(1.05) rotate(2deg);
+                }
+                80% { 
+                    opacity: 1; 
+                    transform: translateX(-50%) translateY(-35px) scale(1) rotate(-1deg);
+                }
+                100% { 
+                    opacity: 0; 
+                    transform: translateX(-50%) translateY(-60px) scale(0.8) rotate(0deg);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(scoreElement);
+    
+    // 创建连锁波纹效果
+    createChainRippleEffect(data.patterns.length);
+    
+    // 自动移除
+    setTimeout(() => {
+        if (scoreElement.parentNode) {
+            scoreElement.parentNode.removeChild(scoreElement);
+        }
+    }, 2500);
+}
+
+/**
+ * 创建连锁波纹效果
+ * @param {number} chainCount - 连锁数量
+ */
+function createChainRippleEffect(chainCount) {
+    const gameArea = document.querySelector('.game-area');
+    if (!gameArea) return;
+    
+    for (let i = 0; i < chainCount; i++) {
         setTimeout(() => {
-            skillElement.classList.remove('disabled', 'activated');
-        }, 3000);
+            const ripple = document.createElement('div');
+            ripple.className = 'chain-ripple-effect';
+            ripple.style.cssText = `
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: 20px;
+                height: 20px;
+                background: rgba(0, 206, 209, 0.3);
+                border: 2px solid #00CED1;
+                border-radius: 50%;
+                pointer-events: none;
+                z-index: 180;
+                animation: chainRipple 1.5s ease-out forwards;
+                transform: translate(-50%, -50%);
+            `;
+            
+            gameArea.appendChild(ripple);
+            
+            // 1.5秒后移除波纹
+            setTimeout(() => {
+                if (ripple.parentNode) {
+                    ripple.parentNode.removeChild(ripple);
+                }
+            }, 1500);
+        }, i * 300);
+    }
+    
+    // 添加连锁波纹动画样式
+    if (!document.getElementById('chain-ripple-style')) {
+        const style = document.createElement('style');
+        style.id = 'chain-ripple-style';
+        style.textContent = `
+            @keyframes chainRipple {
+                0% { 
+                    opacity: 1;
+                    transform: translate(-50%, -50%) scale(1);
+                    background: rgba(0, 206, 209, 0.6);
+                }
+                50% { 
+                    opacity: 0.8;
+                    transform: translate(-50%, -50%) scale(4);
+                    background: rgba(64, 224, 208, 0.4);
+                }
+                100% { 
+                    opacity: 0;
+                    transform: translate(-50%, -50%) scale(8);
+                    background: rgba(0, 206, 209, 0.1);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
+/**
+ * 绑定音频管理器事件
+ */
+function bindAudioManagerEvents() {
+    if (!game || !game.getAudioManager) return;
+    
+    const audioManager = game.getAudioManager();
+    
+    // 音频初始化完成事件
+    audioManager.on('initialized', () => {
+        console.log('音频管理器初始化完成');
+        
+        // 初始化音频设置UI
+        initializeAudioSettings();
+    });
+    
+    // 音频加载完成事件
+    audioManager.on('audioLoaded', (data) => {
+        console.log('音频加载完成:', data.name, data.type);
+    });
+    
+    // 哪吒音频资源加载完成事件
+    audioManager.on('nezhaAudioLoaded', () => {
+        console.log('哪吒主题音频资源加载完成');
+        // 延迟播放背景音乐，等待用户交互
+        setTimeout(() => {
+            if (audioManager.userInteracted) {
+                audioManager.playBackgroundMusic();
+            }
+        }, 2000);
+    });
+    
+    // 音量变化事件
+    audioManager.on('volumeChanged', (data) => {
+        console.log('音量变化:', data.type, data.volume);
+        updateVolumeUI(data.type, data.volume);
+    });
+    
+    // 静音状态变化事件
+    audioManager.on('muteChanged', (data) => {
+        console.log('静音状态变化:', data.muted);
+        updateMuteUI(data.muted);
+    });
+    
+    // 音频错误事件
+    audioManager.on('error', (data) => {
+        console.error('音频管理器错误:', data);
+        showTemporaryMessage('音频系统出现问题', 2000);
+    });
+    
+    // 音频加载错误事件
+    audioManager.on('loadError', (data) => {
+        console.warn('音频加载失败:', data.name, data.error);
+    });
+}
+
+/**
+ * 初始化音频设置UI
+ */
+function initializeAudioSettings() {
+    if (!game || !game.getAudioManager) return;
+    
+    const audioManager = game.getAudioManager();
+    const audioInfo = audioManager.getAudioInfo();
+    
+    // 更新音量滑块
+    const volumeSlider = document.getElementById('volume-slider');
+    if (volumeSlider) {
+        volumeSlider.value = Math.round(audioInfo.volumes.master * 100);
+        
+        // 绑定音量滑块事件
+        volumeSlider.addEventListener('input', (event) => {
+            const volume = parseInt(event.target.value) / 100;
+            audioManager.setMasterVolume(volume);
+        });
+    }
+    
+    // 添加静音按钮功能
+    addMuteButtonFunctionality();
+}
+
+/**
+ * 添加静音按钮功能
+ */
+function addMuteButtonFunctionality() {
+    // 创建静音按钮（如果不存在）
+    let muteButton = document.getElementById('mute-button');
+    
+    if (!muteButton) {
+        muteButton = document.createElement('button');
+        muteButton.id = 'mute-button';
+        muteButton.className = 'control-btn';
+        muteButton.innerHTML = '🔊';
+        muteButton.title = '静音/取消静音';
+        
+        // 添加到控制按钮区域
+        const gameControls = document.querySelector('.game-controls');
+        if (gameControls) {
+            gameControls.appendChild(muteButton);
+        }
+    }
+    
+    // 绑定点击事件
+    muteButton.addEventListener('click', () => {
+        if (game && game.getAudioManager) {
+            const audioManager = game.getAudioManager();
+            audioManager.toggleMute();
+        }
+    });
+}
+
+/**
+ * 更新音量UI
+ * @param {string} type - 音量类型
+ * @param {number} volume - 音量值
+ */
+function updateVolumeUI(type, volume) {
+    if (type === 'master') {
+        const volumeSlider = document.getElementById('volume-slider');
+        if (volumeSlider) {
+            volumeSlider.value = Math.round(volume * 100);
+        }
+    }
+}
+
+/**
+ * 更新静音UI
+ * @param {boolean} muted - 是否静音
+ */
+function updateMuteUI(muted) {
+    const muteButton = document.getElementById('mute-button');
+    if (muteButton) {
+        muteButton.innerHTML = muted ? '🔇' : '🔊';
+        muteButton.title = muted ? '取消静音' : '静音';
     }
 }
 
@@ -887,6 +1993,26 @@ function handleMoveInput(direction) {
         // 移动成功的反馈
         console.log(`成功移动: ${direction}`);
         
+        // 播放移动音效
+        if (game && game.getAudioManager) {
+            const audioManager = game.getAudioManager();
+            if (audioManager && audioManager.playMoveSound) {
+                audioManager.playMoveSound();
+                
+                // 延迟播放新方块音效（因为新方块会在移动后生成）
+                setTimeout(() => {
+                    if (audioManager.playNewTileSound) {
+                        audioManager.playNewTileSound();
+                    }
+                }, 200);
+            }
+        }
+        
+        // 延迟创建新方块特效
+        setTimeout(() => {
+            createNewTileEffect();
+        }, 300);
+        
         // 检查是否需要显示提示
         const gameState = game.getGameState();
         const emptyTiles = gameState.getEmptyTiles();
@@ -900,8 +2026,156 @@ function handleMoveInput(direction) {
         // 移动失败的反馈
         console.log(`移动失败: ${direction}`);
         showTemporaryMessage('无法移动到该方向');
+        
+        // 播放错误音效
+        if (game && game.getAudioManager) {
+            const audioManager = game.getAudioManager();
+            if (audioManager && audioManager.playErrorSound) {
+                audioManager.playErrorSound();
+            }
+        }
+        
         return false;
     }
+}
+
+/**
+ * 处理多方向输入（三头六臂模式）
+ * @param {Array<string>} directions - 方向数组
+ * @returns {boolean} 是否成功处理
+ */
+function handleMultiDirectionInput(directions) {
+    if (!game || !directions || directions.length === 0) {
+        return false;
+    }
+    
+    console.log('🔥 处理三头六臂多方向输入:', directions);
+    
+    let successCount = 0;
+    let totalScore = 0;
+    const results = [];
+    
+    // 按顺序执行每个方向的移动
+    directions.forEach((direction, index) => {
+        // 验证移动有效性
+        if (validateMove(direction)) {
+            const initialScore = game.getGameState().score;
+            const moved = game.move(direction);
+            
+            if (moved) {
+                const scoreGained = game.getGameState().score - initialScore;
+                successCount++;
+                totalScore += scoreGained;
+                
+                results.push({
+                    direction,
+                    success: true,
+                    scoreGained
+                });
+                
+                console.log(`🔥 方向 ${direction} 移动成功，得分: ${scoreGained}`);
+            } else {
+                results.push({
+                    direction,
+                    success: false,
+                    scoreGained: 0
+                });
+            }
+        } else {
+            results.push({
+                direction,
+                success: false,
+                scoreGained: 0
+            });
+        }
+        
+        // 在多方向操作之间添加短暂延迟，让动画更清晰
+        if (index < directions.length - 1) {
+            setTimeout(() => {
+                // 延迟处理下一个方向
+            }, 50);
+        }
+    });
+    
+    // 显示多方向操作结果
+    if (successCount > 0) {
+        const message = `🔥 三头六臂: ${successCount}/${directions.length} 方向成功，总得分: ${totalScore}`;
+        showTemporaryMessage(message, 3000);
+        
+        // 创建特殊的多方向操作视觉效果
+        createThreeHeadsSixArmsEffect(results);
+        
+        return true;
+    } else {
+        showTemporaryMessage('🔥 三头六臂: 所有方向都无法移动', 2000);
+        return false;
+    }
+}
+
+/**
+ * 创建三头六臂技能的视觉效果
+ * @param {Array} results - 移动结果数组
+ */
+function createThreeHeadsSixArmsEffect(results) {
+    // 创建多方向移动的视觉反馈
+    const gameArea = document.querySelector('.game-area');
+    if (!gameArea) return;
+    
+    const effectContainer = document.createElement('div');
+    effectContainer.className = 'three-heads-six-arms-effect';
+    effectContainer.style.cssText = `
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 100;
+    `;
+    
+    // 为每个成功的方向创建效果
+    results.forEach((result, index) => {
+        if (result.success) {
+            const directionEffect = document.createElement('div');
+            directionEffect.className = 'direction-effect';
+            
+            // 根据方向设置效果位置和动画
+            const directionStyles = {
+                'up': { top: '10%', left: '50%', transform: 'translateX(-50%)', animation: 'effectUp 1s ease-out' },
+                'down': { bottom: '10%', left: '50%', transform: 'translateX(-50%)', animation: 'effectDown 1s ease-out' },
+                'left': { top: '50%', left: '10%', transform: 'translateY(-50%)', animation: 'effectLeft 1s ease-out' },
+                'right': { top: '50%', right: '10%', transform: 'translateY(-50%)', animation: 'effectRight 1s ease-out' }
+            };
+            
+            const style = directionStyles[result.direction] || directionStyles['up'];
+            
+            directionEffect.style.cssText = `
+                position: absolute;
+                top: ${style.top || 'auto'};
+                bottom: ${style.bottom || 'auto'};
+                left: ${style.left || 'auto'};
+                right: ${style.right || 'auto'};
+                transform: ${style.transform};
+                font-size: 2rem;
+                color: #FFD700;
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+                animation: ${style.animation};
+                animation-delay: ${index * 100}ms;
+            `;
+            
+            directionEffect.textContent = `+${result.scoreGained}`;
+            effectContainer.appendChild(directionEffect);
+        }
+    });
+    
+    gameArea.appendChild(effectContainer);
+    
+    // 1.5秒后移除效果
+    setTimeout(() => {
+        if (effectContainer.parentNode) {
+            effectContainer.parentNode.removeChild(effectContainer);
+        }
+    }, 1500);
 }
 
 /**
@@ -1141,6 +2415,36 @@ function bindVisualFeedbackEvents() {
             
             themeManager.triggerMergeEffect(x, y, data.value);
         }
+        
+        // 播放合并音效
+        if (game && game.getAudioManager) {
+            const audioManager = game.getAudioManager();
+            if (audioManager) {
+                // 根据方块值播放不同音调的合并音效
+                if (audioManager.playTileUpgradeSound && data.value) {
+                    audioManager.playTileUpgradeSound(data.value);
+                } else if (audioManager.playMergeSound) {
+                    audioManager.playMergeSound();
+                }
+            }
+        }
+        
+        // 创建合并特效
+        if (game && game.getEffectsManager && data.position) {
+            const effectsManager = game.getEffectsManager();
+            if (effectsManager) {
+                // 计算屏幕坐标
+                const gameArea = document.querySelector('.game-area');
+                const rect = gameArea.getBoundingClientRect();
+                const cellSize = rect.width / 4;
+                const x = (data.position.x + 0.5) * cellSize;
+                const y = (data.position.y + 0.5) * cellSize;
+                
+                effectsManager.createNezhaEffect('tileMerge', x, y, {
+                    intensity: Math.min(data.value / 64, 3) // 根据方块值调整特效强度
+                });
+            }
+        }
     });
     
     // 监听技能激活事件
@@ -1178,6 +2482,62 @@ function bindVisualFeedbackEvents() {
             setTimeout(() => {
                 scoreElement.classList.remove('score-increase');
             }, 600);
+        }
+    });
+}
+
+/**
+ * 添加游戏结束视觉反馈
+ */
+function addGameOverVisualFeedback() {
+    // 添加游戏区域覆盖层
+    const gameArea = document.querySelector('.game-area');
+    if (gameArea) {
+        const overlay = document.createElement('div');
+        overlay.className = 'game-over-overlay active';
+        gameArea.appendChild(overlay);
+        
+        // 5秒后移除覆盖层
+        setTimeout(() => {
+            if (overlay.parentNode) {
+                overlay.parentNode.removeChild(overlay);
+            }
+        }, 5000);
+    }
+    
+    // 显示游戏结束消息
+    showTemporaryMessage('游戏结束！', 2000);
+    
+    // 暂停游戏引擎
+    if (game) {
+        game.pause();
+    }
+}
+
+/**
+ * 重置游戏状态显示
+ */
+function resetGameStateDisplay() {
+    // 移除游戏结束覆盖层
+    const overlay = document.querySelector('.game-over-overlay');
+    if (overlay && overlay.parentNode) {
+        overlay.parentNode.removeChild(overlay);
+    }
+    
+    // 重置分数显示动画
+    const scoreElement = document.getElementById('current-score');
+    if (scoreElement) {
+        scoreElement.classList.remove('score-increase', 'new-record');
+    }
+    
+    // 重置技能显示
+    const skillElements = document.querySelectorAll('.skill-item');
+    skillElements.forEach(skill => {
+        skill.classList.remove('disabled', 'activated');
+        const cooldownElement = skill.querySelector('.skill-cooldown');
+        if (cooldownElement) {
+            cooldownElement.classList.remove('active');
+            cooldownElement.style.background = '';
         }
     });
 }

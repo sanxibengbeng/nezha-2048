@@ -123,6 +123,14 @@ class GameState {
     }
 
     /**
+     * 获取当前分数
+     * @returns {number} 当前分数
+     */
+    getScore() {
+        return this.score;
+    }
+
+    /**
      * 增加分数
      * @param {number} points - 增加的分数
      */

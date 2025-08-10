@@ -317,23 +317,56 @@ class StateManager {
      * @returns {number} 计算后的分数
      */
     calculateMergeScore(tileValue, comboCount = 1, skillUsed = null) {
+        // 参数验证
+        if (!tileValue || typeof tileValue !== 'number' || isNaN(tileValue) || tileValue <= 0) {
+            console.warn('calculateMergeScore: 无效的方块值:', tileValue);
+            return 0;
+        }
+        
+        if (!comboCount || typeof comboCount !== 'number' || isNaN(comboCount) || comboCount < 1) {
+            console.warn('calculateMergeScore: 无效的连击数:', comboCount);
+            comboCount = 1;
+        }
+        
+        console.log('calculateMergeScore 参数:', { tileValue, comboCount, skillUsed });
+        
         let baseScore = this.scoreConfig.mergeMultiplier[tileValue] || tileValue;
+        console.log('基础分数:', baseScore);
         
         // 应用连击奖励
         if (comboCount > 1) {
             const comboMultiplier = this.scoreConfig.comboBonus[Math.min(comboCount, 6)] || 1;
+            console.log('连击倍数:', comboMultiplier);
             baseScore *= comboMultiplier;
         }
         
         // 应用技能奖励
         if (skillUsed && this.scoreConfig.skillBonus[skillUsed]) {
-            baseScore *= this.scoreConfig.skillBonus[skillUsed];
+            const skillMultiplier = this.scoreConfig.skillBonus[skillUsed];
+            console.log('技能倍数:', skillMultiplier);
+            baseScore *= skillMultiplier;
         }
         
         // 应用基础倍数
         baseScore *= this.scoreConfig.baseMultiplier;
+        console.log('应用基础倍数后:', baseScore);
         
-        return Math.floor(baseScore);
+        const finalScore = Math.floor(baseScore);
+        console.log('最终分数:', finalScore);
+        
+        // 最终验证
+        if (isNaN(finalScore)) {
+            console.error('calculateMergeScore: 计算结果为 NaN', {
+                tileValue,
+                comboCount,
+                skillUsed,
+                baseScore,
+                finalScore
+            });
+            return 0;
+        }
+        
+        return finalScore;
     }
 
     /**
