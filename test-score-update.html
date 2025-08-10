@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分数更新测试</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <style>
+        .test-controls {
+            margin: 20px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        .test-controls button {
+            margin: 5px;
+            padding: 10px 15px;
+            background: #8f7a66;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .test-controls button:hover {
+            background: #9f8a76;
+        }
+        .score-display {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f9f6f2;
+            border-radius: 4px;
+        }
+        #debug-output {
+            margin: 20px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <header class="game-header">
+            <h1 class="game-title">分数更新测试</h1>
+            <div class="score-container">
+                <div class="score-box">
+                    <div class="score-label">分数</div>
+                    <div id="current-score" class="score-value">0</div>
+                </div>
+                <div class="score-box">
+                    <div class="score-label">最高分</div>
+                    <div id="high-score" class="score-value">0</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="game-area">
+            <div id="game-grid" class="game-grid">
+                <!-- 4x4网格将通过JavaScript动态生成 -->
+            </div>
+            <canvas id="game-canvas" width="400" height="400"></canvas>
+        </div>
+
+        <div class="game-info">
+            <div class="info-item">
+                <span class="info-label">移动:</span>
+                <span id="moves-count" class="info-value">0</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">时间:</span>
+                <span id="play-time" class="info-value">0:00</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">等级:</span>
+                <span id="nezha-level" class="info-value">1</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-controls">
+        <h3>测试控制</h3>
+        <button onclick="initGame()">初始化游戏</button>
+        <button onclick="addTestTiles()">添加测试方块</button>
+        <button onclick="testMove('left')">向左移动</button>
+        <button onclick="testMove('right')">向右移动</button>
+        <button onclick="testMove('up')">向上移动</button>
+        <button onclick="testMove('down')">向下移动</button>
+        <button onclick="testDirectScore()">直接增加分数</button>
+        <button onclick="clearDebug()">清除调试信息</button>
+        
+        <div class="score-display">
+            <strong>当前游戏状态:</strong>
+            <div>分数: <span id="debug-score">0</span></div>
+            <div>移动次数: <span id="debug-moves">0</span></div>
+            <div>合并次数: <span id="debug-merges">0</span></div>
+        </div>
+    </div>
+
+    <div id="debug-output"></div>
+
+    <!-- 加载脚本 -->
+    <script src="js/core/Tile.js"></script>
+    <script src="js/core/GameState.js"></script>
+    <script src="js/core/ThemeConfig.js"></script>
+    <script src="js/managers/GridManager.js"></script>
+    <script src="js/managers/InputManager.js"></script>
+    <script src="js/managers/ThemeManager.js"></script>
+    <script src="js/managers/AnimationSystem.js"></script>
+    <script src="js/managers/AudioManager.js"></script>
+    <script src="js/managers/StateManager.js"></script>
+    <script src="js/systems/NezhaSkillSystem.js"></script>
+    <script src="js/core/GameEngine.js"></script>
+
+    <script>
+        let game = null;
+        const debugOutput = document.getElementById('debug-output');
+        
+        function log(message) {
+            console.log(message);
+            debugOutput.textContent += new Date().toLocaleTimeString() + ': ' + message + '\n';
+            debugOutput.scrollTop = debugOutput.scrollHeight;
+        }
+        
+        function clearDebug() {
+            debugOutput.textContent = '';
+        }
+        
+        async function initGame() {
+            try {
+                log('开始初始化游戏...');
+                
+                const canvas = document.getElementById('game-canvas');
+                game = new GameEngine({
+                    targetFPS: 60,
+                    debug: true
+                });
+                
+                await game.init(canvas);
+                
+                // 绑定事件监听器
+                game.on('move', (data) => {
+                    log(`移动事件: 方向=${data.direction}, 分数=${data.score}, 合并=${data.merged.length}个`);
+                    updateScoreDisplay();
+                });
+                
+                game.on('initialized', () => {
+                    log('游戏初始化完成');
+                    updateScoreDisplay();
+                });
+                
+                // 创建网格显示
+                createGridCells();
+                
+                log('游戏初始化成功');
+                updateScoreDisplay();
+                
+            } catch (error) {
+                log('游戏初始化失败: ' + error.message);
+                console.error(error);
+            }
+        }
+        
+        function createGridCells() {
+            const grid = document.getElementById('game-grid');
+            grid.innerHTML = '';
+            
+            for (let i = 0; i < 16; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'grid-cell';
+                cell.dataset.index = i;
+                grid.appendChild(cell);
+            }
+        }
+        
+        function addTestTiles() {
+            if (!game) {
+                log('游戏未初始化');
+                return;
+            }
+            
+            const gameState = game.getGameState();
+            
+            // 清空现有方块
+            for (let x = 0; x < 4; x++) {
+                for (let y = 0; y < 4; y++) {
+                    gameState.setTile(x, y, null);
+                }
+            }
+            
+            // 添加测试方块 - 两个相同的方块用于合并
+            const tile1 = new Tile(0, 0, 2);
+            const tile2 = new Tile(1, 0, 2);
+            const tile3 = new Tile(2, 0, 4);
+            
+            gameState.setTile(0, 0, tile1);
+            gameState.setTile(1, 0, tile2);
+            gameState.setTile(2, 0, tile3);
+            
+            game.render();
+            updateScoreDisplay();
+            log('添加了测试方块: (0,0)=2, (1,0)=2, (2,0)=4');
+        }
+        
+        function testMove(direction) {
+            if (!game) {
+                log('游戏未初始化');
+                return;
+            }
+            
+            log(`尝试向${direction}移动...`);
+            
+            const beforeScore = game.getGameState().score;
+            const beforeMoves = game.getGameState().moves;
+            
+            const result = game.move(direction);
+            
+            const afterScore = game.getGameState().score;
+            const afterMoves = game.getGameState().moves;
+            
+            log(`移动结果: ${result ? '成功' : '失败'}`);
+            log(`分数变化: ${beforeScore} -> ${afterScore} (增加${afterScore - beforeScore})`);
+            log(`移动次数: ${beforeMoves} -> ${afterMoves}`);
+            
+            updateScoreDisplay();
+        }
+        
+        function testDirectScore() {
+            if (!game) {
+                log('游戏未初始化');
+                return;
+            }
+            
+            const gameState = game.getGameState();
+            const beforeScore = gameState.score;
+            
+            gameState.addScore(100);
+            
+            const afterScore = gameState.score;
+            
+            log(`直接增加分数: ${beforeScore} -> ${afterScore}`);
+            updateScoreDisplay();
+        }
+        
+        function updateScoreDisplay() {
+            if (!game) return;
+            
+            const gameState = game.getGameState();
+            
+            // 更新界面显示
+            document.getElementById('current-score').textContent = gameState.score;
+            document.getElementById('high-score').textContent = gameState.highScore;
+            document.getElementById('moves-count').textContent = gameState.moves;
+            document.getElementById('nezha-level').textContent = gameState.nezhaLevel;
+            
+            // 更新调试显示
+            document.getElementById('debug-score').textContent = gameState.score;
+            document.getElementById('debug-moves').textContent = gameState.moves;
+            document.getElementById('debug-merges').textContent = gameState.mergeCount;
+            
+            // 更新时间显示
+            const minutes = Math.floor(gameState.playTime / 60);
+            const seconds = Math.floor(gameState.playTime % 60);
+            document.getElementById('play-time').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        // 页面加载完成后自动初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            log('页面加载完成，准备初始化游戏...');
+        });
+    </script>
+</body>
+</html>

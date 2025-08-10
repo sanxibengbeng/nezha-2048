@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>合并动画修复测试</title>
+    <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-area">
+            <div class="grid-container">
+                <!-- 网格背景 -->
+                <div class="grid-cell" data-x="0" data-y="0"></div>
+                <div class="grid-cell" data-x="1" data-y="0"></div>
+                <div class="grid-cell" data-x="2" data-y="0"></div>
+                <div class="grid-cell" data-x="3" data-y="0"></div>
+                <div class="grid-cell" data-x="0" data-y="1"></div>
+                <div class="grid-cell" data-x="1" data-y="1"></div>
+                <div class="grid-cell" data-x="2" data-y="1"></div>
+                <div class="grid-cell" data-x="3" data-y="1"></div>
+                <div class="grid-cell" data-x="0" data-y="2"></div>
+                <div class="grid-cell" data-x="1" data-y="2"></div>
+                <div class="grid-cell" data-x="2" data-y="2"></div>
+                <div class="grid-cell" data-x="3" data-y="2"></div>
+                <div class="grid-cell" data-x="0" data-y="3"></div>
+                <div class="grid-cell" data-x="1" data-y="3"></div>
+                <div class="grid-cell" data-x="2" data-y="3"></div>
+                <div class="grid-cell" data-x="3" data-y="3"></div>
+            </div>
+            <canvas id="game-canvas" width="400" height="400"></canvas>
+        </div>
+    </div>
+
+    <div id="controls">
+        <button onclick="testMove()">测试移动</button>
+        <button onclick="addTestTiles()">添加测试方块</button>
+        <div id="output"></div>
+    </div>
+
+    <!-- 加载脚本 -->
+    <script src="js/core/Tile.js"></script>
+    <script src="js/core/GameState.js"></script>
+    <script src="js/core/ThemeConfig.js"></script>
+    <script src="js/managers/GridManager.js"></script>
+    <script src="js/managers/InputManager.js"></script>
+    <script src="js/managers/ThemeManager.js"></script>
+    <script src="js/managers/AnimationSystem.js"></script>
+    <script src="js/managers/AudioManager.js"></script>
+    <script src="js/managers/StateManager.js"></script>
+    <script src="js/systems/NezhaSkillSystem.js"></script>
+    <script src="js/core/GameEngine.js"></script>
+
+    <script>
+        let game = null;
+        const output = document.getElementById('output');
+        
+        function log(message) {
+            console.log(message);
+            output.innerHTML += '<p>' + message + '</p>';
+        }
+        
+        async function initGame() {
+            try {
+                const canvas = document.getElementById('game-canvas');
+                game = new GameEngine({
+                    targetFPS: 60,
+                    debug: true
+                });
+                
+                await game.init(canvas);
+                log('游戏初始化成功');
+                
+                // 添加一些测试方块
+                addTestTiles();
+                
+            } catch (error) {
+                log('游戏初始化失败: ' + error.message);
+            }
+        }
+        
+        function addTestTiles() {
+            if (!game) return;
+            
+            // 添加两个相同的方块用于测试合并
+            const tile1 = new Tile(0, 0, 2);
+            const tile2 = new Tile(1, 0, 2);
+            
+            game.gridManager.setTile(0, 0, tile1);
+            game.gridManager.setTile(1, 0, tile2);
+            
+            game.render();
+            log('添加了测试方块');
+        }
+        
+        function testMove() {
+            if (!game) return;
+            
+            try {
+                log('测试向左移动...');
+                const result = game.move({ x: -1, y: 0 });
+                log('移动结果: ' + JSON.stringify({
+                    moved: result.moved,
+                    mergedCount: result.merged ? result.merged.length : 0
+                }));
+            } catch (error) {
+                log('移动测试失败: ' + error.message);
+                console.error(error);
+            }
+        }
+        
+        // 初始化游戏
+        document.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>

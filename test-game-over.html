@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>游戏结束功能测试 - 哪吒2048</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <style>
+        .test-controls {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .test-btn {
+            margin: 5px;
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .test-btn:hover {
+            background: #0056b3;
+        }
+        
+        .test-info {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255, 255, 0, 0.1);
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body data-theme="nezha">
+    <div id="game-container">
+        <!-- 测试控制面板 -->
+        <div class="test-controls">
+            <h3>游戏结束功能测试</h3>
+            <div class="test-info">
+                <p>测试游戏结束检测、模态框显示和重新开始功能</p>
+            </div>
+            <button class="test-btn" onclick="testGameOver()">模拟游戏结束</button>
+            <button class="test-btn" onclick="testNewRecord()">模拟新纪录</button>
+            <button class="test-btn" onclick="testRestartConfirm()">测试重新开始确认</button>
+            <button class="test-btn" onclick="fillGrid()">填满网格</button>
+            <button class="test-btn" onclick="clearTestResults()">清除测试结果</button>
+            <div id="test-results" style="margin-top: 10px; font-size: 0.9rem;"></div>
+        </div>
+
+        <!-- 游戏标题和UI -->
+        <header class="game-header">
+            <h1 class="game-title">哪吒2048</h1>
+            <div class="score-container">
+                <div class="score-box">
+                    <div class="score-label">分数</div>
+                    <div id="current-score" class="score-value">0</div>
+                </div>
+                <div class="score-box">
+                    <div class="score-label">最高分</div>
+                    <div id="high-score" class="score-value">0</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 游戏信息显示 -->
+        <div class="game-info">
+            <div class="info-item">
+                <span class="info-label">移动:</span>
+                <span id="moves-count" class="info-value">0</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">时间:</span>
+                <span id="play-time" class="info-value">0:00</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">等级:</span>
+                <span id="nezha-level" class="info-value">1</span>
+            </div>
+        </div>
+
+        <!-- 游戏主区域 -->
+        <div class="game-area">
+            <canvas id="game-canvas" width="400" height="400"></canvas>
+            <div id="game-grid" class="game-grid breathing">
+                <!-- 4x4网格将通过JavaScript动态生成 -->
+            </div>
+            <!-- 特效容器 -->
+            <div id="effects-container" class="effects-container"></div>
+        </div>
+
+        <!-- 游戏控制按钮 -->
+        <div class="game-controls">
+            <button id="new-game-btn" class="control-btn primary">新游戏</button>
+            <button id="pause-btn" class="control-btn">暂停</button>
+            <button id="settings-btn" class="control-btn">设置</button>
+        </div>
+    </div>
+
+    <!-- 游戏结束弹窗 -->
+    <div id="game-over-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>游戏结束</h2>
+            <p>最终分数: <span id="final-score">0</span></p>
+            <p id="new-record" class="hidden">🎉 新纪录！</p>
+            <div class="modal-buttons">
+                <button id="restart-btn" class="control-btn primary">重新开始</button>
+                <button id="close-modal-btn" class="control-btn">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设置弹窗 -->
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>游戏设置</h2>
+            <div class="setting-item">
+                <label for="volume-slider">音量</label>
+                <input type="range" id="volume-slider" min="0" max="100" value="70">
+            </div>
+            <div class="setting-item">
+                <label for="theme-select">主题</label>
+                <select id="theme-select">
+                    <option value="nezha">哪吒主题</option>
+                    <option value="classic">经典主题</option>
+                </select>
+            </div>
+            <div class="modal-buttons">
+                <button id="save-settings-btn" class="control-btn primary">保存</button>
+                <button id="cancel-settings-btn" class="control-btn">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载脚本 -->
+    <script src="js/core/Tile.js"></script>
+    <script src="js/core/GameState.js"></script>
+    <script src="js/core/ThemeConfig.js"></script>
+    <script src="js/managers/GridManager.js"></script>
+    <script src="js/managers/InputManager.js"></script>
+    <script src="js/managers/ThemeManager.js"></script>
+    <script src="js/managers/AnimationSystem.js"></script>
+    <script src="js/managers/AudioManager.js"></script>
+    <script src="js/managers/StateManager.js"></script>
+    <script src="js/systems/NezhaSkillSystem.js"></script>
+    <script src="js/core/GameEngine.js"></script>
+    <script src="js/main.js"></script>
+
+    <script>
+        // 测试函数
+        function logTest(message) {
+            const results = document.getElementById('test-results');
+            const timestamp = new Date().toLocaleTimeString();
+            results.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+        }
+
+        function testGameOver() {
+            if (!game) {
+                logTest('❌ 游戏引擎未初始化');
+                return;
+            }
+
+            logTest('🧪 开始测试游戏结束功能...');
+            
+            // 模拟游戏结束状态
+            const gameState = game.getGameState();
+            gameState.isGameOver = true;
+            gameState.score = 12345;
+            gameState.moves = 150;
+            gameState.playTime = 300; // 5分钟
+            
+            // 触发游戏结束事件
+            game.emit('gameOver', {
+                score: gameState.score,
+                highScore: gameState.highScore,
+                moves: gameState.moves,
+                playTime: gameState.playTime,
+                maxTile: 512,
+                isNewRecord: false,
+                statistics: {
+                    totalMoves: gameState.moves,
+                    totalMerges: 75,
+                    maxConsecutiveMerges: 5,
+                    skillsUsed: { threeHeadsSixArms: 2, qiankunCircle: 1 },
+                    nezhaLevel: 3,
+                    playTimeFormatted: '5:00',
+                    efficiency: 82
+                }
+            });
+            
+            logTest('✅ 游戏结束事件已触发');
+        }
+
+        function testNewRecord() {
+            if (!game) {
+                logTest('❌ 游戏引擎未初始化');
+                return;
+            }
+
+            logTest('🧪 开始测试新纪录功能...');
+            
+            // 模拟新纪录
+            const gameState = game.getGameState();
+            gameState.isGameOver = true;
+            gameState.score = 50000; // 高分
+            gameState.moves = 200;
+            gameState.playTime = 600; // 10分钟
+            
+            // 触发游戏结束事件（新纪录）
+            game.emit('gameOver', {
+                score: gameState.score,
+                highScore: Math.max(gameState.highScore, gameState.score - 1000), // 确保是新纪录
+                moves: gameState.moves,
+                playTime: gameState.playTime,
+                maxTile: 2048,
+                isNewRecord: true,
+                statistics: {
+                    totalMoves: gameState.moves,
+                    totalMerges: 100,
+                    maxConsecutiveMerges: 8,
+                    skillsUsed: { threeHeadsSixArms: 5, qiankunCircle: 3, huntianLing: 2 },
+                    nezhaLevel: 5,
+                    playTimeFormatted: '10:00',
+                    efficiency: 250
+                }
+            });
+            
+            logTest('✅ 新纪录事件已触发');
+        }
+
+        function testRestartConfirm() {
+            if (!game) {
+                logTest('❌ 游戏引擎未初始化');
+                return;
+            }
+
+            logTest('🧪 开始测试重新开始确认功能...');
+            
+            // 模拟游戏进行中
+            const gameState = game.getGameState();
+            gameState.score = 1000;
+            gameState.moves = 50;
+            gameState.isGameOver = false;
+            
+            // 更新显示
+            updateScoreDisplay();
+            
+            logTest('✅ 游戏状态已设置为进行中，点击"新游戏"按钮测试确认对话框');
+        }
+
+        function fillGrid() {
+            if (!game) {
+                logTest('❌ 游戏引擎未初始化');
+                return;
+            }
+
+            logTest('🧪 填满网格以测试游戏结束检测...');
+            
+            const gameState = game.getGameState();
+            const gridManager = game.getGridManager();
+            
+            // 填满网格，但不能移动
+            const values = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2, 4, 8, 16, 32, 64];
+            let index = 0;
+            
+            for (let x = 0; x < 4; x++) {
+                for (let y = 0; y < 4; y++) {
+                    const tile = new Tile(x, y, values[index % values.length]);
+                    gameState.setTile(x, y, tile);
+                    index++;
+                }
+            }
+            
+            // 强制检查游戏结束
+            setTimeout(() => {
+                game.checkGameOver();
+            }, 100);
+            
+            logTest('✅ 网格已填满，游戏结束检测已触发');
+        }
+
+        function clearTestResults() {
+            document.getElementById('test-results').innerHTML = '';
+            logTest('🧹 测试结果已清除');
+        }
+
+        // 页面加载完成后添加测试信息
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                logTest('📋 游戏结束功能测试页面已加载');
+                logTest('💡 使用上方按钮测试各种游戏结束场景');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>三头六臂技能测试 - 哪吒2048</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <style>
+        .test-controls {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .test-btn {
+            margin: 5px;
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .test-btn:hover {
+            background: #0056b3;
+        }
+        
+        .test-info {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255, 255, 0, 0.1);
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .instruction-box {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(255, 215, 0, 0.1);
+            border-radius: 10px;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+        }
+        
+        .instruction-box h4 {
+            margin: 0 0 10px 0;
+            color: #DC143C;
+        }
+        
+        .key-combo {
+            display: inline-block;
+            background: #333;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 0 2px;
+        }
+    </style>
+</head>
+<body data-theme="nezha">
+    <div id="game-container">
+        <!-- 测试控制面板 -->
+        <div class="test-controls">
+            <h3>三头六臂技能测试</h3>
+            <div class="test-info">
+                <p>测试多方向操作模式、视觉反馈和技能效果</p>
+            </div>
+            
+            <div class="instruction-box">
+                <h4>🔥 三头六臂技能使用说明：</h4>
+                <p>1. 点击"激活三头六臂"或按 <span class="key-combo">Q</span> 键激活技能</p>
+                <p>2. 技能激活后，快速按多个方向键进行多方向操作</p>
+                <p>3. 支持的方向键：<span class="key-combo">↑</span> <span class="key-combo">↓</span> <span class="key-combo">←</span> <span class="key-combo">→</span> 或 <span class="key-combo">W</span> <span class="key-combo">S</span> <span class="key-combo">A</span> <span class="key-combo">D</span></p>
+                <p>4. 技能持续8秒，冷却15秒</p>
+            </div>
+            
+            <button class="test-btn" onclick="activateThreeHeadsSixArms()">激活三头六臂</button>
+            <button class="test-btn" onclick="testMultiDirection()">测试多方向</button>
+            <button class="test-btn" onclick="addTestTiles()">添加测试方块</button>
+            <button class="test-btn" onclick="showSkillStatus()">显示技能状态</button>
+            <button class="test-btn" onclick="clearTestResults()">清除测试结果</button>
+            <div id="test-results" style="margin-top: 10px; font-size: 0.9rem;"></div>
+        </div>
+
+        <!-- 游戏标题和UI -->
+        <header class="game-header">
+            <h1 class="game-title">哪吒2048</h1>
+            <div class="score-container">
+                <div class="score-box">
+                    <div class="score-label">分数</div>
+                    <div id="current-score" class="score-value">0</div>
+                </div>
+                <div class="score-box">
+                    <div class="score-label">最高分</div>
+                    <div id="high-score" class="score-value">0</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 技能栏 -->
+        <div class="skills-container">
+            <div class="skill-item" id="skill-three-heads" title="三头六臂 - 多方向操作">
+                <div class="skill-icon">🔥</div>
+                <div class="skill-cooldown"></div>
+            </div>
+            <div class="skill-item locked" id="skill-qiankun-circle" title="乾坤圈">
+                <div class="skill-icon">⭕</div>
+                <div class="skill-cooldown"></div>
+            </div>
+            <div class="skill-item locked" id="skill-huntian-ling" title="混天绫">
+                <div class="skill-icon">🌊</div>
+                <div class="skill-cooldown"></div>
+            </div>
+            <div class="skill-item locked" id="skill-transformation" title="哪吒变身">
+                <div class="skill-icon">⚡</div>
+                <div class="skill-cooldown"></div>
+            </div>
+        </div>
+
+        <!-- 游戏信息显示 -->
+        <div class="game-info">
+            <div class="info-item">
+                <span class="info-label">移动:</span>
+                <span id="moves-count" class="info-value">0</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">时间:</span>
+                <span id="play-time" class="info-value">0:00</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">等级:</span>
+                <span id="nezha-level" class="info-value">1</span>
+            </div>
+        </div>
+
+        <!-- 游戏主区域 -->
+        <div class="game-area">
+            <canvas id="game-canvas" width="400" height="400"></canvas>
+            <div id="game-grid" class="game-grid breathing">
+                <!-- 4x4网格将通过JavaScript动态生成 -->
+            </div>
+            <!-- 特效容器 -->
+            <div id="effects-container" class="effects-container"></div>
+        </div>
+
+        <!-- 游戏控制按钮 -->
+        <div class="game-controls">
+            <button id="new-game-btn" class="control-btn primary">新游戏</button>
+            <button id="pause-btn" class="control-btn">暂停</button>
+            <button id="settings-btn" class="control-btn">设置</button>
+        </div>
+    </div>
+
+    <!-- 游戏结束弹窗 -->
+    <div id="game-over-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>游戏结束</h2>
+            <p>最终分数: <span id="final-score">0</span></p>
+            <p id="new-record" class="hidden">🎉 新纪录！</p>
+            <div class="modal-buttons">
+                <button id="restart-btn" class="control-btn primary">重新开始</button>
+                <button id="close-modal-btn" class="control-btn">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设置弹窗 -->
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>游戏设置</h2>
+            <div class="setting-item">
+                <label for="volume-slider">音量</label>
+                <input type="range" id="volume-slider" min="0" max="100" value="70">
+            </div>
+            <div class="setting-item">
+                <label for="theme-select">主题</label>
+                <select id="theme-select">
+                    <option value="nezha">哪吒主题</option>
+                    <option value="classic">经典主题</option>
+                </select>
+            </div>
+            <div class="modal-buttons">
+                <button id="save-settings-btn" class="control-btn primary">保存</button>
+                <button id="cancel-settings-btn" class="control-btn">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载脚本 -->
+    <script src="js/core/Tile.js"></script>
+    <script src="js/core/GameState.js"></script>
+    <script src="js/core/ThemeConfig.js"></script>
+    <script src="js/managers/GridManager.js"></script>
+    <script src="js/managers/InputManager.js"></script>
+    <script src="js/managers/ThemeManager.js"></script>
+    <script src="js/managers/AnimationSystem.js"></script>
+    <script src="js/managers/AudioManager.js"></script>
+    <script src="js/managers/StateManager.js"></script>
+    <script src="js/systems/NezhaSkillSystem.js"></script>
+    <script src="js/core/GameEngine.js"></script>
+    <script src="js/main.js"></script>
+
+    <script>
+        // 测试函数
+        function logTest(message) {
+            const results = document.getElementById('test-results');
+            const timestamp = new Date().toLocaleTimeString();
+            results.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+        }
+
+        function activateThreeHeadsSixArms() {
+            if (!game || !game.getNezhaSkillSystem) {
+                logTest('❌ 技能系统未初始化');
+                return;
+            }
+
+            logTest('🔥 尝试激活三头六臂技能...');
+            
+            const skillSystem = game.getNezhaSkillSystem();
+            
+            // 确保技能已解锁
+            const gameState = game.getGameState();
+            gameState.score = 2000; // 设置足够的分数解锁技能
+            updateScoreDisplay();
+            
+            // 强制解锁技能
+            skillSystem.unlockSkill('threeHeadsSixArms');
+            
+            // 激活技能
+            const success = skillSystem.triggerSkill('threeHeadsSixArms');
+            
+            if (success) {
+                logTest('✅ 三头六臂技能激活成功！');
+                logTest('💡 现在可以使用多方向操作了，试试快速按多个方向键');
+            } else {
+                logTest('❌ 三头六臂技能激活失败');
+            }
+        }
+
+        function testMultiDirection() {
+            if (!game || !game.getInputManager) {
+                logTest('❌ 输入管理器未初始化');
+                return;
+            }
+
+            logTest('🧪 开始测试多方向操作...');
+            
+            const inputManager = game.getInputManager();
+            
+            // 模拟多方向输入
+            const directions = ['up', 'right', 'down'];
+            
+            logTest(`🔥 模拟多方向输入: ${directions.join(', ')}`);
+            
+            // 启用多方向模式
+            inputManager.enableMultiDirectionMode(true);
+            
+            // 模拟快速输入多个方向
+            directions.forEach((direction, index) => {
+                setTimeout(() => {
+                    inputManager.processDirectionInput(direction);
+                    logTest(`📍 输入方向: ${direction}`);
+                }, index * 50);
+            });
+            
+            // 3秒后关闭多方向模式
+            setTimeout(() => {
+                inputManager.enableMultiDirectionMode(false);
+                logTest('🔥 多方向模式已关闭');
+            }, 3000);
+        }
+
+        function addTestTiles() {
+            if (!game) {
+                logTest('❌ 游戏引擎未初始化');
+                return;
+            }
+
+            logTest('🧪 添加测试方块...');
+            
+            const gameState = game.getGameState();
+            const gridManager = game.getGridManager();
+            
+            // 清空网格
+            for (let x = 0; x < 4; x++) {
+                for (let y = 0; y < 4; y++) {
+                    gameState.setTile(x, y, null);
+                }
+            }
+            
+            // 添加一些测试方块，确保可以移动
+            const testTiles = [
+                { x: 0, y: 0, value: 2 },
+                { x: 1, y: 0, value: 2 },
+                { x: 0, y: 1, value: 4 },
+                { x: 2, y: 2, value: 8 },
+                { x: 3, y: 3, value: 16 }
+            ];
+            
+            testTiles.forEach(tileData => {
+                const tile = new Tile(tileData.x, tileData.y, tileData.value);
+                gameState.setTile(tileData.x, tileData.y, tile);
+            });
+            
+            logTest('✅ 测试方块已添加，现在可以测试多方向移动了');
+        }
+
+        function showSkillStatus() {
+            if (!game || !game.getNezhaSkillSystem) {
+                logTest('❌ 技能系统未初始化');
+                return;
+            }
+
+            const skillSystem = game.getNezhaSkillSystem();
+            const skillInfo = skillSystem.getSkillInfo('threeHeadsSixArms');
+            
+            if (skillInfo) {
+                const skill = skillInfo.skill;
+                const state = skillInfo.state;
+                
+                logTest('📊 三头六臂技能状态:');
+                logTest(`   解锁: ${skillInfo.unlocked ? '✅' : '❌'}`);
+                logTest(`   可用: ${skillInfo.canActivate ? '✅' : '❌'}`);
+                logTest(`   激活中: ${state.isActive ? '✅' : '❌'}`);
+                logTest(`   冷却剩余: ${Math.ceil(state.cooldownRemaining / 1000)}秒`);
+                logTest(`   使用次数: ${state.usageCount}`);
+                
+                // 检查多方向模式状态
+                const inputManager = game.getInputManager();
+                if (inputManager) {
+                    const stats = inputManager.getStats();
+                    logTest(`   多方向模式: ${inputManager.multiDirectionMode ? '✅' : '❌'}`);
+                }
+            }
+        }
+
+        function clearTestResults() {
+            document.getElementById('test-results').innerHTML = '';
+            logTest('🧹 测试结果已清除');
+        }
+
+        // 页面加载完成后添加测试信息
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                logTest('📋 三头六臂技能测试页面已加载');
+                logTest('💡 点击"激活三头六臂"开始测试');
+                logTest('🎮 技能激活后，快速按多个方向键体验多方向操作');
+                
+                // 自动添加测试方块
+                setTimeout(() => {
+                    addTestTiles();
+                }, 1000);
+            }, 1000);
+        });
+
+        // 监听键盘事件，显示按键反馈
+        document.addEventListener('keydown', function(event) {
+            const directionKeys = {
+                'ArrowUp': '↑',
+                'ArrowDown': '↓', 
+                'ArrowLeft': '←',
+                'ArrowRight': '→',
+                'KeyW': 'W(↑)',
+                'KeyS': 'S(↓)',
+                'KeyA': 'A(←)',
+                'KeyD': 'D(→)',
+                'KeyQ': 'Q(技能)'
+            };
+            
+            if (directionKeys[event.code]) {
+                logTest(`⌨️ 按键: ${directionKeys[event.code]}`);
+            }
+        });
+    </script>
+</body>
+</html>

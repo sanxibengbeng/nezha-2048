@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>混天绫技能测试 - 哪吒2048</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <style>
+        .test-controls {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .test-btn {
+            margin: 5px;
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .test-btn:hover {
+            background: #0056b3;
+        }
+        
+        .test-info {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255, 255, 0, 0.1);
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .instruction-box {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(0, 206, 209, 0.1);
+            border-radius: 10px;
+            border: 2px solid rgba(0, 206, 209, 0.3);
+        }
+        
+        .instruction-box h4 {
+            margin: 0 0 10px 0;
+            color: #DC143C;
+        }
+        
+        .key-combo {
+            display: inline-block;
+            background: #333;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 0 2px;
+        }
+        
+        .pattern-examples {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(64, 224, 208, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(64, 224, 208, 0.3);
+        }
+        
+        .pattern-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2px;
+            max-width: 200px;
+            margin: 10px auto;
+            background: #ccc;
+            padding: 2px;
+            border-radius: 4px;
+        }
+        
+        .pattern-cell {
+            aspect-ratio: 1;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .pattern-cell.highlight {
+            background: #00CED1;
+            color: white;
+        }
+    </style>
+</head>
+<body data-theme="nezha">
+    <div id="game-container">
+        <!-- 测试控制面板 -->
+        <div class="test-controls">
+            <h3>混天绫技能测试</h3>
+            <div class="test-info">
+                <p>测试特定数字组合检测、连锁消除算法和动画效果</p>
+            </div>
+            
+            <div class="instruction-box">
+                <h4>🌊 混天绫技能使用说明：</h4>
+                <p>1. 检测特定数字组合模式自动触发混天绫技能</p>
+                <p>2. 或者点击"激活混天绫"按钮手动触发</p>
+                <p>3. 支持递增序列、聚集模式、对称模式等</p>
+                <p>4. 连锁消除获得倍数分数奖励</p>
+                <p>5. 技能冷却25秒</p>
+            </div>
+            
+            <div class="pattern-examples">
+                <h4>🎯 支持的模式示例：</h4>
+                
+                <div style="margin: 10px 0;">
+                    <strong>递增序列模式 (2-4-8):</strong>
+                    <div class="pattern-grid">
+                        <div class="pattern-cell highlight">2</div>
+                        <div class="pattern-cell highlight">4</div>
+                        <div class="pattern-cell highlight">8</div>
+                        <div class="pattern-cell"></div>
+                        <div class="pattern-cell"></div>
+                        <div class="pattern-cell"></div>
+                        <div class="pattern-cell"></div>
+                        <div class="pattern-cell"></div>
+                        <div class="pattern-cell"></div>
+                        <div class="pattern-cell"></div>
+                        <div class="pattern-cell"></div>
+                        <div class="pattern-cell"></div>
+                        <div class="pattern-cell"></div>
+                        <div class="pattern-cell"></div>
+                        <div class="pattern-cell"></div>
+                        <div class="pattern-cell"></div>
+                    </div>
+                </div>
+                
+                <div style="margin: 10px 0;">
+                    <strong>聚集模式 (4个相同数值):</strong>
+                    <div class="pattern-grid">
+                        <div class="pattern-cell highlight">16</div>
+                        <div class="pattern-cell highlight">16</div>
+                        <div class="pattern-cell"></div>
+                        <div class="pattern-cell"></div>
+                        <div class="pattern-cell highlight">16</div>
+                        <div class="pattern-cell highlight">16</div>
+                        <div class="pattern-cell"></div>
+                        <div class="pattern-cell"></div>
+                        <div class="pattern-cell"></div>
+                        <div class="pattern-cell"></div>
+                        <div class="pattern-cell"></div>
+                        <div class="pattern-cell"></div>
+                        <div class="pattern-cell"></div>
+                        <div class="pattern-cell"></div>
+                        <div class="pattern-cell"></div>
+                        <div class="pattern-cell"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="test-btn" onclick="activateHuntianLing()">激活混天绫</button>
+            <button class="test-btn" onclick="createProgressionPattern()">创建递增序列</button>
+            <button class="test-btn" onclick="createClusterPattern()">创建聚集模式</button>
+            <button class="test-btn" onclick="createSymmetryPattern()">创建对称模式</button>
+            <button class="test-btn" onclick="testPatternDetection()">测试模式检测</button>
+            <button class="test-btn" onclick="showSkillStatus()">显示技能状态</button>
+            <button class="test-btn" onclick="clearTestResults()">清除测试结果</button>
+            <div id="test-results" style="margin-top: 10px; font-size: 0.9rem;"></div>
+        </div>
+
+        <!-- 游戏标题和UI -->
+        <header class="game-header">
+            <h1 class="game-title">哪吒2048</h1>
+            <div class="score-container">
+                <div class="score-box">
+                    <div class="score-label">分数</div>
+                    <div id="current-score" class="score-value">0</div>
+                </div>
+                <div class="score-box">
+                    <div class="score-label">最高分</div>
+                    <div id="high-score" class="score-value">0</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 技能栏 -->
+        <div class="skills-container">
+            <div class="skill-item locked" id="skill-three-heads" title="三头六臂">
+                <div class="skill-icon">🔥</div>
+                <div class="skill-cooldown"></div>
+            </div>
+            <div class="skill-item locked" id="skill-qiankun-circle" title="乾坤圈">
+                <div class="skill-icon">⭕</div>
+                <div class="skill-cooldown"></div>
+            </div>
+            <div class="skill-item" id="skill-huntian-ling" title="混天绫 - 连锁消除">
+                <div class="skill-icon">🌊</div>
+                <div class="skill-cooldown"></div>
+            </div>
+            <div class="skill-item locked" id="skill-transformation" title="哪吒变身">
+                <div class="skill-icon">⚡</div>
+                <div class="skill-cooldown"></div>
+            </div>
+        </div>
+
+        <!-- 游戏信息显示 -->
+        <div class="game-info">
+            <div class="info-item">
+                <span class="info-label">移动:</span>
+                <span id="moves-count" class="info-value">0</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">时间:</span>
+                <span id="play-time" class="info-value">0:00</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">等级:</span>
+                <span id="nezha-level" class="info-value">1</span>
+            </div>
+        </div>
+
+        <!-- 游戏主区域 -->
+        <div class="game-area">
+            <canvas id="game-canvas" width="400" height="400"></canvas>
+            <div id="game-grid" class="game-grid breathing">
+                <!-- 4x4网格将通过JavaScript动态生成 -->
+            </div>
+            <!-- 特效容器 -->
+            <div id="effects-container" class="effects-container"></div>
+        </div>
+
+        <!-- 游戏控制按钮 -->
+        <div class="game-controls">
+            <button id="new-game-btn" class="control-btn primary">新游戏</button>
+            <button id="pause-btn" class="control-btn">暂停</button>
+            <button id="settings-btn" class="control-btn">设置</button>
+        </div>
+    </div>
+
+    <!-- 游戏结束弹窗 -->
+    <div id="game-over-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>游戏结束</h2>
+            <p>最终分数: <span id="final-score">0</span></p>
+            <p id="new-record" class="hidden">🎉 新纪录！</p>
+            <div class="modal-buttons">
+                <button id="restart-btn" class="control-btn primary">重新开始</button>
+                <button id="close-modal-btn" class="control-btn">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设置弹窗 -->
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>游戏设置</h2>
+            <div class="setting-item">
+                <label for="volume-slider">音量</label>
+                <input type="range" id="volume-slider" min="0" max="100" value="70">
+            </div>
+            <div class="setting-item">
+                <label for="theme-select">主题</label>
+                <select id="theme-select">
+                    <option value="nezha">哪吒主题</option>
+                    <option value="classic">经典主题</option>
+                </select>
+            </div>
+            <div class="modal-buttons">
+                <button id="save-settings-btn" class="control-btn primary">保存</button>
+                <button id="cancel-settings-btn" class="control-btn">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载脚本 -->
+    <script src="js/core/Tile.js"></script>
+    <script src="js/core/GameState.js"></script>
+    <script src="js/core/ThemeConfig.js"></script>
+    <script src="js/managers/GridManager.js"></script>
+    <script src="js/managers/InputManager.js"></script>
+    <script src="js/managers/ThemeManager.js"></script>
+    <script src="js/managers/AnimationSystem.js"></script>
+    <script src="js/managers/AudioManager.js"></script>
+    <script src="js/managers/StateManager.js"></script>
+    <script src="js/systems/NezhaSkillSystem.js"></script>
+    <script src="js/core/GameEngine.js"></script>
+    <script src="js/main.js"></script>
+
+    <script>
+        // 测试函数
+        function logTest(message) {
+            const results = document.getElementById('test-results');
+            const timestamp = new Date().toLocaleTimeString();
+            results.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+        }
+
+        function activateHuntianLing() {
+            if (!game || !game.getNezhaSkillSystem) {
+                logTest('❌ 技能系统未初始化');
+                return;
+            }
+
+            logTest('🌊 尝试激活混天绫技能...');
+            
+            const skillSystem = game.getNezhaSkillSystem();
+            
+            // 确保技能已解锁
+            const gameState = game.getGameState();
+            gameState.score = 6000; // 设置足够的分数解锁技能
+            updateScoreDisplay();
+            
+            // 强制解锁技能
+            skillSystem.unlockSkill('huntianLing');
+            
+            // 激活技能
+            const success = skillSystem.triggerSkill('huntianLing');
+            
+            if (success) {
+                logTest('✅ 混天绫技能激活成功！');
+                logTest('💡 观察连锁消除的预览和动画效果');
+            } else {
+                logTest('❌ 混天绫技能激活失败');
+            }
+        }
+
+        function createProgressionPattern() {
+            if (!game) {
+                logTest('❌ 游戏引擎未初始化');
+                return;
+            }
+
+            logTest('🧪 创建递增序列模式...');
+            
+            const gameState = game.getGameState();
+            
+            // 清空网格
+            for (let x = 0; x < 4; x++) {
+                for (let y = 0; y < 4; y++) {
+                    gameState.setTile(x, y, null);
+                }
+            }
+            
+            // 创建水平递增序列 2-4-8
+            gameState.setTile(0, 1, new Tile(0, 1, 2));
+            gameState.setTile(1, 1, new Tile(1, 1, 4));
+            gameState.setTile(2, 1, new Tile(2, 1, 8));
+            
+            // 创建垂直递增序列 4-8-16
+            gameState.setTile(3, 0, new Tile(3, 0, 4));
+            gameState.setTile(3, 1, new Tile(3, 1, 8));
+            gameState.setTile(3, 2, new Tile(3, 2, 16));
+            
+            // 添加一些其他方块
+            gameState.setTile(0, 0, new Tile(0, 0, 32));
+            gameState.setTile(2, 3, new Tile(2, 3, 64));
+            
+            logTest('✅ 递增序列模式已创建 (2-4-8 和 4-8-16)');
+        }
+
+        function createClusterPattern() {
+            if (!game) {
+                logTest('❌ 游戏引擎未初始化');
+                return;
+            }
+
+            logTest('🧪 创建聚集模式...');
+            
+            const gameState = game.getGameState();
+            
+            // 清空网格
+            for (let x = 0; x < 4; x++) {
+                for (let y = 0; y < 4; y++) {
+                    gameState.setTile(x, y, null);
+                }
+            }
+            
+            // 创建16的聚集模式
+            gameState.setTile(1, 1, new Tile(1, 1, 16));
+            gameState.setTile(2, 1, new Tile(2, 1, 16));
+            gameState.setTile(1, 2, new Tile(1, 2, 16));
+            gameState.setTile(2, 2, new Tile(2, 2, 16));
+            
+            // 创建32的聚集模式
+            gameState.setTile(0, 0, new Tile(0, 0, 32));
+            gameState.setTile(1, 0, new Tile(1, 0, 32));
+            gameState.setTile(0, 1, new Tile(0, 1, 32));
+            gameState.setTile(0, 2, new Tile(0, 2, 32));
+            gameState.setTile(0, 3, new Tile(0, 3, 32));
+            
+            logTest('✅ 聚集模式已创建 (16的4聚集 和 32的5聚集)');
+        }
+
+        function createSymmetryPattern() {
+            if (!game) {
+                logTest('❌ 游戏引擎未初始化');
+                return;
+            }
+
+            logTest('🧪 创建对称模式...');
+            
+            const gameState = game.getGameState();
+            
+            // 清空网格
+            for (let x = 0; x < 4; x++) {
+                for (let y = 0; y < 4; y++) {
+                    gameState.setTile(x, y, null);
+                }
+            }
+            
+            // 创建中心对称模式
+            gameState.setTile(0, 0, new Tile(0, 0, 8));
+            gameState.setTile(3, 3, new Tile(3, 3, 8));
+            gameState.setTile(1, 0, new Tile(1, 0, 16));
+            gameState.setTile(2, 3, new Tile(2, 3, 16));
+            gameState.setTile(0, 1, new Tile(0, 1, 32));
+            gameState.setTile(3, 2, new Tile(3, 2, 32));
+            
+            logTest('✅ 对称模式已创建 (中心对称)');
+        }
+
+        function testPatternDetection() {
+            if (!game || !game.getNezhaSkillSystem) {
+                logTest('❌ 技能系统未初始化');
+                return;
+            }
+
+            logTest('🧪 测试模式检测算法...');
+            
+            const skillSystem = game.getNezhaSkillSystem();
+            
+            // 测试特定模式检测
+            const patterns = skillSystem.findSpecificPatterns();
+            
+            logTest(`🔍 检测到 ${patterns.length} 个模式:`);
+            
+            patterns.forEach((pattern, index) => {
+                logTest(`   模式 ${index + 1}: ${pattern.type}, ${pattern.tiles.length} 个方块, 倍数 x${pattern.multiplier}`);
+            });
+            
+            if (patterns.length === 0) {
+                logTest('💡 没有检测到可连锁的模式，尝试创建一些测试模式');
+            } else {
+                logTest('✅ 模式检测完成，可以激活混天绫技能');
+            }
+        }
+
+        function showSkillStatus() {
+            if (!game || !game.getNezhaSkillSystem) {
+                logTest('❌ 技能系统未初始化');
+                return;
+            }
+
+            const skillSystem = game.getNezhaSkillSystem();
+            const skillInfo = skillSystem.getSkillInfo('huntianLing');
+            
+            if (skillInfo) {
+                const skill = skillInfo.skill;
+                const state = skillInfo.state;
+                
+                logTest('📊 混天绫技能状态:');
+                logTest(`   解锁: ${skillInfo.unlocked ? '✅' : '❌'}`);
+                logTest(`   可用: ${skillInfo.canActivate ? '✅' : '❌'}`);
+                logTest(`   激活中: ${state.isActive ? '✅' : '❌'}`);
+                logTest(`   冷却剩余: ${Math.ceil(state.cooldownRemaining / 1000)}秒`);
+                logTest(`   使用次数: ${state.usageCount}`);
+                
+                // 检查当前模式
+                const patterns = skillSystem.findSpecificPatterns();
+                logTest(`   当前可检测模式: ${patterns.length} 个`);
+            }
+        }
+
+        function clearTestResults() {
+            document.getElementById('test-results').innerHTML = '';
+            logTest('🧹 测试结果已清除');
+        }
+
+        // 页面加载完成后添加测试信息
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                logTest('📋 混天绫技能测试页面已加载');
+                logTest('💡 点击"创建递增序列"等按钮创建测试模式');
+                logTest('🎮 然后点击"激活混天绫"测试连锁消除效果');
+                
+                // 自动创建一个测试模式
+                setTimeout(() => {
+                    createProgressionPattern();
+                }, 1000);
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

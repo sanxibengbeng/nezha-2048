@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>特效系统集成测试 - 哪吒2048</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <style>
+        .test-controls {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .test-btn {
+            margin: 5px;
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .test-btn:hover {
+            background: #0056b3;
+        }
+        
+        .status-display {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(0, 255, 0, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(0, 255, 0, 0.3);
+            text-align: left;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body data-theme="nezha">
+    <div id="game-container">
+        <div class="test-controls">
+            <h3>特效系统集成测试</h3>
+            <p>测试GameEngine中的特效系统是否正常工作</p>
+            
+            <button class="test-btn" onclick="testGameEngineInit()">测试GameEngine初始化</button>
+            <button class="test-btn" onclick="testEffectsManager()">测试EffectsManager</button>
+            <button class="test-btn" onclick="testParticleSystem()">测试ParticleSystem</button>
+            <button class="test-btn" onclick="clearResults()">清除结果</button>
+            
+            <div class="status-display" id="test-results"></div>
+        </div>
+
+        <!-- 游戏主区域 -->
+        <div class="game-area">
+            <canvas id="game-canvas" width="400" height="400"></canvas>
+        </div>
+    </div>
+
+    <!-- 加载脚本 - 按正确顺序 -->
+    <script src="js/core/Tile.js"></script>
+    <script src="js/core/GameState.js"></script>
+    <script src="js/core/ThemeConfig.js"></script>
+    <script src="js/managers/GridManager.js"></script>
+    <script src="js/managers/InputManager.js"></script>
+    <script src="js/managers/ThemeManager.js"></script>
+    <script src="js/managers/AnimationSystem.js"></script>
+    <script src="js/managers/AudioManager.js"></script>
+    <script src="js/managers/StateManager.js"></script>
+    <script src="js/effects/ParticleSystem.js"></script>
+    <script src="js/managers/EffectsManager.js"></script>
+    <script src="js/systems/NezhaSkillSystem.js"></script>
+    <script src="js/core/GameEngine.js"></script>
+
+    <script>
+        let testGame = null;
+        
+        function logTest(message, type = 'info') {
+            const results = document.getElementById('test-results');
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? 'red' : type === 'success' ? 'green' : 'black';
+            results.innerHTML += `<div style="color: ${color};">[${timestamp}] ${message}</div>`;
+            results.scrollTop = results.scrollHeight;
+        }
+
+        function clearResults() {
+            document.getElementById('test-results').innerHTML = '';
+        }
+
+        function testGameEngineInit() {
+            try {
+                logTest('开始测试GameEngine初始化...');
+                
+                const canvas = document.getElementById('game-canvas');
+                if (!canvas) {
+                    logTest('❌ Canvas元素未找到', 'error');
+                    return;
+                }
+                
+                testGame = new GameEngine({
+                    targetFPS: 60,
+                    debug: true
+                });
+                
+                logTest('✅ GameEngine创建成功', 'success');
+                
+                // 测试初始化
+                testGame.init(canvas).then(() => {
+                    logTest('✅ GameEngine初始化成功', 'success');
+                    
+                    // 检查特效管理器
+                    const effectsManager = testGame.getEffectsManager();
+                    if (effectsManager) {
+                        logTest('✅ EffectsManager获取成功', 'success');
+                        
+                        // 测试特效管理器功能
+                        const status = effectsManager.getStatus();
+                        logTest(`📊 EffectsManager状态: 质量=${status.qualityLevel}, 最大特效=${status.maxEffects}`);
+                        
+                        // 测试创建特效
+                        effectsManager.createNezhaEffect('fire', 200, 200);
+                        logTest('✅ 测试特效创建成功', 'success');
+                        
+                    } else {
+                        logTest('❌ EffectsManager获取失败', 'error');
+                    }
+                }).catch(error => {
+                    logTest(`❌ GameEngine初始化失败: ${error.message}`, 'error');
+                    console.error('GameEngine初始化错误:', error);
+                });
+                
+            } catch (error) {
+                logTest(`❌ GameEngine创建失败: ${error.message}`, 'error');
+                console.error('GameEngine创建错误:', error);
+            }
+        }
+
+        function testEffectsManager() {
+            try {
+                logTest('开始测试EffectsManager...');
+                
+                const canvas = document.getElementById('game-canvas');
+                const effectsManager = new EffectsManager(canvas);
+                
+                logTest('✅ EffectsManager创建成功', 'success');
+                
+                effectsManager.start();
+                logTest('✅ EffectsManager启动成功', 'success');
+                
+                // 测试创建特效
+                effectsManager.createNezhaEffect('fire', 200, 200);
+                logTest('✅ 特效创建成功', 'success');
+                
+                const status = effectsManager.getStatus();
+                logTest(`📊 特效状态: 活跃特效=${status.activeEffects}, 质量=${status.qualityLevel}`);
+                
+            } catch (error) {
+                logTest(`❌ EffectsManager测试失败: ${error.message}`, 'error');
+                console.error('EffectsManager测试错误:', error);
+            }
+        }
+
+        function testParticleSystem() {
+            try {
+                logTest('开始测试ParticleSystem...');
+                
+                const canvas = document.getElementById('game-canvas');
+                const particleSystem = new ParticleSystem(canvas);
+                
+                logTest('✅ ParticleSystem创建成功', 'success');
+                
+                particleSystem.start();
+                logTest('✅ ParticleSystem启动成功', 'success');
+                
+                // 测试创建粒子效果
+                particleSystem.createEffect('fire', 100, 100);
+                logTest('✅ 粒子效果创建成功', 'success');
+                
+                const status = particleSystem.getStatus();
+                logTest(`📊 粒子状态: 粒子数=${status.particleCount}, 发射器=${status.emitterCount}`);
+                
+            } catch (error) {
+                logTest(`❌ ParticleSystem测试失败: ${error.message}`, 'error');
+                console.error('ParticleSystem测试错误:', error);
+            }
+        }
+
+        // 页面加载完成后自动运行基础测试
+        document.addEventListener('DOMContentLoaded', () => {
+            logTest('页面加载完成，开始基础测试...');
+            
+            // 检查类是否存在
+            if (typeof ParticleSystem !== 'undefined') {
+                logTest('✅ ParticleSystem类已加载', 'success');
+            } else {
+                logTest('❌ ParticleSystem类未加载', 'error');
+            }
+            
+            if (typeof EffectsManager !== 'undefined') {
+                logTest('✅ EffectsManager类已加载', 'success');
+            } else {
+                logTest('❌ EffectsManager类未加载', 'error');
+            }
+            
+            if (typeof GameEngine !== 'undefined') {
+                logTest('✅ GameEngine类已加载', 'success');
+            } else {
+                logTest('❌ GameEngine类未加载', 'error');
+            }
+            
+            logTest('💡 点击按钮进行详细测试');
+        });
+    </script>
+</body>
+</html>

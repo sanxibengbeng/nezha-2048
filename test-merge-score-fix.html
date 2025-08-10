@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>合并分数修复测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #faf8ef;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .game-container {
+            width: 500px;
+            height: 500px;
+            background-color: #bbada0;
+            border-radius: 10px;
+            position: relative;
+            margin: 20px auto;
+        }
+        .grid-container {
+            position: absolute;
+            z-index: 1;
+        }
+        .grid-row {
+            display: flex;
+        }
+        .grid-cell {
+            width: 107px;
+            height: 107px;
+            background-color: rgba(238, 228, 218, 0.35);
+            border-radius: 3px;
+            margin: 15px;
+        }
+        .tile-container {
+            position: absolute;
+            z-index: 2;
+        }
+        .tile {
+            width: 107px;
+            height: 107px;
+            background-color: #eee4da;
+            border-radius: 3px;
+            font-weight: bold;
+            font-size: 35px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+            transition: all 0.15s ease-in-out;
+        }
+        .controls {
+            text-align: center;
+            margin: 20px;
+        }
+        button {
+            margin: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background-color: #8f7a66;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #9f8a76;
+        }
+        .debug-info {
+            margin: 20px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .score-display {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+            color: #8f7a66;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>合并分数修复测试</h1>
+        
+        <div class="score-display">
+            分数: <span id="current-score">0</span>
+        </div>
+        
+        <div class="controls">
+            <button onclick="setupMergeTest()">设置合并测试场景</button>
+            <button onclick="testMove('right')">向右移动 (触发合并)</button>
+            <button onclick="testCalculateScore()">测试分数计算</button>
+            <button onclick="clearDebug()">清除日志</button>
+        </div>
+
+        <div class="game-container">
+            <div class="grid-container">
+                <div class="grid-row">
+                    <div class="grid-cell"></div>
+                    <div class="grid-cell"></div>
+                    <div class="grid-cell"></div>
+                    <div class="grid-cell"></div>
+                </div>
+                <div class="grid-row">
+                    <div class="grid-cell"></div>
+                    <div class="grid-cell"></div>
+                    <div class="grid-cell"></div>
+                    <div class="grid-cell"></div>
+                </div>
+                <div class="grid-row">
+                    <div class="grid-cell"></div>
+                    <div class="grid-cell"></div>
+                    <div class="grid-cell"></div>
+                    <div class="grid-cell"></div>
+                </div>
+                <div class="grid-row">
+                    <div class="grid-cell"></div>
+                    <div class="grid-cell"></div>
+                    <div class="grid-cell"></div>
+                    <div class="grid-cell"></div>
+                </div>
+            </div>
+            <div class="tile-container" id="tile-container"></div>
+        </div>
+
+        <div class="debug-info" id="debug-info">
+            调试信息将显示在这里...<br>
+        </div>
+    </div>
+
+    <!-- 引入必要的类和管理器 -->
+    <script src="js/core/Tile.js"></script>
+    <script src="js/core/GameState.js"></script>
+    <script src="js/managers/StateManager.js"></script>
+    <script src="js/managers/GridManager.js"></script>
+    <script src="js/managers/AnimationSystem.js"></script>
+    <script src="js/core/GameEngine.js"></script>
+
+    <script>
+        let gameEngine;
+        let debugInfo = document.getElementById('debug-info');
+
+        function log(message) {
+            console.log(message);
+            debugInfo.innerHTML += new Date().toLocaleTimeString() + ': ' + message + '<br>';
+            debugInfo.scrollTop = debugInfo.scrollHeight;
+        }
+
+        function clearDebug() {
+            debugInfo.innerHTML = '调试信息已清除...<br>';
+        }
+
+        // 初始化游戏引擎
+        function initGame() {
+            try {
+                gameEngine = new GameEngine();
+                
+                // 监听合并动画完成事件
+                gameEngine.on('mergeAnimationComplete', (data) => {
+                    log(`合并动画完成事件: 得分 ${data.scoreGained}`);
+                });
+                
+                // 监听合并事件
+                gameEngine.on('tilesmerged', (data) => {
+                    log(`方块合并事件: ${data.mergedTiles.length} 个方块`);
+                });
+                
+                log('游戏引擎初始化成功');
+                updateDisplay();
+                updateScore();
+            } catch (error) {
+                log('初始化失败: ' + error.message);
+                console.error('初始化错误详情:', error);
+            }
+        }
+
+        // 设置合并测试场景
+        function setupMergeTest() {
+            try {
+                // 清空网格
+                gameEngine.gridManager.clearGrid();
+                
+                // 添加两个相同的方块，准备合并
+                gameEngine.gridManager.setTile(0, 0, new Tile(0, 0, 2));
+                gameEngine.gridManager.setTile(1, 0, new Tile(1, 0, 2));
+                
+                // 添加另一对方块
+                gameEngine.gridManager.setTile(0, 1, new Tile(0, 1, 4));
+                gameEngine.gridManager.setTile(1, 1, new Tile(1, 1, 4));
+                
+                updateDisplay();
+                log('合并测试场景设置完成: 两对可合并的方块');
+            } catch (error) {
+                log('设置测试场景失败: ' + error.message);
+            }
+        }
+
+        // 测试移动
+        function testMove(direction) {
+            try {
+                log(`尝试移动: ${direction}`);
+                const directionMap = {
+                    'up': { x: 0, y: -1 },
+                    'down': { x: 0, y: 1 },
+                    'left': { x: -1, y: 0 },
+                    'right': { x: 1, y: 0 }
+                };
+                
+                const result = gameEngine.move(directionMap[direction]);
+                log(`移动结果: ${JSON.stringify(result)}`);
+                
+                setTimeout(() => {
+                    updateDisplay();
+                    updateScore();
+                }, 500);
+            } catch (error) {
+                log('移动失败: ' + error.message);
+                console.error('移动错误详情:', error);
+            }
+        }
+
+        // 测试分数计算
+        function testCalculateScore() {
+            try {
+                log('=== 测试分数计算 ===');
+                
+                // 测试不同的参数组合
+                const testCases = [
+                    { tileValue: 2, comboCount: 1, skillUsed: null },
+                    { tileValue: 4, comboCount: 2, skillUsed: null },
+                    { tileValue: 8, comboCount: 3, skillUsed: 'threeHeadsSixArms' },
+                    { tileValue: null, comboCount: 1, skillUsed: null }, // 测试无效值
+                    { tileValue: 'invalid', comboCount: 1, skillUsed: null }, // 测试无效值
+                    { tileValue: 16, comboCount: NaN, skillUsed: null }, // 测试 NaN
+                ];
+                
+                testCases.forEach((testCase, index) => {
+                    log(`测试用例 ${index + 1}: ${JSON.stringify(testCase)}`);
+                    const score = gameEngine.stateManager.calculateMergeScore(
+                        testCase.tileValue,
+                        testCase.comboCount,
+                        testCase.skillUsed
+                    );
+                    log(`结果: ${score}`);
+                });
+                
+            } catch (error) {
+                log('测试分数计算失败: ' + error.message);
+                console.error('测试错误详情:', error);
+            }
+        }
+
+        // 更新显示
+        function updateDisplay() {
+            const container = document.getElementById('tile-container');
+            container.innerHTML = '';
+            
+            for (let x = 0; x < 4; x++) {
+                for (let y = 0; y < 4; y++) {
+                    const tile = gameEngine.gridManager.getTile(x, y);
+                    if (tile) {
+                        const tileElement = document.createElement('div');
+                        tileElement.className = 'tile';
+                        tileElement.textContent = tile.value;
+                        tileElement.style.left = (x * 122 + 15) + 'px';
+                        tileElement.style.top = (y * 122 + 15) + 'px';
+                        container.appendChild(tileElement);
+                    }
+                }
+            }
+        }
+
+        // 更新分数显示
+        function updateScore() {
+            const scoreElement = document.getElementById('current-score');
+            const currentScore = gameEngine.gameState.getScore();
+            scoreElement.textContent = currentScore;
+        }
+
+        // 页面加载完成后初始化
+        window.addEventListener('load', () => {
+            initGame();
+        });
+    </script>
+</body>
+</html>

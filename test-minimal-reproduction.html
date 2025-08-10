@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>最小化问题重现</title>
+</head>
+<body>
+    <h1>最小化问题重现</h1>
+    <div id="output"></div>
+
+    <!-- 按照原始顺序加载脚本 -->
+    <script src="js/core/Tile.js"></script>
+    <script src="js/core/GameState.js"></script>
+    <script src="js/core/ThemeConfig.js"></script>
+    <script src="js/managers/GridManager.js"></script>
+    <script src="js/managers/InputManager.js"></script>
+    <script src="js/managers/ThemeManager.js"></script>
+    <script src="js/managers/AnimationSystem.js"></script>
+    <script src="js/managers/AudioManager.js"></script>
+    <script src="js/managers/StateManager.js"></script>
+    <script src="js/systems/NezhaSkillSystem.js"></script>
+
+    <script>
+        const output = document.getElementById('output');
+        
+        function log(message) {
+            console.log(message);
+            output.innerHTML += '<p>' + message + '</p>';
+        }
+        
+        try {
+            log('开始测试...');
+            
+            // 检查所有必要的类是否存在
+            const requiredClasses = [
+                'Tile', 'GameState', 'ThemeConfig', 'GridManager', 
+                'InputManager', 'ThemeManager', 'AnimationSystem', 
+                'AudioManager', 'StateManager'
+            ];
+            
+            for (const className of requiredClasses) {
+                if (typeof window[className] === 'undefined') {
+                    throw new Error(`${className} 类未定义`);
+                }
+                log(`✓ ${className} 类已定义`);
+            }
+            
+            // 创建 StateManager 实例
+            log('创建 StateManager 实例...');
+            const stateManager = new StateManager();
+            log('StateManager 实例创建成功');
+            
+            // 检查 on 方法
+            if (typeof stateManager.on !== 'function') {
+                throw new Error('stateManager.on 不是函数，类型: ' + typeof stateManager.on);
+            }
+            log('✓ stateManager.on 方法存在');
+            
+            // 测试事件系统
+            stateManager.on('test', (data) => {
+                log('✓ 测试事件触发成功: ' + JSON.stringify(data));
+            });
+            
+            stateManager.emit('test', { message: 'Hello World' });
+            
+            log('✅ 所有测试通过！');
+            
+        } catch (error) {
+            log('❌ 测试失败: ' + error.message);
+            log('错误堆栈: ' + error.stack);
+        }
+    </script>
+</body>
+</html>

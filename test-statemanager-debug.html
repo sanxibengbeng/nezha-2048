@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StateManager 调试测试</title>
+</head>
+<body>
+    <h1>StateManager 调试测试</h1>
+    <div id="output"></div>
+
+    <script src="js/managers/StateManager.js"></script>
+    <script>
+        const output = document.getElementById('output');
+        
+        function log(message) {
+            console.log(message);
+            output.innerHTML += '<p>' + message + '</p>';
+        }
+        
+        try {
+            log('开始测试 StateManager...');
+            
+            // 检查 StateManager 类是否存在
+            if (typeof StateManager === 'undefined') {
+                log('错误: StateManager 类未定义');
+                throw new Error('StateManager 类未定义');
+            }
+            
+            log('StateManager 类已定义');
+            
+            // 创建 StateManager 实例
+            const stateManager = new StateManager();
+            log('StateManager 实例创建成功');
+            
+            // 检查 on 方法是否存在
+            if (typeof stateManager.on !== 'function') {
+                log('错误: stateManager.on 不是一个函数');
+                log('stateManager.on 类型: ' + typeof stateManager.on);
+                log('StateManager 原型方法: ' + Object.getOwnPropertyNames(StateManager.prototype));
+                throw new Error('stateManager.on 不是一个函数');
+            }
+            
+            log('stateManager.on 方法存在');
+            
+            // 测试事件监听
+            stateManager.on('test', (data) => {
+                log('测试事件触发: ' + JSON.stringify(data));
+            });
+            
+            log('事件监听器添加成功');
+            
+            // 触发测试事件
+            stateManager.emit('test', { message: 'Hello World' });
+            
+            log('StateManager 测试完成，一切正常！');
+            
+        } catch (error) {
+            log('测试失败: ' + error.message);
+            log('错误堆栈: ' + error.stack);
+        }
+    </script>
+</body>
+</html>

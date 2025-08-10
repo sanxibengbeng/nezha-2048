@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>粒子效果系统测试 - 哪吒2048</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <style>
+        .test-controls {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            text-align: center;
+            position: relative;
+            z-index: 1000;
+        }
+        
+        .test-btn {
+            margin: 5px;
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .test-btn:hover {
+            background: #0056b3;
+        }
+        
+        .test-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .test-section {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(255, 215, 0, 0.1);
+            border-radius: 10px;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+        }
+        
+        .test-section h4 {
+            margin: 0 0 15px 0;
+            color: #DC143C;
+            text-align: center;
+        }
+        
+        .canvas-container {
+            position: relative;
+            margin: 20px auto;
+            border: 2px solid #333;
+            border-radius: 10px;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        #particle-canvas {
+            display: block;
+            cursor: crosshair;
+        }
+        
+        .quality-control {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(0, 255, 0, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(0, 255, 0, 0.3);
+        }
+        
+        .quality-control select {
+            padding: 5px 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin: 0 10px;
+        }
+        
+        .status-display {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(0, 0, 255, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(0, 0, 255, 0.3);
+            text-align: left;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        
+        .instruction-box {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(255, 215, 0, 0.1);
+            border-radius: 10px;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+        }
+        
+        .instruction-box h4 {
+            margin: 0 0 10px 0;
+            color: #DC143C;
+        }
+        
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .nezha-effects {
+            background: rgba(255, 165, 0, 0.1);
+            border: 1px solid rgba(255, 165, 0, 0.3);
+        }
+        
+        .game-effects {
+            background: rgba(138, 43, 226, 0.1);
+            border: 1px solid rgba(138, 43, 226, 0.3);
+        }
+        
+        .environment-effects {
+            background: rgba(0, 191, 255, 0.1);
+            border: 1px solid rgba(0, 191, 255, 0.3);
+        }
+    </style>
+</head>
+<body data-theme="nezha">
+    <div id="game-container">
+        <!-- 测试控制面板 -->
+        <div class="test-controls">
+            <h3>粒子效果系统测试</h3>
+            <div class="instruction-box">
+                <h4>🎆 粒子效果系统测试说明：</h4>
+                <p>1. 点击"启动粒子系统"开始测试</p>
+                <p>2. 在画布上点击创建各种粒子效果</p>
+                <p>3. 测试基础粒子预设和哪吒主题特效</p>
+                <p>4. 调整质量等级观察性能差异</p>
+                <p>5. 观察粒子系统状态信息</p>
+            </div>
+            
+            <!-- 系统控制 -->
+            <div class="test-section">
+                <h4>🎛️ 系统控制</h4>
+                <button class="test-btn" onclick="startParticleSystem()">启动粒子系统</button>
+                <button class="test-btn" onclick="stopParticleSystem()">停止粒子系统</button>
+                <button class="test-btn" onclick="clearAllEffects()">清除所有特效</button>
+                <button class="test-btn" onclick="showSystemStatus()">显示系统状态</button>
+            </div>
+            
+            <!-- 质量控制 -->
+            <div class="quality-control">
+                <h4>⚙️ 质量控制</h4>
+                <label>特效质量:</label>
+                <select id="quality-select" onchange="changeQuality()">
+                    <option value="high">高质量</option>
+                    <option value="medium">中等质量</option>
+                    <option value="low">低质量</option>
+                </select>
+                <button class="test-btn" onclick="testPerformance()">性能测试</button>
+            </div>
+            
+            <!-- 基础粒子预设 -->
+            <div class="test-section">
+                <h4>🔥 基础粒子预设</h4>
+                <div class="preset-grid">
+                    <button class="test-btn" onclick="setCurrentEffect('fire')">火焰</button>
+                    <button class="test-btn" onclick="setCurrentEffect('spark')">火花</button>
+                    <button class="test-btn" onclick="setCurrentEffect('glow')">光芒</button>
+                    <button class="test-btn" onclick="setCurrentEffect('smoke')">烟雾</button>
+                    <button class="test-btn" onclick="setCurrentEffect('explosion')">爆炸</button>
+                    <button class="test-btn" onclick="setCurrentEffect('magic')">魔法</button>
+                    <button class="test-btn" onclick="setCurrentEffect('lotus')">莲花</button>
+                    <button class="test-btn" onclick="setCurrentEffect('divine')">神圣</button>
+                </div>
+            </div>
+            
+            <!-- 哪吒主题特效 -->
+            <div class="test-section nezha-effects">
+                <h4>⚡ 哪吒主题特效</h4>
+                <div class="preset-grid">
+                    <button class="test-btn" onclick="setCurrentEffect('threeHeadsActivation')">三头六臂</button>
+                    <button class="test-btn" onclick="setCurrentEffect('qiankunCircleCharge')">乾坤圈</button>
+                    <button class="test-btn" onclick="setCurrentEffect('huntianLingFlow')">混天绫</button>
+                    <button class="test-btn" onclick="setCurrentEffect('transformationAura')">哪吒变身</button>
+                </div>
+            </div>
+            
+            <!-- 游戏特效 -->
+            <div class="test-section game-effects">
+                <h4>🎮 游戏特效</h4>
+                <div class="preset-grid">
+                    <button class="test-btn" onclick="setCurrentEffect('tileSpawn')">方块生成</button>
+                    <button class="test-btn" onclick="setCurrentEffect('tileMerge')">方块合并</button>
+                    <button class="test-btn" onclick="setCurrentEffect('scoreBonus')">分数奖励</button>
+                    <button class="test-btn" onclick="setCurrentEffect('comboEffect')">连击特效</button>
+                </div>
+            </div>
+            
+            <!-- 环境特效 -->
+            <div class="test-section environment-effects">
+                <h4>🌟 环境特效</h4>
+                <div class="preset-grid">
+                    <button class="test-btn" onclick="setCurrentEffect('backgroundAmbient')">背景环境</button>
+                    <button class="test-btn" onclick="setCurrentEffect('victoryBurst')">胜利爆发</button>
+                    <button class="test-btn" onclick="setCurrentEffect('gameOverFade')">游戏结束</button>
+                </div>
+            </div>
+            
+            <!-- 特殊测试 -->
+            <div class="test-section">
+                <h4>🎭 特殊测试</h4>
+                <button class="test-btn" onclick="testMultipleEffects()">多重特效</button>
+                <button class="test-btn" onclick="testEffectSequence()">特效序列</button>
+                <button class="test-btn" onclick="testRandomEffects()">随机特效</button>
+                <button class="test-btn" onclick="testContinuousEffects()">连续特效</button>
+            </div>
+            
+            <!-- 系统状态显示 -->
+            <div class="status-display" id="status-display" style="display: none;">
+                <h4>📊 系统状态：</h4>
+                <div id="status-content"></div>
+            </div>
+            
+            <div style="margin-top: 15px;">
+                <p><strong>当前特效:</strong> <span id="current-effect">无</span></p>
+                <p><strong>提示:</strong> 在画布上点击创建特效</p>
+            </div>
+        </div>
+
+        <!-- 粒子画布 -->
+        <div class="canvas-container">
+            <canvas id="particle-canvas" width="800" height="600"></canvas>
+        </div>
+    </div>
+
+    <!-- 加载脚本 -->
+    <script src="js/effects/ParticleSystem.js"></script>
+    <script src="js/managers/EffectsManager.js"></script>
+
+    <script>
+        // 全局变量
+        let particleSystem = null;
+        let effectsManager = null;
+        let canvas = null;
+        let animationId = null;
+        let currentEffect = 'fire';
+        let isRunning = false;
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            canvas = document.getElementById('particle-canvas');
+            
+            // 绑定画布点击事件
+            canvas.addEventListener('click', (event) => {
+                if (!isRunning) return;
+                
+                const rect = canvas.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+                
+                createEffectAtPosition(x, y);
+            });
+            
+            console.log('粒子效果系统测试页面初始化完成');
+        });
+
+        function startParticleSystem() {
+            try {
+                // 创建粒子系统
+                particleSystem = new ParticleSystem(canvas);
+                effectsManager = new EffectsManager(canvas);
+                
+                // 启动系统
+                particleSystem.start();
+                effectsManager.start();
+                
+                // 开始渲染循环
+                startRenderLoop();
+                
+                isRunning = true;
+                console.log('✅ 粒子系统已启动');
+                
+            } catch (error) {
+                console.error('❌ 启动粒子系统失败:', error);
+            }
+        }
+
+        function stopParticleSystem() {
+            if (particleSystem) {
+                particleSystem.stop();
+            }
+            if (effectsManager) {
+                effectsManager.stop();
+            }
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+            
+            isRunning = false;
+            console.log('⏹️ 粒子系统已停止');
+        }
+
+        function startRenderLoop() {
+            function render(currentTime) {
+                if (!isRunning) return;
+                
+                // 清除画布
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // 更新和渲染
+                if (particleSystem) {
+                    particleSystem.update(currentTime);
+                    particleSystem.render();
+                }
+                
+                if (effectsManager) {
+                    effectsManager.update(currentTime);
+                    effectsManager.render();
+                }
+                
+                // 继续循环
+                animationId = requestAnimationFrame(render);
+            }
+            
+            animationId = requestAnimationFrame(render);
+        }
+
+        function setCurrentEffect(effectName) {
+            currentEffect = effectName;
+            document.getElementById('current-effect').textContent = effectName;
+            console.log(`当前特效设置为: ${effectName}`);
+        }
+
+        function createEffectAtPosition(x, y) {
+            if (!isRunning) return;
+            
+            try {
+                if (effectsManager && effectsManager.nezhaEffects[currentEffect]) {
+                    // 使用特效管理器创建哪吒主题特效
+                    effectsManager.createNezhaEffect(currentEffect, x, y);
+                } else if (particleSystem) {
+                    // 使用粒子系统创建基础特效
+                    particleSystem.createEffect(currentEffect, x, y);
+                }
+                
+                console.log(`在 (${x}, ${y}) 创建特效: ${currentEffect}`);
+                
+            } catch (error) {
+                console.error('创建特效失败:', error);
+            }
+        }
+
+        function clearAllEffects() {
+            if (particleSystem) {
+                particleSystem.clear();
+            }
+            if (effectsManager) {
+                effectsManager.clear();
+            }
+            console.log('🗑️ 所有特效已清除');
+        }
+
+        function changeQuality() {
+            const quality = document.getElementById('quality-select').value;
+            if (effectsManager) {
+                effectsManager.setQualityLevel(quality);
+                console.log(`特效质量设置为: ${quality}`);
+            }
+        }
+
+        function showSystemStatus() {
+            if (!particleSystem || !effectsManager) {
+                console.log('系统未启动');
+                return;
+            }
+            
+            const particleStatus = particleSystem.getStatus();
+            const effectsStatus = effectsManager.getStatus();
+            
+            const statusDiv = document.getElementById('status-display');
+            const contentDiv = document.getElementById('status-content');
+            
+            contentDiv.innerHTML = `
+                <div><strong>粒子系统状态:</strong></div>
+                <div>  运行状态: ${particleStatus.isRunning ? '运行中' : '已停止'}</div>
+                <div>  活跃粒子: ${particleStatus.particleCount}</div>
+                <div>  发射器数量: ${particleStatus.emitterCount}</div>
+                <div>  粒子池大小: ${particleStatus.poolSize}</div>
+                <div>  最大粒子数: ${particleStatus.maxParticles}</div>
+                <br>
+                <div><strong>特效管理器状态:</strong></div>
+                <div>  活跃特效: ${effectsStatus.activeEffects}</div>
+                <div>  队列特效: ${effectsStatus.queuedEffects}</div>
+                <div>  质量等级: ${effectsStatus.qualityLevel}</div>
+                <div>  最大特效数: ${effectsStatus.maxEffects}</div>
+            `;
+            
+            statusDiv.style.display = 'block';
+            console.log('📊 系统状态已显示');
+        }
+
+        function testPerformance() {
+            if (!isRunning) {
+                console.log('请先启动粒子系统');
+                return;
+            }
+            
+            console.log('🚀 开始性能测试...');
+            
+            // 创建大量特效进行性能测试
+            const testCount = 20;
+            const effects = ['fire', 'spark', 'explosion', 'magic'];
+            
+            for (let i = 0; i < testCount; i++) {
+                setTimeout(() => {
+                    const x = Math.random() * canvas.width;
+                    const y = Math.random() * canvas.height;
+                    const effect = effects[Math.floor(Math.random() * effects.length)];
+                    
+                    if (particleSystem) {
+                        particleSystem.createEffect(effect, x, y);
+                    }
+                }, i * 100);
+            }
+            
+            // 5秒后显示性能结果
+            setTimeout(() => {
+                showSystemStatus();
+                console.log('性能测试完成');
+            }, 5000);
+        }
+
+        function testMultipleEffects() {
+            if (!isRunning) return;
+            
+            console.log('🎆 测试多重特效...');
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = 100;
+            
+            const effects = ['fire', 'spark', 'glow', 'magic'];
+            
+            effects.forEach((effect, index) => {
+                const angle = (index / effects.length) * Math.PI * 2;
+                const x = centerX + Math.cos(angle) * radius;
+                const y = centerY + Math.sin(angle) * radius;
+                
+                setTimeout(() => {
+                    if (particleSystem) {
+                        particleSystem.createEffect(effect, x, y);
+                    }
+                }, index * 200);
+            });
+        }
+
+        function testEffectSequence() {
+            if (!isRunning) return;
+            
+            console.log('🎭 测试特效序列...');
+            
+            const sequence = [
+                { effect: 'spark', delay: 0 },
+                { effect: 'fire', delay: 500 },
+                { effect: 'explosion', delay: 1000 },
+                { effect: 'smoke', delay: 1500 },
+                { effect: 'glow', delay: 2000 }
+            ];
+            
+            const x = canvas.width / 2;
+            const y = canvas.height / 2;
+            
+            sequence.forEach(step => {
+                setTimeout(() => {
+                    if (particleSystem) {
+                        particleSystem.createEffect(step.effect, x, y);
+                    }
+                }, step.delay);
+            });
+        }
+
+        function testRandomEffects() {
+            if (!isRunning) return;
+            
+            console.log('🎲 测试随机特效...');
+            
+            const effects = ['fire', 'spark', 'glow', 'smoke', 'explosion', 'magic', 'lotus', 'divine'];
+            const count = 15;
+            
+            for (let i = 0; i < count; i++) {
+                setTimeout(() => {
+                    const x = Math.random() * canvas.width;
+                    const y = Math.random() * canvas.height;
+                    const effect = effects[Math.floor(Math.random() * effects.length)];
+                    
+                    if (particleSystem) {
+                        particleSystem.createEffect(effect, x, y);
+                    }
+                }, i * 300);
+            }
+        }
+
+        function testContinuousEffects() {
+            if (!isRunning) return;
+            
+            console.log('🔄 测试连续特效...');
+            
+            let count = 0;
+            const maxCount = 30;
+            
+            const interval = setInterval(() => {
+                if (count >= maxCount || !isRunning) {
+                    clearInterval(interval);
+                    return;
+                }
+                
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                const effects = ['spark', 'glow'];
+                const effect = effects[Math.floor(Math.random() * effects.length)];
+                
+                if (particleSystem) {
+                    particleSystem.createEffect(effect, x, y);
+                }
+                
+                count++;
+            }, 200);
+        }
+    </script>
+</body>
+</html>

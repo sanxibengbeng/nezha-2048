@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StateManager 简单测试</title>
+</head>
+<body>
+    <h1>StateManager 简单测试</h1>
+    <div id="result"></div>
+
+    <script src="js/managers/StateManager.js"></script>
+    <script>
+        try {
+            console.log('开始创建StateManager...');
+            const stateManager = new StateManager();
+            
+            console.log('StateManager创建成功');
+            console.log('StateManager类型:', typeof stateManager);
+            console.log('on方法类型:', typeof stateManager.on);
+            console.log('emit方法类型:', typeof stateManager.emit);
+            
+            // 测试事件系统
+            stateManager.on('test', (data) => {
+                console.log('测试事件触发:', data);
+            });
+            
+            stateManager.emit('test', { message: 'Hello World' });
+            
+            document.getElementById('result').innerHTML = `
+                <p>✅ StateManager 创建成功</p>
+                <p>on方法: ${typeof stateManager.on}</p>
+                <p>emit方法: ${typeof stateManager.emit}</p>
+                <p>事件系统测试完成</p>
+            `;
+            
+        } catch (error) {
+            console.error('StateManager创建失败:', error);
+            document.getElementById('result').innerHTML = `
+                <p>❌ StateManager 创建失败</p>
+                <p>错误: ${error.message}</p>
+                <p>堆栈: ${error.stack}</p>
+            `;
+        }
+    </script>
+</body>
+</html>

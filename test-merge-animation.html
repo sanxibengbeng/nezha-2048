@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>合并动画测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: linear-gradient(135deg, #8B4513, #CD853F);
+            min-height: 100vh;
+        }
+        
+        .test-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+        
+        .test-tile {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(45deg, #DC143C, #FF6347);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 18px;
+            margin: 10px;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .test-tile:hover {
+            transform: scale(1.05);
+        }
+        
+        .test-tile.tile-4 {
+            background: linear-gradient(45deg, #FF6347, #FFA500);
+        }
+        
+        .test-tile.tile-8 {
+            background: linear-gradient(45deg, #FFA500, #FFD700);
+            color: #8B4513;
+        }
+        
+        .test-tile.tile-16 {
+            background: linear-gradient(45deg, #FFD700, #FFFF00);
+            color: #8B4513;
+        }
+        
+        .test-tile.tile-32 {
+            background: linear-gradient(45deg, #FFFF00, #ADFF2F);
+            color: #8B4513;
+        }
+        
+        .test-controls {
+            margin: 20px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .test-btn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .test-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+        
+        .test-btn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .test-btn.danger {
+            background: linear-gradient(45deg, #f44336, #d32f2f);
+        }
+        
+        .test-btn.special {
+            background: linear-gradient(45deg, #9C27B0, #7B1FA2);
+        }
+        
+        .test-area {
+            border: 3px dashed #ccc;
+            min-height: 300px;
+            padding: 20px;
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+        }
+        
+        .status {
+            background: linear-gradient(45deg, #e7f3ff, #cce7ff);
+            border: 2px solid #b3d9ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: 500;
+        }
+        
+        .error {
+            background: linear-gradient(45deg, #ffe7e7, #ffcccc);
+            border: 2px solid #ffb3b3;
+            color: #d00;
+        }
+        
+        .success {
+            background: linear-gradient(45deg, #e7ffe7, #ccffcc);
+            border: 2px solid #b3ffb3;
+            color: #0a0;
+        }
+        
+        .stats-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-item {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .fire-effect {
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .pulsing {
+            animation: pulse 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔥 合并动画系统测试</h1>
+        
+        <div class="status" id="status">
+            正在初始化合并动画系统...
+        </div>
+        
+        <div class="stats-panel">
+            <div class="stat-item">
+                <div class="stat-label">活跃动画</div>
+                <div class="stat-value" id="active-count">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">合并动画</div>
+                <div class="stat-value" id="merge-count">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">火焰特效</div>
+                <div class="stat-value" id="fire-count">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">总测试次数</div>
+                <div class="stat-value" id="test-count">0</div>
+            </div>
+        </div>
+        
+        <div class="test-controls">
+            <button class="test-btn" onclick="testSingleMerge()">单个合并</button>
+            <button class="test-btn" onclick="testMultipleMerge()">多重合并</button>
+            <button class="test-btn" onclick="testChainMerge()">连锁合并</button>
+            <button class="test-btn special" onclick="testFireEffects()">火焰特效</button>
+            <button class="test-btn special" onclick="testFlashEffect()">闪烁效果</button>
+            <button class="test-btn" onclick="testPerformance()">性能测试</button>
+            <button class="test-btn danger" onclick="clearAllAnimations()">清除所有</button>
+        </div>
+        
+        <div class="test-area" id="test-area">
+            <!-- 测试方块将在这里动态创建 -->
+        </div>
+        
+        <h3>测试日志</h3>
+        <div id="test-log" style="background: rgba(245, 245, 245, 0.8); padding: 15px; border-radius: 8px; max-height: 250px; overflow-y: auto; font-family: monospace; font-size: 12px; border: 2px solid #ddd;">
+        </div>
+    </div>
+
+    <!-- 引入动画系统 -->
+    <script src="js/managers/AnimationSystem.js"></script>
+    
+    <script>
+        let animationSystem = null;
+        let testTileCounter = 0;
+        let testStats = {
+            totalTests: 0,
+            mergeAnimations: 0,
+            fireEffects: 0
+        };
+        
+        // 初始化测试
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                animationSystem = new AnimationSystem();
+                animationSystem.start();
+                
+                updateStatus('合并动画系统初始化成功！', 'success');
+                log('AnimationSystem 初始化完成');
+                
+                // 开始监控动画状态
+                setInterval(updateAnimationInfo, 100);
+                
+            } catch (error) {
+                updateStatus('合并动画系统初始化失败: ' + error.message, 'error');
+                log('ERROR: ' + error.message);
+            }
+        });
+        
+        // 更新状态显示
+        function updateStatus(message, type = '') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = 'status ' + type;
+        }
+        
+        // 记录日志
+        function log(message) {
+            const logEl = document.getElementById('test-log');
+            const timestamp = new Date().toLocaleTimeString();
+            logEl.innerHTML += `[${timestamp}] ${message}\n`;
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+        
+        // 更新动画信息
+        function updateAnimationInfo() {
+            if (animationSystem) {
+                const activeCount = animationSystem.animations.size;
+                const mergeCount = animationSystem.getActiveMergeAnimationCount();
+                
+                document.getElementById('active-count').textContent = activeCount;
+                document.getElementById('merge-count').textContent = mergeCount;
+                document.getElementById('fire-count').textContent = document.querySelectorAll('.fire-effect').length;
+                document.getElementById('test-count').textContent = testStats.totalTests;
+            }
+        }
+        
+        // 创建测试方块
+        function createTestTile(x = 50, y = 50, value = 2) {
+            const testArea = document.getElementById('test-area');
+            const tile = document.createElement('div');
+            
+            tile.className = `test-tile tile-${value}`;
+            tile.textContent = value;
+            tile.style.position = 'absolute';
+            tile.style.left = x + 'px';
+            tile.style.top = y + 'px';
+            tile.id = 'test-tile-' + (++testTileCounter);
+            
+            // 创建方块对象（模拟Tile类）
+            const tileObj = {
+                element: tile,
+                x: x,
+                y: y,
+                value: value,
+                scale: 1,
+                opacity: 1,
+                brightness: 1
+            };
+            
+            testArea.appendChild(tile);
+            log(`创建测试方块: ${tile.id} (值:${value}) at (${x}, ${y})`);
+            
+            return tileObj;
+        }
+        
+        // 测试单个合并
+        function testSingleMerge() {
+            if (!animationSystem) {
+                updateStatus('动画系统未初始化', 'error');
+                return;
+            }
+            
+            const tile = createTestTile(100, 100, 4);
+            const newValue = 8;
+            
+            log(`开始单个合并动画: ${tile.value} -> ${newValue}`);
+            testStats.totalTests++;
+            testStats.mergeAnimations++;
+            
+            const animationId = animationSystem.createTileMergeAnimation(tile, newValue, (target) => {
+                log(`单个合并动画完成: ${animationId}`);
+                updateStatus('单个合并动画完成', 'success');
+                
+                // 添加脉冲效果
+                target.element.classList.add('pulsing');
+                setTimeout(() => {
+                    target.element.classList.remove('pulsing');
+                }, 500);
+            });
+            
+            updateStatus('单个合并动画已启动', 'success');
+        }
+        
+        // 测试多重合并
+        function testMultipleMerge() {
+            if (!animationSystem) {
+                updateStatus('动画系统未初始化', 'error');
+                return;
+            }
+            
+            log('开始多重合并动画测试');
+            testStats.totalTests++;
+            
+            const mergeData = [
+                { tile: createTestTile(50, 150, 2), newValue: 4, position: { x: 50, y: 150 } },
+                { tile: createTestTile(150, 150, 4), newValue: 8, position: { x: 150, y: 150 } },
+                { tile: createTestTile(250, 150, 8), newValue: 16, position: { x: 250, y: 150 } }
+            ];
+            
+            testStats.mergeAnimations += mergeData.length;
+            
+            const animationIds = animationSystem.createSynchronizedMergeAnimation(mergeData, () => {
+                log('多重合并动画完成');
+                updateStatus('多重合并动画完成', 'success');
+            });
+            
+            updateStatus('多重合并动画已启动', 'success');
+        }
+        
+        // 测试连锁合并
+        function testChainMerge() {
+            if (!animationSystem) {
+                updateStatus('动画系统未初始化', 'error');
+                return;
+            }
+            
+            log('开始连锁合并动画测试');
+            testStats.totalTests++;
+            
+            const chainData = [
+                { tile: createTestTile(80, 200, 2), newValue: 4, position: { x: 80, y: 200 } },
+                { tile: createTestTile(120, 200, 2), newValue: 4, position: { x: 120, y: 200 } },
+                { tile: createTestTile(160, 200, 4), newValue: 8, position: { x: 160, y: 200 } },
+                { tile: createTestTile(200, 200, 4), newValue: 8, position: { x: 200, y: 200 } }
+            ];
+            
+            testStats.mergeAnimations += chainData.length;
+            
+            const animationIds = animationSystem.createChainMergeAnimation(chainData, () => {
+                log('连锁合并动画完成');
+                updateStatus('连锁合并动画完成', 'success');
+            });
+            
+            updateStatus('连锁合并动画已启动', 'success');
+        }
+        
+        // 测试火焰特效
+        function testFireEffects() {
+            if (!animationSystem) {
+                updateStatus('动画系统未初始化', 'error');
+                return;
+            }
+            
+            log('开始火焰特效测试');
+            testStats.totalTests++;
+            testStats.fireEffects += 3;
+            
+            const intensities = ['low', 'medium', 'high'];
+            const positions = [
+                { x: 100, y: 50 },
+                { x: 200, y: 50 },
+                { x: 300, y: 50 }
+            ];
+            
+            intensities.forEach((intensity, index) => {
+                setTimeout(() => {
+                    const pos = positions[index];
+                    const animationId = animationSystem.createFireEffectAnimation(
+                        pos.x, pos.y, intensity, () => {
+                            log(`火焰特效完成: ${intensity} at (${pos.x}, ${pos.y})`);
+                        }
+                    );
+                    log(`创建火焰特效: ${intensity} at (${pos.x}, ${pos.y})`);
+                }, index * 300);
+            });
+            
+            updateStatus('火焰特效已启动', 'success');
+        }
+        
+        // 测试闪烁效果
+        function testFlashEffect() {
+            if (!animationSystem) {
+                updateStatus('动画系统未初始化', 'error');
+                return;
+            }
+            
+            const tile = createTestTile(200, 100, 16);
+            
+            log('开始闪烁效果测试');
+            testStats.totalTests++;
+            
+            const animationId = animationSystem.createMergeFlashAnimation(tile, () => {
+                log(`闪烁效果完成: ${animationId}`);
+                updateStatus('闪烁效果完成', 'success');
+            });
+            
+            updateStatus('闪烁效果已启动', 'success');
+        }
+        
+        // 性能测试
+        function testPerformance() {
+            if (!animationSystem) {
+                updateStatus('动画系统未初始化', 'error');
+                return;
+            }
+            
+            log('开始性能测试...');
+            testStats.totalTests++;
+            
+            const startTime = performance.now();
+            const testCount = 20;
+            
+            for (let i = 0; i < testCount; i++) {
+                const tile = createTestTile(
+                    50 + (i % 5) * 80,
+                    50 + Math.floor(i / 5) * 80,
+                    Math.pow(2, (i % 5) + 1)
+                );
+                
+                const newValue = tile.value * 2;
+                const position = { x: tile.x, y: tile.y };
+                
+                // 创建组合动画
+                animationSystem.createCombinedMergeAnimation(tile, newValue, position);
+            }
+            
+            const endTime = performance.now();
+            const duration = endTime - startTime;
+            
+            testStats.mergeAnimations += testCount;
+            testStats.fireEffects += testCount;
+            
+            log(`性能测试完成: 创建${testCount}个组合动画耗时 ${duration.toFixed(2)}ms`);
+            updateStatus(`性能测试完成: ${testCount}个动画`, 'success');
+        }
+        
+        // 清除所有动画
+        function clearAllAnimations() {
+            if (!animationSystem) {
+                updateStatus('动画系统未初始化', 'error');
+                return;
+            }
+            
+            animationSystem.clearAllAnimations();
+            
+            // 清除所有测试方块
+            const testArea = document.getElementById('test-area');
+            const tiles = testArea.querySelectorAll('.test-tile');
+            tiles.forEach(tile => tile.remove());
+            
+            // 清除所有火焰特效
+            const fireEffects = document.querySelectorAll('.fire-effect');
+            fireEffects.forEach(effect => effect.remove());
+            
+            testTileCounter = 0;
+            
+            log('所有动画和方块已清除');
+            updateStatus('所有动画已清除', 'success');
+        }
+        
+        // 添加键盘快捷键
+        document.addEventListener('keydown', function(e) {
+            switch(e.key) {
+                case '1':
+                    testSingleMerge();
+                    break;
+                case '2':
+                    testMultipleMerge();
+                    break;
+                case '3':
+                    testChainMerge();
+                    break;
+                case '4':
+                    testFireEffects();
+                    break;
+                case '5':
+                    testFlashEffect();
+                    break;
+                case 'p':
+                case 'P':
+                    testPerformance();
+                    break;
+                case 'c':
+                case 'C':
+                    clearAllAnimations();
+                    break;
+            }
+        });
+        
+        // 显示快捷键提示
+        window.addEventListener('load', function() {
+            log('快捷键: 1-单个合并, 2-多重合并, 3-连锁合并, 4-火焰特效, 5-闪烁效果, P-性能测试, C-清除');
+        });
+    </script>
+</body>
+</html>

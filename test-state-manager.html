@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>状态管理器测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: linear-gradient(135deg, #8B4513, #CD853F);
+            min-height: 100vh;
+            color: #2F1B14;
+        }
+        
+        .test-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+        
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.8);
+        }
+        
+        .test-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .test-btn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .test-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .test-btn.danger {
+            background: linear-gradient(45deg, #f44336, #d32f2f);
+        }
+        
+        .test-btn.info {
+            background: linear-gradient(45deg, #2196F3, #1976D2);
+        }
+        
+        .status {
+            background: linear-gradient(45deg, #e7f3ff, #cce7ff);
+            border: 2px solid #b3d9ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: 500;
+        }
+        
+        .error {
+            background: linear-gradient(45deg, #ffe7e7, #ffcccc);
+            border: 2px solid #ffb3b3;
+            color: #d00;
+        }
+        
+        .success {
+            background: linear-gradient(45deg, #e7ffe7, #ccffcc);
+            border: 2px solid #b3ffb3;
+            color: #0a0;
+        }
+        
+        .data-display {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 2px solid #ddd;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .achievement-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.8);
+        }
+        
+        .achievement-item.unlocked {
+            background: linear-gradient(45deg, #e7ffe7, #ccffcc);
+            border: 2px solid #4CAF50;
+        }
+        
+        .achievement-item.locked {
+            background: rgba(240, 240, 240, 0.8);
+            border: 2px solid #ccc;
+            opacity: 0.6;
+        }
+        
+        .achievement-icon {
+            font-size: 24px;
+            margin-right: 15px;
+        }
+        
+        .achievement-info h4 {
+            margin: 0 0 5px 0;
+            color: #333;
+        }
+        
+        .achievement-info p {
+            margin: 0;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🎮 StateManager 测试页面</h1>
+        
+        <div class="status" id="status">
+            正在初始化状态管理器...
+        </div>
+        
+        <!-- 基础功能测试 -->
+        <div class="test-section">
+            <h3>基础功能测试</h3>
+            <div class="test-controls">
+                <button class="test-btn" onclick="testSaveGameState()">保存游戏状态</button>
+                <button class="test-btn" onclick="testLoadGameState()">加载游戏状态</button>
+                <button class="test-btn" onclick="testUpdateHighScore()">更新最高分</button>
+                <button class="test-btn" onclick="testCalculateScore()">计算分数</button>
+                <button class="test-btn danger" onclick="testClearGameState()">清除状态</button>
+            </div>
+            <div class="data-display" id="basic-test-result"></div>
+        </div>
+        
+        <!-- 统计数据测试 -->
+        <div class="test-section">
+            <h3>统计数据</h3>
+            <div class="test-controls">
+                <button class="test-btn" onclick="testUpdateStatistics()">更新统计</button>
+                <button class="test-btn info" onclick="displayStatistics()">显示统计</button>
+                <button class="test-btn danger" onclick="testResetStatistics()">重置统计</button>
+            </div>
+            <div class="stats-grid" id="statistics-display"></div>
+        </div>
+        
+        <!-- 成就系统测试 -->
+        <div class="test-section">
+            <h3>成就系统</h3>
+            <div class="test-controls">
+                <button class="test-btn" onclick="testUnlockAchievement()">解锁成就</button>
+                <button class="test-btn info" onclick="displayAchievements()">显示成就</button>
+                <button class="test-btn" onclick="testCheckAchievements()">检查成就</button>
+            </div>
+            <div id="achievements-display"></div>
+        </div>
+        
+        <!-- 存储功能测试 -->
+        <div class="test-section">
+            <h3>存储功能</h3>
+            <div class="test-controls">
+                <button class="test-btn" onclick="testStorageOperations()">存储操作</button>
+                <button class="test-btn info" onclick="testStorageUsage()">存储使用情况</button>
+                <button class="test-btn" onclick="testDataExport()">导出数据</button>
+                <button class="test-btn" onclick="testDataImport()">导入数据</button>
+                <button class="test-btn danger" onclick="testResetGame()">完全重置</button>
+            </div>
+            <div class="data-display" id="storage-test-result"></div>
+        </div>
+        
+        <!-- 测试日志 -->
+        <div class="test-section">
+            <h3>测试日志</h3>
+            <div class="data-display" id="test-log"></div>
+        </div>
+    </div>
+
+    <!-- 引入状态管理器 -->
+    <script src="js/managers/StateManager.js"></script>
+    
+    <script>
+        let stateManager = null;
+        let testCounter = 0;
+        
+        // 初始化测试
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                stateManager = new StateManager();
+                
+                // 绑定事件监听器
+                bindStateManagerEvents();
+                
+                updateStatus('状态管理器初始化成功！', 'success');
+                log('StateManager 初始化完成');
+                
+                // 显示初始数据
+                displayStatistics();
+                displayAchievements();
+                
+            } catch (error) {
+                updateStatus('状态管理器初始化失败: ' + error.message, 'error');
+                log('ERROR: ' + error.message);
+            }
+        });
+        
+        // 绑定状态管理器事件
+        function bindStateManagerEvents() {
+            stateManager.on('newHighScore', (data) => {
+                log(`新最高分: ${data.newScore} (之前: ${data.oldScore})`);
+                showNotification('🎉 新最高分！', 'success');
+            });
+            
+            stateManager.on('achievementUnlocked', (data) => {
+                log(`成就解锁: ${data.achievement} - ${data.data.name}`);
+                showNotification(`🏆 成就解锁: ${data.data.name}`, 'success');
+                displayAchievements();
+            });
+            
+            stateManager.on('statisticsUpdated', (data) => {
+                log('统计数据已更新');
+                displayStatistics();
+            });
+            
+            stateManager.on('gameStateSaved', (data) => {
+                log('游戏状态已保存');
+            });
+            
+            stateManager.on('gameStateLoaded', (data) => {
+                log('游戏状态已加载');
+            });
+            
+            stateManager.on('storageError', (data) => {
+                log(`存储错误: ${data.error.message}`);
+                showNotification('存储操作失败', 'error');
+            });
+        }
+        
+        // 更新状态显示
+        function updateStatus(message, type = '') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = 'status ' + type;
+        }
+        
+        // 记录日志
+        function log(message) {
+            const logEl = document.getElementById('test-log');
+            const timestamp = new Date().toLocaleTimeString();
+            logEl.innerHTML += `[${timestamp}] ${message}\n`;
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+        
+        // 显示通知
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `status ${type}`;
+            notification.textContent = message;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 1000;
+                min-width: 200px;
+                animation: slideIn 0.3s ease-out;
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-in';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+        
+        // 测试保存游戏状态
+        function testSaveGameState() {
+            const mockGameState = {
+                grid: Array(16).fill(null).map((_, i) => i % 4 === 0 ? { value: 2 * (i + 1) } : null),
+                score: Math.floor(Math.random() * 10000),
+                moves: Math.floor(Math.random() * 100),
+                playTime: Math.floor(Math.random() * 300000),
+                isGameOver: false,
+                isWon: false,
+                skillCooldowns: { threeHeadsSixArms: 0, qiankunCircle: 5000 },
+                nezhaLevel: 2,
+                consecutiveMerges: 3
+            };
+            
+            stateManager.saveGameState(mockGameState);
+            
+            document.getElementById('basic-test-result').textContent = 
+                '保存的游戏状态:\n' + JSON.stringify(mockGameState, null, 2);
+            
+            log(`保存游戏状态: 分数=${mockGameState.score}, 移动=${mockGameState.moves}`);
+            updateStatus('游戏状态保存成功', 'success');
+        }
+        
+        // 测试加载游戏状态
+        function testLoadGameState() {
+            const loadedState = stateManager.loadGameState();
+            
+            if (loadedState) {
+                document.getElementById('basic-test-result').textContent = 
+                    '加载的游戏状态:\n' + JSON.stringify(loadedState, null, 2);
+                log(`加载游戏状态: 分数=${loadedState.score}, 移动=${loadedState.moves}`);
+                updateStatus('游戏状态加载成功', 'success');
+            } else {
+                document.getElementById('basic-test-result').textContent = '没有找到保存的游戏状态';
+                log('没有找到保存的游戏状态');
+                updateStatus('没有保存的游戏状态', 'error');
+            }
+        }
+        
+        // 测试更新最高分
+        function testUpdateHighScore() {
+            const randomScore = Math.floor(Math.random() * 50000) + 1000;
+            const isNewRecord = stateManager.updateHighScore(randomScore);
+            const currentHighScore = stateManager.getHighScore();
+            
+            document.getElementById('basic-test-result').textContent = 
+                `测试分数: ${randomScore}\n当前最高分: ${currentHighScore}\n是否新纪录: ${isNewRecord}`;
+            
+            log(`测试最高分: ${randomScore}, 当前最高分: ${currentHighScore}, 新纪录: ${isNewRecord}`);
+            updateStatus(isNewRecord ? '创造新纪录！' : '未超过最高分', isNewRecord ? 'success' : 'info');
+        }
+        
+        // 测试分数计算
+        function testCalculateScore() {
+            const testCases = [
+                { value: 4, combo: 1, skill: null },
+                { value: 8, combo: 2, skill: null },
+                { value: 16, combo: 3, skill: 'threeHeadsSixArms' },
+                { value: 32, combo: 4, skill: 'qiankunCircle' },
+                { value: 64, combo: 5, skill: 'transformation' }
+            ];
+            
+            let results = '分数计算测试:\n';
+            testCases.forEach((testCase, index) => {
+                const score = stateManager.calculateMergeScore(
+                    testCase.value, 
+                    testCase.combo, 
+                    testCase.skill
+                );
+                results += `${index + 1}. 值:${testCase.value}, 连击:${testCase.combo}, 技能:${testCase.skill || '无'} => 分数:${score}\n`;
+            });
+            
+            document.getElementById('basic-test-result').textContent = results;
+            log('分数计算测试完成');
+            updateStatus('分数计算测试完成', 'success');
+        }
+        
+        // 测试清除游戏状态
+        function testClearGameState() {
+            stateManager.clearGameState();
+            document.getElementById('basic-test-result').textContent = '游戏状态已清除';
+            log('游戏状态已清除');
+            updateStatus('游戏状态已清除', 'success');
+        }
+        
+        // 测试更新统计
+        function testUpdateStatistics() {
+            const mockGameData = {
+                score: Math.floor(Math.random() * 20000) + 1000,
+                moves: Math.floor(Math.random() * 200) + 50,
+                playTime: Math.floor(Math.random() * 600000) + 60000,
+                isWon: Math.random() > 0.7,
+                isGameOver: true,
+                maxTile: [64, 128, 256, 512, 1024, 2048][Math.floor(Math.random() * 6)],
+                maxCombo: Math.floor(Math.random() * 8) + 1,
+                skillsUsed: {
+                    threeHeadsSixArms: Math.floor(Math.random() * 3),
+                    qiankunCircle: Math.floor(Math.random() * 2),
+                    huntianLing: Math.floor(Math.random() * 2),
+                    transformation: Math.floor(Math.random() * 1)
+                }
+            };
+            
+            stateManager.updateStatistics(mockGameData);
+            log(`更新统计: 分数=${mockGameData.score}, 获胜=${mockGameData.isWon}, 最大方块=${mockGameData.maxTile}`);
+            updateStatus('统计数据已更新', 'success');
+        }
+        
+        // 显示统计数据
+        function displayStatistics() {
+            const stats = stateManager.getStatistics();
+            const statsDisplay = document.getElementById('statistics-display');
+            
+            statsDisplay.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-label">总游戏数</div>
+                    <div class="stat-value">${stats.totalGames}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">总分数</div>
+                    <div class="stat-value">${stats.totalScore.toLocaleString()}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">平均分</div>
+                    <div class="stat-value">${stats.averageScore}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">最佳分数</div>
+                    <div class="stat-value">${stats.bestScore.toLocaleString()}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">最大方块</div>
+                    <div class="stat-value">${stats.bestTile}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">总移动数</div>
+                    <div class="stat-value">${stats.totalMoves.toLocaleString()}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">总游戏时间</div>
+                    <div class="stat-value">${Math.floor(stats.totalPlayTime / 60000)}分钟</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">胜率</div>
+                    <div class="stat-value">${stats.winRate}%</div>
+                </div>
+            `;
+        }
+        
+        // 测试重置统计
+        function testResetStatistics() {
+            if (confirm('确定要重置所有统计数据吗？')) {
+                stateManager.resetStatistics();
+                log('统计数据已重置');
+                updateStatus('统计数据已重置', 'success');
+            }
+        }
+        
+        // 测试解锁成就
+        function testUnlockAchievement() {
+            const mockGameData = {
+                score: 60000,
+                isWon: true,
+                playTime: 240000,
+                maxCombo: 7,
+                maxTile: 4096
+            };
+            
+            stateManager.checkAchievements(mockGameData);
+            log('成就检查完成');
+            updateStatus('成就检查完成', 'success');
+        }
+        
+        // 显示成就
+        function displayAchievements() {
+            const achievements = stateManager.getAchievements();
+            const achievementsDisplay = document.getElementById('achievements-display');
+            
+            let html = '';
+            Object.keys(achievements).forEach(key => {
+                const achievement = achievements[key];
+                const isUnlocked = achievement.unlocked;
+                
+                html += `
+                    <div class="achievement-item ${isUnlocked ? 'unlocked' : 'locked'}">
+                        <div class="achievement-icon">${isUnlocked ? '🏆' : '🔒'}</div>
+                        <div class="achievement-info">
+                            <h4>${achievement.name}</h4>
+                            <p>${achievement.description}</p>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            achievementsDisplay.innerHTML = html;
+            
+            const unlockedCount = stateManager.getUnlockedAchievementsCount();
+            const totalCount = Object.keys(achievements).length;
+            log(`成就进度: ${unlockedCount}/${totalCount}`);
+        }
+        
+        // 测试检查成就
+        function testCheckAchievements() {
+            // 模拟各种游戏数据来触发不同成就
+            const testCases = [
+                { score: 55000, isWon: true, playTime: 180000, maxCombo: 4, maxTile: 2048 },
+                { score: 30000, isWon: true, playTime: 250000, maxCombo: 6, maxTile: 1024 },
+                { score: 80000, isWon: true, playTime: 400000, maxCombo: 8, maxTile: 4096 }
+            ];
+            
+            testCases.forEach((testCase, index) => {
+                setTimeout(() => {
+                    stateManager.checkAchievements(testCase);
+                    log(`成就测试 ${index + 1} 完成`);
+                }, index * 500);
+            });
+            
+            updateStatus('成就测试序列已启动', 'success');
+        }
+        
+        // 测试存储操作
+        function testStorageOperations() {
+            const testData = {
+                testKey: 'testValue',
+                number: 12345,
+                array: [1, 2, 3, 4, 5],
+                object: { nested: { value: 'test' } }
+            };
+            
+            // 测试存储
+            stateManager.setItem('test_data', testData);
+            
+            // 测试读取
+            const retrievedData = stateManager.getItem('test_data');
+            
+            // 测试删除
+            stateManager.removeItem('test_data');
+            const deletedData = stateManager.getItem('test_data', 'not found');
+            
+            const result = `
+存储测试结果:
+原始数据: ${JSON.stringify(testData, null, 2)}
+读取数据: ${JSON.stringify(retrievedData, null, 2)}
+删除后读取: ${deletedData}
+            `;
+            
+            document.getElementById('storage-test-result').textContent = result;
+            log('存储操作测试完成');
+            updateStatus('存储操作测试完成', 'success');
+        }
+        
+        // 测试存储使用情况
+        function testStorageUsage() {
+            const usage = stateManager.getStorageUsage();
+            
+            const result = `
+存储使用情况:
+支持本地存储: ${usage.supported}
+已使用空间: ${usage.used} 字节
+总空间: ${usage.total} 字节
+使用百分比: ${usage.percentage ? usage.percentage.toFixed(2) + '%' : 'N/A'}
+${usage.error ? '错误: ' + usage.error : ''}
+            `;
+            
+            document.getElementById('storage-test-result').textContent = result;
+            log(`存储使用情况: ${usage.used}/${usage.total} 字节`);
+            updateStatus('存储使用情况已获取', 'success');
+        }
+        
+        // 测试数据导出
+        function testDataExport() {
+            const exportedData = stateManager.exportData();
+            
+            document.getElementById('storage-test-result').textContent = 
+                '导出的数据:\n' + JSON.stringify(exportedData, null, 2);
+            
+            log('数据导出完成');
+            updateStatus('数据导出完成', 'success');
+        }
+        
+        // 测试数据导入
+        function testDataImport() {
+            const mockImportData = {
+                statistics: {
+                    totalGames: 50,
+                    totalScore: 500000,
+                    bestScore: 75000
+                },
+                achievements: {
+                    firstWin: { unlocked: true, name: '初次胜利', description: '第一次达到2048' }
+                },
+                highScore: 75000,
+                settings: {
+                    volume: 0.8,
+                    theme: 'nezha'
+                }
+            };
+            
+            stateManager.importData(mockImportData);
+            
+            document.getElementById('storage-test-result').textContent = 
+                '导入的数据:\n' + JSON.stringify(mockImportData, null, 2);
+            
+            log('数据导入完成');
+            updateStatus('数据导入完成', 'success');
+        }
+        
+        // 测试完全重置
+        function testResetGame() {
+            if (confirm('确定要完全重置游戏吗？这将清除所有数据！')) {
+                stateManager.resetGame();
+                
+                // 刷新显示
+                displayStatistics();
+                displayAchievements();
+                
+                document.getElementById('storage-test-result').textContent = '游戏已完全重置';
+                log('游戏已完全重置');
+                updateStatus('游戏已完全重置', 'success');
+            }
+        }
+        
+        // 添加CSS动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

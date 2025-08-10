@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>哪吒主题音效测试 - 哪吒2048</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <style>
+        .test-controls {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .test-btn {
+            margin: 5px;
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .test-btn:hover {
+            background: #0056b3;
+        }
+        
+        .test-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 215, 0, 0.1);
+            border-radius: 10px;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+        }
+        
+        .test-section h4 {
+            margin: 0 0 15px 0;
+            color: #DC143C;
+            text-align: center;
+        }
+        
+        .combo-test {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(0, 255, 0, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(0, 255, 0, 0.3);
+        }
+        
+        .score-test {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(255, 165, 0, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 165, 0, 0.3);
+        }
+        
+        .tile-test {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(138, 43, 226, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(138, 43, 226, 0.3);
+        }
+        
+        .sequence-test {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(255, 20, 147, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 20, 147, 0.3);
+        }
+        
+        .test-info {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255, 255, 0, 0.1);
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .instruction-box {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(255, 215, 0, 0.1);
+            border-radius: 10px;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+        }
+        
+        .instruction-box h4 {
+            margin: 0 0 10px 0;
+            color: #DC143C;
+        }
+        
+        .volume-control {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .volume-control label {
+            min-width: 80px;
+            font-weight: 600;
+        }
+        
+        .volume-control input[type="range"] {
+            flex: 1;
+            max-width: 200px;
+        }
+        
+        .volume-value {
+            min-width: 40px;
+            font-weight: 600;
+            color: #007bff;
+        }
+        
+        .audio-status {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(0, 0, 255, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(0, 0, 255, 0.3);
+            text-align: left;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-indicator.active {
+            background: #28a745;
+        }
+        
+        .status-indicator.inactive {
+            background: #dc3545;
+        }
+    </style>
+</head>
+<body data-theme="nezha">
+    <div id="game-container">
+        <!-- 测试控制面板 -->
+        <div class="test-controls">
+            <h3>哪吒主题音效测试</h3>
+            <div class="test-info">
+                <p>测试所有哪吒主题音效和游戏事件音频同步</p>
+                <p><strong>注意：</strong> 需要用户交互后才能播放音频</p>
+            </div>
+            
+            <div class="instruction-box">
+                <h4>🎵 哪吒主题音效测试说明：</h4>
+                <p>1. 点击"初始化音频系统"开始测试</p>
+                <p>2. 测试基础游戏音效（移动、合并、新方块等）</p>
+                <p>3. 测试哪吒技能音效（三头六臂、乾坤圈、混天绫、变身）</p>
+                <p>4. 测试智能音效（连击、分数、方块升级等）</p>
+                <p>5. 测试音效序列和组合效果</p>
+            </div>
+            
+            <!-- 初始化控制 -->
+            <div class="test-section">
+                <h4>🎛️ 系统控制</h4>
+                <button class="test-btn" onclick="initializeAudioSystem()">初始化音频系统</button>
+                <button class="test-btn" onclick="destroyAudioSystem()">销毁音频系统</button>
+                <button class="test-btn" onclick="showAudioStatus()">显示音频状态</button>
+                <button class="test-btn" onclick="clearTestResults()">清除测试结果</button>
+            </div>
+            
+            <!-- 基础游戏音效测试 -->
+            <div class="test-section">
+                <h4>🎮 基础游戏音效</h4>
+                <button class="test-btn" onclick="testGameSound('move')">移动音效</button>
+                <button class="test-btn" onclick="testGameSound('merge')">合并音效</button>
+                <button class="test-btn" onclick="testGameSound('newTile')">新方块音效</button>
+                <button class="test-btn" onclick="testGameSound('gameOver')">游戏结束</button>
+                <button class="test-btn" onclick="testGameSound('victory')">胜利音效</button>
+                <button class="test-btn" onclick="testGameSound('error')">错误音效</button>
+                <button class="test-btn" onclick="testGameSound('buttonClick')">按钮点击</button>
+            </div>
+            
+            <!-- 哪吒技能音效测试 -->
+            <div class="test-section">
+                <h4>⚡ 哪吒技能音效</h4>
+                <button class="test-btn" onclick="testSkillSound('skillReady')">技能准备</button>
+                <button class="test-btn" onclick="testSkillSound('threeHeads')">三头六臂</button>
+                <button class="test-btn" onclick="testSkillSound('qiankunCircle')">乾坤圈</button>
+                <button class="test-btn" onclick="testSkillSound('huntianLing')">混天绫</button>
+                <button class="test-btn" onclick="testSkillSound('transformation')">哪吒变身</button>
+            </div>
+            
+            <!-- 背景音乐测试 -->\n            <div class="test-section">
+                <h4>🎼 背景音乐</h4>
+                <button class="test-btn" onclick="testMusic('background')">游戏背景音乐</button>
+                <button class="test-btn" onclick="testMusic('transformation')">变身背景音乐</button>
+                <button class="test-btn" onclick="testMusic('victory')">胜利背景音乐</button>
+                <button class="test-btn" onclick="stopAllMusic()">停止所有音乐</button>
+            </div>
+            
+            <!-- 智能音效测试 -->
+            <div class="combo-test">
+                <h4>🔥 连击音效测试</h4>
+                <p>测试根据连击数调整的音效</p>
+                <button class="test-btn" onclick="testComboSound(1)">1连击</button>
+                <button class="test-btn" onclick="testComboSound(3)">3连击</button>
+                <button class="test-btn" onclick="testComboSound(5)">5连击</button>
+                <button class="test-btn" onclick="testComboSound(10)">10连击</button>
+                <button class="test-btn" onclick="testComboSequence()">连击序列</button>
+            </div>
+            
+            <div class="score-test">
+                <h4>💰 分数音效测试</h4>
+                <p>测试根据分数调整的音效</p>
+                <button class="test-btn" onclick="testScoreSound(100)">100分</button>
+                <button class="test-btn" onclick="testScoreSound(500)">500分</button>
+                <button class="test-btn" onclick="testScoreSound(1000)">1000分</button>
+                <button class="test-btn" onclick="testScoreSound(5000)">5000分</button>
+                <button class="test-btn" onclick="testScoreSequence()">分数序列</button>
+            </div>
+            
+            <div class="tile-test">
+                <h4>🎯 方块升级音效测试</h4>
+                <p>测试根据方块值调整的音效</p>
+                <button class="test-btn" onclick="testTileUpgradeSound(4)">4方块</button>
+                <button class="test-btn" onclick="testTileUpgradeSound(16)">16方块</button>
+                <button class="test-btn" onclick="testTileUpgradeSound(64)">64方块</button>
+                <button class="test-btn" onclick="testTileUpgradeSound(256)">256方块</button>
+                <button class="test-btn" onclick="testTileUpgradeSound(1024)">1024方块</button>
+                <button class="test-btn" onclick="testTileUpgradeSound(2048)">2048方块</button>
+                <button class="test-btn" onclick="testTileUpgradeSequence()">升级序列</button>
+            </div>
+            
+            <div class="sequence-test">
+                <h4>🎭 音效序列测试</h4>
+                <p>测试复杂的音效组合和序列</p>
+                <button class="test-btn" onclick="testGameplaySequence()">游戏流程序列</button>
+                <button class="test-btn" onclick="testSkillSequence()">技能激活序列</button>
+                <button class="test-btn" onclick="testTransformationSequence()">变身完整序列</button>
+                <button class="test-btn" onclick="testVictorySequence()">胜利庆祝序列</button>
+            </div>
+            
+            <!-- 音量控制 -->
+            <div class="test-section">
+                <h4>🔊 音量控制</h4>
+                <div class="volume-control">
+                    <label>主音量:</label>
+                    <input type="range" id="master-volume" min="0" max="100" value="70">
+                    <span class="volume-value" id="master-volume-value">70%</span>
+                </div>
+                <div class="volume-control">
+                    <label>音效音量:</label>
+                    <input type="range" id="sound-volume" min="0" max="100" value="80">
+                    <span class="volume-value" id="sound-volume-value">80%</span>
+                </div>
+                <div class="volume-control">
+                    <label>音乐音量:</label>
+                    <input type="range" id="music-volume" min="0" max="100" value="60">
+                    <span class="volume-value" id="music-volume-value">60%</span>
+                </div>
+                <div style="margin-top: 10px;">
+                    <button class="test-btn" onclick="toggleMute()">切换静音</button>
+                    <button class="test-btn" onclick="applyVolumeSettings()">应用音量设置</button>
+                </div>
+            </div>
+            
+            <!-- 音频状态显示 -->
+            <div class="audio-status" id="audio-status" style="display: none;">
+                <h4>📊 音频系统状态：</h4>
+                <div id="audio-status-content"></div>
+            </div>
+            
+            <div id="test-results" style="margin-top: 10px; font-size: 0.9rem; text-align: left; max-height: 300px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <!-- 加载脚本 -->
+    <script src="js/managers/AudioManager.js"></script>
+
+    <script>
+        // 全局变量
+        let audioManager = null;
+        
+        // 测试函数
+        function logTest(message, type = 'info') {
+            const results = document.getElementById('test-results');
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? 'red' : type === 'success' ? 'green' : type === 'warning' ? 'orange' : 'black';
+            results.innerHTML += `<div style="color: ${color};">[${timestamp}] ${message}</div>`;
+            results.scrollTop = results.scrollHeight;
+        }
+
+        function clearTestResults() {
+            document.getElementById('test-results').innerHTML = '';
+        }
+
+        function initializeAudioSystem() {
+            try {
+                if (audioManager) {
+                    logTest('音频管理器已存在，先销毁旧实例', 'warning');
+                    audioManager.destroy();
+                }
+                
+                audioManager = new AudioManager();
+                
+                // 绑定事件监听器
+                audioManager.on('initialized', () => {
+                    logTest('✅ 音频管理器初始化完成', 'success');
+                });
+                
+                audioManager.on('nezhaAudioLoaded', () => {
+                    logTest('✅ 哪吒主题音频资源加载完成', 'success');
+                });
+                
+                audioManager.on('audioLoaded', (data) => {
+                    logTest(`✅ 音频加载完成: ${data.name} (${data.type})`, 'success');
+                });
+                
+                audioManager.on('error', (data) => {
+                    logTest(`❌ 音频管理器错误: ${data.error}`, 'error');
+                });
+                
+                audioManager.on('volumeChanged', (data) => {
+                    logTest(`🔊 音量变化: ${data.type} = ${Math.round(data.volume * 100)}%`);
+                    updateVolumeDisplay();
+                });
+                
+                audioManager.on('muteChanged', (data) => {
+                    logTest(`🔇 静音状态: ${data.muted ? '开启' : '关闭'}`);
+                });
+                
+                logTest('🎵 正在初始化音频管理器...');
+                
+            } catch (error) {
+                logTest(`❌ 初始化失败: ${error.message}`, 'error');
+            }
+        }
+
+        function destroyAudioSystem() {
+            if (audioManager) {
+                audioManager.destroy();
+                audioManager = null;
+                logTest('🗑️ 音频管理器已销毁', 'success');
+            } else {
+                logTest('⚠️ 音频管理器不存在', 'warning');
+            }
+        }
+
+        function testGameSound(soundName) {
+            if (!audioManager) {
+                logTest('❌ 音频管理器未初始化', 'error');
+                return;
+            }
+            
+            try {
+                switch (soundName) {
+                    case 'move':
+                        audioManager.playMoveSound();
+                        break;
+                    case 'merge':
+                        audioManager.playMergeSound();
+                        break;
+                    case 'newTile':
+                        audioManager.playNewTileSound();
+                        break;
+                    case 'gameOver':
+                        audioManager.playGameOverSound();
+                        break;
+                    case 'victory':
+                        audioManager.playVictorySound();
+                        break;
+                    case 'error':
+                        audioManager.playErrorSound();
+                        break;
+                    case 'buttonClick':
+                        audioManager.playButtonClickSound();
+                        break;
+                    default:
+                        audioManager.playSound(soundName);
+                }
+                
+                logTest(`🎵 播放游戏音效: ${soundName}`);
+                
+            } catch (error) {
+                logTest(`❌ 播放游戏音效失败 ${soundName}: ${error.message}`, 'error');
+            }
+        }
+
+        function testSkillSound(soundName) {
+            if (!audioManager) {
+                logTest('❌ 音频管理器未初始化', 'error');
+                return;
+            }
+            
+            try {
+                switch (soundName) {
+                    case 'skillReady':
+                        audioManager.playSkillReadySound();
+                        break;
+                    case 'threeHeads':
+                        audioManager.playThreeHeadsSound();
+                        break;
+                    case 'qiankunCircle':
+                        audioManager.playQiankunCircleSound();
+                        break;
+                    case 'huntianLing':
+                        audioManager.playHuntianLingSound();
+                        break;
+                    case 'transformation':
+                        audioManager.playTransformationSound();
+                        break;
+                    default:
+                        audioManager.playSound(soundName);
+                }
+                
+                logTest(`⚡ 播放技能音效: ${soundName}`);
+                
+            } catch (error) {
+                logTest(`❌ 播放技能音效失败 ${soundName}: ${error.message}`, 'error');
+            }
+        }
+
+        function testMusic(musicName) {
+            if (!audioManager) {
+                logTest('❌ 音频管理器未初始化', 'error');
+                return;
+            }
+            
+            try {
+                switch (musicName) {
+                    case 'background':
+                        audioManager.playBackgroundMusic();
+                        break;
+                    case 'transformation':
+                        audioManager.playTransformationMusic();
+                        break;
+                    case 'victory':
+                        audioManager.playVictoryMusic();
+                        break;
+                    default:
+                        audioManager.playMusic(musicName);
+                }
+                
+                logTest(`🎼 播放背景音乐: ${musicName}`);
+                
+            } catch (error) {
+                logTest(`❌ 播放背景音乐失败 ${musicName}: ${error.message}`, 'error');
+            }
+        }
+
+        function stopAllMusic() {
+            if (!audioManager) {
+                logTest('❌ 音频管理器未初始化', 'error');
+                return;
+            }
+            
+            try {
+                audioManager.stopMusic();
+                logTest('⏹️ 所有背景音乐已停止');
+            } catch (error) {
+                logTest(`❌ 停止背景音乐失败: ${error.message}`, 'error');
+            }
+        }
+
+        function testComboSound(comboCount) {
+            if (!audioManager) {
+                logTest('❌ 音频管理器未初始化', 'error');
+                return;
+            }
+            
+            try {
+                if (audioManager.playComboSound) {
+                    audioManager.playComboSound(comboCount);
+                    logTest(`🔥 播放${comboCount}连击音效`);
+                } else {
+                    logTest('⚠️ 连击音效方法不存在', 'warning');
+                }
+            } catch (error) {
+                logTest(`❌ 播放连击音效失败: ${error.message}`, 'error');
+            }
+        }
+
+        function testScoreSound(score) {
+            if (!audioManager) {
+                logTest('❌ 音频管理器未初始化', 'error');
+                return;
+            }
+            
+            try {
+                if (audioManager.playScoreSound) {
+                    audioManager.playScoreSound(score);
+                    logTest(`💰 播放${score}分音效`);
+                } else {
+                    logTest('⚠️ 分数音效方法不存在', 'warning');
+                }
+            } catch (error) {
+                logTest(`❌ 播放分数音效失败: ${error.message}`, 'error');
+            }
+        }
+
+        function testTileUpgradeSound(tileValue) {
+            if (!audioManager) {
+                logTest('❌ 音频管理器未初始化', 'error');
+                return;
+            }
+            
+            try {
+                if (audioManager.playTileUpgradeSound) {
+                    audioManager.playTileUpgradeSound(tileValue);
+                    logTest(`🎯 播放${tileValue}方块升级音效`);
+                } else {
+                    logTest('⚠️ 方块升级音效方法不存在', 'warning');
+                }
+            } catch (error) {
+                logTest(`❌ 播放方块升级音效失败: ${error.message}`, 'error');
+            }
+        }
+
+        function testComboSequence() {
+            if (!audioManager) {
+                logTest('❌ 音频管理器未初始化', 'error');
+                return;
+            }
+            
+            logTest('🔥 开始连击序列测试...');
+            
+            for (let i = 1; i <= 5; i++) {
+                setTimeout(() => {
+                    testComboSound(i);
+                }, i * 300);
+            }
+        }
+
+        function testScoreSequence() {
+            if (!audioManager) {
+                logTest('❌ 音频管理器未初始化', 'error');
+                return;
+            }
+            
+            logTest('💰 开始分数序列测试...');
+            
+            const scores = [100, 300, 500, 1000, 2000];
+            scores.forEach((score, index) => {
+                setTimeout(() => {
+                    testScoreSound(score);
+                }, index * 400);
+            });
+        }
+
+        function testTileUpgradeSequence() {
+            if (!audioManager) {
+                logTest('❌ 音频管理器未初始化', 'error');
+                return;
+            }
+            
+            logTest('🎯 开始方块升级序列测试...');
+            
+            const tiles = [4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
+            tiles.forEach((tile, index) => {
+                setTimeout(() => {
+                    testTileUpgradeSound(tile);
+                }, index * 300);
+            });
+        }
+
+        function testGameplaySequence() {
+            if (!audioManager) {
+                logTest('❌ 音频管理器未初始化', 'error');
+                return;
+            }
+            
+            logTest('🎮 开始游戏流程序列测试...');
+            
+            const sequence = [
+                { action: () => testGameSound('move'), delay: 0, name: '移动' },
+                { action: () => testGameSound('newTile'), delay: 200, name: '新方块' },
+                { action: () => testGameSound('move'), delay: 500, name: '移动' },
+                { action: () => testGameSound('merge'), delay: 200, name: '合并' },
+                { action: () => testComboSound(2), delay: 300, name: '2连击' },
+                { action: () => testScoreSound(500), delay: 200, name: '得分' }
+            ];
+            
+            let totalDelay = 0;
+            sequence.forEach(step => {
+                totalDelay += step.delay;
+                setTimeout(() => {
+                    step.action();
+                    logTest(`  → ${step.name}`);
+                }, totalDelay);
+            });
+        }
+
+        function testSkillSequence() {
+            if (!audioManager) {
+                logTest('❌ 音频管理器未初始化', 'error');
+                return;
+            }
+            
+            logTest('⚡ 开始技能激活序列测试...');
+            
+            const skills = ['skillReady', 'threeHeads', 'qiankunCircle', 'huntianLing'];
+            skills.forEach((skill, index) => {
+                setTimeout(() => {
+                    testSkillSound(skill);
+                }, index * 800);
+            });
+        }
+
+        function testTransformationSequence() {
+            if (!audioManager) {
+                logTest('❌ 音频管理器未初始化', 'error');
+                return;
+            }
+            
+            logTest('⚡ 开始变身完整序列测试...');
+            
+            // 技能准备
+            setTimeout(() => {
+                testSkillSound('skillReady');
+                logTest('  → 变身技能准备就绪');
+            }, 0);
+            
+            // 变身激活
+            setTimeout(() => {
+                testSkillSound('transformation');
+                logTest('  → 哪吒变身激活');
+            }, 1000);
+            
+            // 变身音乐
+            setTimeout(() => {
+                testMusic('transformation');
+                logTest('  → 变身背景音乐开始');
+            }, 2000);
+            
+            // 变身期间的强化效果
+            setTimeout(() => {
+                testComboSound(5);
+                logTest('  → 变身期间连击效果');
+            }, 4000);
+            
+            setTimeout(() => {
+                testScoreSound(2000);
+                logTest('  → 变身期间高分效果');
+            }, 5000);
+            
+            // 变身结束，恢复背景音乐
+            setTimeout(() => {
+                testMusic('background');
+                logTest('  → 变身结束，恢复背景音乐');
+            }, 8000);
+        }
+
+        function testVictorySequence() {
+            if (!audioManager) {
+                logTest('❌ 音频管理器未初始化', 'error');
+                return;
+            }
+            
+            logTest('🎉 开始胜利庆祝序列测试...');
+            
+            // 达成2048
+            setTimeout(() => {
+                testTileUpgradeSound(2048);
+                logTest('  → 达成2048方块');
+            }, 0);
+            
+            // 胜利音效
+            setTimeout(() => {
+                testGameSound('victory');
+                logTest('  → 胜利音效');
+            }, 500);
+            
+            // 新纪录音效
+            setTimeout(() => {
+                if (audioManager.playNewRecordSound) {
+                    audioManager.playNewRecordSound();
+                    logTest('  → 新纪录音效');
+                } else {
+                    testGameSound('victory');
+                    logTest('  → 备用胜利音效');
+                }
+            }, 1000);
+            
+            // 胜利背景音乐
+            setTimeout(() => {
+                testMusic('victory');
+                logTest('  → 胜利背景音乐');
+            }, 1500);
+        }
+
+        function toggleMute() {
+            if (!audioManager) {
+                logTest('❌ 音频管理器未初始化', 'error');
+                return;
+            }
+            
+            try {
+                audioManager.toggleMute();
+                logTest('🔇 切换静音状态');
+            } catch (error) {
+                logTest(`❌ 切换静音失败: ${error.message}`, 'error');
+            }
+        }
+
+        function applyVolumeSettings() {
+            if (!audioManager) {
+                logTest('❌ 音频管理器未初始化', 'error');
+                return;
+            }
+            
+            try {
+                const masterVolume = document.getElementById('master-volume').value / 100;
+                const soundVolume = document.getElementById('sound-volume').value / 100;
+                const musicVolume = document.getElementById('music-volume').value / 100;
+                
+                audioManager.setMasterVolume(masterVolume);
+                audioManager.setSoundVolume(soundVolume);
+                audioManager.setMusicVolume(musicVolume);
+                
+                logTest(`🔊 音量设置更新: 主音量=${Math.round(masterVolume*100)}%, 音效=${Math.round(soundVolume*100)}%, 音乐=${Math.round(musicVolume*100)}%`);
+                
+            } catch (error) {
+                logTest(`❌ 音量设置失败: ${error.message}`, 'error');
+            }
+        }
+
+        function showAudioStatus() {
+            if (!audioManager) {
+                logTest('❌ 音频管理器未初始化', 'error');
+                return;
+            }
+            
+            try {
+                const info = audioManager.getAudioInfo();
+                const statusDiv = document.getElementById('audio-status');
+                const contentDiv = document.getElementById('audio-status-content');
+                
+                contentDiv.innerHTML = `
+                    <div style="margin: 5px 0;">
+                        <span class="status-indicator ${info.webAudioSupported ? 'active' : 'inactive'}"></span>
+                        Web Audio API: ${info.webAudioSupported ? '支持' : '不支持'}
+                    </div>
+                    <div style="margin: 5px 0;">
+                        <span class="status-indicator ${info.htmlAudioSupported ? 'active' : 'inactive'}"></span>
+                        HTML Audio: ${info.htmlAudioSupported ? '支持' : '不支持'}
+                    </div>
+                    <div style="margin: 5px 0;">
+                        <span class="status-indicator ${info.userInteracted ? 'active' : 'inactive'}"></span>
+                        用户交互: ${info.userInteracted ? '已交互' : '未交互'}
+                    </div>
+                    <div style="margin: 5px 0;">
+                        <span class="status-indicator ${info.audioContextState === 'running' ? 'active' : 'inactive'}"></span>
+                        音频上下文: ${info.audioContextState || '未创建'}
+                    </div>
+                    <div style="margin: 5px 0;">
+                        <strong>已加载音效:</strong> ${info.loadedSounds.length} 个 (${info.loadedSounds.join(', ') || '无'})
+                    </div>
+                    <div style="margin: 5px 0;">
+                        <strong>已加载音乐:</strong> ${info.loadedMusic.length} 个 (${info.loadedMusic.join(', ') || '无'})
+                    </div>
+                    <div style="margin: 5px 0;">
+                        <strong>当前音乐:</strong> ${info.currentMusic || '无'}
+                    </div>
+                    <div style="margin: 5px 0;">
+                        <strong>音量设置:</strong> 主音量=${Math.round(info.volumes.master*100)}%, 音效=${Math.round(info.volumes.sound*100)}%, 音乐=${Math.round(info.volumes.music*100)}%
+                    </div>
+                    <div style="margin: 5px 0;">
+                        <span class="status-indicator ${info.isMuted ? 'inactive' : 'active'}"></span>
+                        静音状态: ${info.isMuted ? '已静音' : '正常'}
+                    </div>
+                `;
+                
+                statusDiv.style.display = 'block';
+                logTest('📊 音频系统状态已显示');
+                
+            } catch (error) {
+                logTest(`❌ 获取音频状态失败: ${error.message}`, 'error');
+            }
+        }
+
+        function updateVolumeDisplay() {
+            if (!audioManager) return;
+            
+            const info = audioManager.getAudioInfo();
+            document.getElementById('master-volume-value').textContent = Math.round(info.volumes.master * 100) + '%';
+            document.getElementById('sound-volume-value').textContent = Math.round(info.volumes.sound * 100) + '%';
+            document.getElementById('music-volume-value').textContent = Math.round(info.volumes.music * 100) + '%';
+        }
+
+        // 绑定音量滑块事件
+        document.getElementById('master-volume').addEventListener('input', (e) => {
+            document.getElementById('master-volume-value').textContent = e.target.value + '%';
+        });
+
+        document.getElementById('sound-volume').addEventListener('input', (e) => {
+            document.getElementById('sound-volume-value').textContent = e.target.value + '%';
+        });
+
+        document.getElementById('music-volume').addEventListener('input', (e) => {
+            document.getElementById('music-volume-value').textContent = e.target.value + '%';
+        });
+
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            logTest('📄 页面加载完成，准备测试哪吒主题音效');
+            logTest('💡 提示: 点击"初始化音频系统"开始测试');
+            logTest('🎵 本测试包含基础音效、技能音效、智能音效和音效序列');
+        });
+    </script>
+</body>
+</html>

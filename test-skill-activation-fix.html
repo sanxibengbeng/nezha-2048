@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>技能激活修复测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #faf8ef;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        button {
+            margin: 10px;
+            padding: 15px 20px;
+            background-color: #8f7a66;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #9f8a76;
+        }
+        .debug-info {
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .score {
+            font-size: 24px;
+            font-weight: bold;
+            color: #8f7a66;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>技能激活修复测试</h1>
+        
+        <div class="score">分数: <span id="score">0</span></div>
+        
+        <div>
+            <button onclick="setScore(1500)">设置分数为 1500 (解锁三头六臂)</button>
+            <button onclick="testThreeHeads()">测试三头六臂技能</button>
+            <button onclick="debugSkill()">调试技能状态</button>
+            <button onclick="clearLog()">清除日志</button>
+        </div>
+        
+        <div class="debug-info" id="debug-info">
+            等待测试...<br>
+        </div>
+    </div>
+
+    <!-- 引入必要的类 -->
+    <script src="js/core/Tile.js"></script>
+    <script src="js/core/GameState.js"></script>
+    <script src="js/managers/GridManager.js"></script>
+    <script src="js/managers/AnimationSystem.js"></script>
+    <script src="js/core/GameEngine.js"></script>
+    <script src="js/systems/NezhaSkillSystem.js"></script>
+
+    <script>
+        let gameEngine;
+        let skillSystem;
+        let debugInfo = document.getElementById('debug-info');
+
+        function log(message) {
+            console.log(message);
+            debugInfo.innerHTML += new Date().toLocaleTimeString() + ': ' + message + '<br>';
+            debugInfo.scrollTop = debugInfo.scrollHeight;
+        }
+
+        function clearLog() {
+            debugInfo.innerHTML = '日志已清除...<br>';
+        }
+
+        function updateScore() {
+            const scoreElement = document.getElementById('score');
+            scoreElement.textContent = gameEngine.gameState.score;
+        }
+
+        function setScore(points) {
+            gameEngine.gameState.score = points;
+            log(`设置分数为: ${points}`);
+            updateScore();
+            
+            // 手动触发解锁检查
+            skillSystem.checkUnlockConditions();
+        }
+
+        function testThreeHeads() {
+            log('尝试激活三头六臂技能...');
+            const result = skillSystem.triggerSkill('threeHeadsSixArms');
+            log(`激活结果: ${result ? '成功' : '失败'}`);
+        }
+
+        function debugSkill() {
+            log('=== 技能调试信息 ===');
+            skillSystem.debugSkillState('threeHeadsSixArms');
+            
+            const skillInfo = skillSystem.getSkillInfo('threeHeadsSixArms');
+            log(`技能信息: ${JSON.stringify(skillInfo, null, 2)}`);
+        }
+
+        // 初始化
+        function init() {
+            try {
+                gameEngine = new GameEngine();
+                skillSystem = gameEngine.getNezhaSkillSystem();
+                
+                if (!skillSystem) {
+                    log('错误: 无法获取技能系统');
+                    return;
+                }
+                
+                // 监听技能事件
+                skillSystem.on('skillUnlocked', (data) => {
+                    log(`✅ 技能解锁: ${data.skill.name}`);
+                });
+                
+                skillSystem.on('skillActivated', (data) => {
+                    log(`🔥 技能激活: ${data.skill.name}`);
+                });
+                
+                log('✅ 系统初始化成功');
+                updateScore();
+                
+                // 初始调试
+                setTimeout(() => {
+                    debugSkill();
+                }, 200);
+                
+            } catch (error) {
+                log('❌ 初始化失败: ' + error.message);
+                console.error('初始化错误:', error);
+            }
+        }
+
+        // 页面加载后初始化
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

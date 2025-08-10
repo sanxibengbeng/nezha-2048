@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>时序问题测试</title>
+</head>
+<body>
+    <h1>时序问题测试</h1>
+    <div id="output"></div>
+
+    <!-- 按照原始顺序加载脚本 -->
+    <script src="js/core/Tile.js"></script>
+    <script src="js/core/GameState.js"></script>
+    <script src="js/core/ThemeConfig.js"></script>
+    <script src="js/managers/GridManager.js"></script>
+    <script src="js/managers/InputManager.js"></script>
+    <script src="js/managers/ThemeManager.js"></script>
+    <script src="js/managers/AnimationSystem.js"></script>
+    <script src="js/managers/AudioManager.js"></script>
+    <script src="js/managers/StateManager.js"></script>
+    <script src="js/systems/NezhaSkillSystem.js"></script>
+    <script src="js/core/GameEngine.js"></script>
+
+    <script>
+        const output = document.getElementById('output');
+        
+        function log(message) {
+            console.log(message);
+            output.innerHTML += '<p>' + message + '</p>';
+        }
+        
+        // 等待所有脚本加载完成
+        window.addEventListener('load', function() {
+            try {
+                log('页面加载完成，开始测试...');
+                
+                // 检查 StateManager 类
+                log('StateManager 类型: ' + typeof StateManager);
+                
+                if (typeof StateManager === 'undefined') {
+                    throw new Error('StateManager 类未定义');
+                }
+                
+                // 创建 StateManager 实例
+                log('创建 StateManager 实例...');
+                const stateManager = new StateManager();
+                log('StateManager 实例: ' + stateManager);
+                log('StateManager.on 类型: ' + typeof stateManager.on);
+                
+                if (typeof stateManager.on !== 'function') {
+                    throw new Error('stateManager.on 不是函数');
+                }
+                
+                // 创建 GameEngine 实例
+                log('创建 GameEngine 实例...');
+                const gameEngine = new GameEngine({
+                    targetFPS: 60,
+                    debug: false
+                });
+                
+                log('GameEngine 创建成功');
+                log('GameEngine.stateManager: ' + gameEngine.stateManager);
+                log('GameEngine.stateManager.on 类型: ' + typeof gameEngine.stateManager.on);
+                
+                // 测试 bindStateManagerEvents
+                log('测试 bindStateManagerEvents...');
+                gameEngine.bindStateManagerEvents();
+                log('bindStateManagerEvents 执行成功');
+                
+                log('✅ 所有测试通过！');
+                
+            } catch (error) {
+                log('❌ 测试失败: ' + error.message);
+                log('错误堆栈: ' + error.stack);
+            }
+        });
+    </script>
+</body>
+</html>

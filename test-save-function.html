@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>保存功能测试</title>
+    <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-area">
+            <div class="grid-container">
+                <!-- 网格背景 -->
+                <div class="grid-cell" data-x="0" data-y="0"></div>
+                <div class="grid-cell" data-x="1" data-y="0"></div>
+                <div class="grid-cell" data-x="2" data-y="0"></div>
+                <div class="grid-cell" data-x="3" data-y="0"></div>
+                <div class="grid-cell" data-x="0" data-y="1"></div>
+                <div class="grid-cell" data-x="1" data-y="1"></div>
+                <div class="grid-cell" data-x="2" data-y="1"></div>
+                <div class="grid-cell" data-x="3" data-y="1"></div>
+                <div class="grid-cell" data-x="0" data-y="2"></div>
+                <div class="grid-cell" data-x="1" data-y="2"></div>
+                <div class="grid-cell" data-x="2" data-y="2"></div>
+                <div class="grid-cell" data-x="3" data-y="2"></div>
+                <div class="grid-cell" data-x="0" data-y="3"></div>
+                <div class="grid-cell" data-x="1" data-y="3"></div>
+                <div class="grid-cell" data-x="2" data-y="3"></div>
+                <div class="grid-cell" data-x="3" data-y="3"></div>
+            </div>
+            <canvas id="game-canvas" width="400" height="400"></canvas>
+        </div>
+    </div>
+
+    <div id="controls">
+        <button onclick="testSave()">测试保存</button>
+        <button onclick="testLoad()">测试加载</button>
+        <button onclick="addTestTiles()">添加测试方块</button>
+        <div id="output"></div>
+    </div>
+
+    <!-- 加载脚本 -->
+    <script src="js/core/Tile.js"></script>
+    <script src="js/core/GameState.js"></script>
+    <script src="js/core/ThemeConfig.js"></script>
+    <script src="js/managers/GridManager.js"></script>
+    <script src="js/managers/InputManager.js"></script>
+    <script src="js/managers/ThemeManager.js"></script>
+    <script src="js/managers/AnimationSystem.js"></script>
+    <script src="js/managers/AudioManager.js"></script>
+    <script src="js/managers/StateManager.js"></script>
+    <script src="js/systems/NezhaSkillSystem.js"></script>
+    <script src="js/core/GameEngine.js"></script>
+
+    <script>
+        let game = null;
+        const output = document.getElementById('output');
+        
+        function log(message) {
+            console.log(message);
+            output.innerHTML += '<p>' + message + '</p>';
+        }
+        
+        async function initGame() {
+            try {
+                const canvas = document.getElementById('game-canvas');
+                game = new GameEngine({
+                    targetFPS: 60,
+                    debug: true
+                });
+                
+                await game.init(canvas);
+                log('游戏初始化成功');
+                
+            } catch (error) {
+                log('游戏初始化失败: ' + error.message);
+            }
+        }
+        
+        function addTestTiles() {
+            if (!game) return;
+            
+            // 添加一些测试方块
+            const tile1 = new Tile(0, 0, 2);
+            const tile2 = new Tile(1, 0, 4);
+            const tile3 = new Tile(2, 0, 8);
+            
+            game.gridManager.setTile(0, 0, tile1);
+            game.gridManager.setTile(1, 0, tile2);
+            game.gridManager.setTile(2, 0, tile3);
+            
+            game.render();
+            log('添加了测试方块');
+        }
+        
+        function testSave() {
+            if (!game) return;
+            
+            try {
+                log('测试保存游戏...');
+                
+                // 检查 getGridData 方法是否存在
+                if (typeof game.gridManager.getGridData !== 'function') {
+                    log('错误: getGridData 方法不存在');
+                    return;
+                }
+                
+                const gridData = game.gridManager.getGridData();
+                log('网格数据获取成功: ' + JSON.stringify(gridData, null, 2));
+                
+                game.saveCurrentGame();
+                log('保存游戏成功');
+                
+            } catch (error) {
+                log('保存游戏失败: ' + error.message);
+                console.error(error);
+            }
+        }
+        
+        function testLoad() {
+            if (!game) return;
+            
+            try {
+                log('测试加载游戏...');
+                game.loadSavedGame();
+                log('加载游戏完成');
+                
+            } catch (error) {
+                log('加载游戏失败: ' + error.message);
+                console.error(error);
+            }
+        }
+        
+        // 初始化游戏
+        document.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>

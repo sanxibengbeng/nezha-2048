@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>技能系统调试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #faf8ef;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .skill-panel {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .skill-button {
+            display: inline-block;
+            margin: 10px;
+            padding: 15px 20px;
+            background-color: #8f7a66;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            min-width: 150px;
+        }
+        .skill-button:hover {
+            background-color: #9f8a76;
+        }
+        .skill-button.locked {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .skill-button.available {
+            background-color: #4CAF50;
+        }
+        .skill-button.cooldown {
+            background-color: #ff9800;
+        }
+        .debug-info {
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .controls button {
+            margin: 5px;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            background-color: #2196F3;
+            color: white;
+            cursor: pointer;
+        }
+        .score-display {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+            color: #8f7a66;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>技能系统调试</h1>
+        
+        <div class="score-display">
+            当前分数: <span id="current-score">0</span>
+        </div>
+        
+        <div class="controls">
+            <button onclick="addScore(500)">+500 分</button>
+            <button onclick="addScore(1000)">+1000 分</button>
+            <button onclick="addScore(5000)">+5000 分</button>
+            <button onclick="resetScore()">重置分数</button>
+            <button onclick="debugAllSkills()">调试所有技能</button>
+            <button onclick="clearDebug()">清除日志</button>
+        </div>
+        
+        <div class="skill-panel">
+            <h2>哪吒技能</h2>
+            <button class="skill-button" id="skill-threeHeadsSixArms" onclick="testSkill('threeHeadsSixArms')">
+                🔥 三头六臂
+            </button>
+            <button class="skill-button" id="skill-qiankunCircle" onclick="testSkill('qiankunCircle')">
+                ⭕ 乾坤圈
+            </button>
+            <button class="skill-button" id="skill-huntianLing" onclick="testSkill('huntianLing')">
+                🌊 混天绫
+            </button>
+            <button class="skill-button" id="skill-transformation" onclick="testSkill('transformation')">
+                ⚡ 哪吒变身
+            </button>
+        </div>
+        
+        <div class="debug-info" id="debug-info">
+            调试信息将显示在这里...<br>
+        </div>
+    </div>
+
+    <!-- 引入必要的类和系统 -->
+    <script src="js/core/Tile.js"></script>
+    <script src="js/core/GameState.js"></script>
+    <script src="js/managers/GridManager.js"></script>
+    <script src="js/managers/AnimationSystem.js"></script>
+    <script src="js/core/GameEngine.js"></script>
+    <script src="js/systems/NezhaSkillSystem.js"></script>
+
+    <script>
+        let gameEngine;
+        let skillSystem;
+        let debugInfo = document.getElementById('debug-info');
+
+        function log(message) {
+            console.log(message);
+            debugInfo.innerHTML += new Date().toLocaleTimeString() + ': ' + message + '<br>';
+            debugInfo.scrollTop = debugInfo.scrollHeight;
+        }
+
+        function clearDebug() {
+            debugInfo.innerHTML = '调试信息已清除...<br>';
+        }
+
+        // 初始化游戏引擎和技能系统
+        function initSystem() {
+            try {
+                gameEngine = new GameEngine();
+                skillSystem = gameEngine.getNezhaSkillSystem();
+                
+                if (!skillSystem) {
+                    log('错误: 无法获取技能系统');
+                    return;
+                }
+                
+                // 监听技能事件
+                skillSystem.on('skillUnlocked', (data) => {
+                    log(`技能解锁: ${data.skill.name}`);
+                    updateSkillButtons();
+                });
+                
+                skillSystem.on('skillActivated', (data) => {
+                    log(`技能激活: ${data.skill.name}`);
+                    updateSkillButtons();
+                });
+                
+                skillSystem.on('skillDeactivated', (data) => {
+                    log(`技能结束: ${data.skill.name}`);
+                    updateSkillButtons();
+                });
+                
+                log('系统初始化成功');
+                updateSkillButtons();
+                updateScore();
+            } catch (error) {
+                log('初始化失败: ' + error.message);
+                console.error('初始化错误详情:', error);
+            }
+        }
+
+        // 测试技能激活
+        function testSkill(skillId) {
+            try {
+                log(`尝试激活技能: ${skillId}`);
+                const success = skillSystem.triggerSkill(skillId);
+                log(`技能激活结果: ${success ? '成功' : '失败'}`);
+            } catch (error) {
+                log('技能激活错误: ' + error.message);
+                console.error('技能激活错误详情:', error);
+            }
+        }
+
+        // 添加分数
+        function addScore(points) {
+            try {
+                gameEngine.gameState.addScore(points);
+                log(`添加 ${points} 分`);
+                updateScore();
+                updateSkillButtons();
+            } catch (error) {
+                log('添加分数失败: ' + error.message);
+            }
+        }
+
+        // 重置分数
+        function resetScore() {
+            try {
+                gameEngine.gameState.score = 0;
+                log('分数已重置');
+                updateScore();
+                updateSkillButtons();
+            } catch (error) {
+                log('重置分数失败: ' + error.message);
+            }
+        }
+
+        // 调试所有技能
+        function debugAllSkills() {
+            const skills = ['threeHeadsSixArms', 'qiankunCircle', 'huntianLing', 'transformation'];
+            skills.forEach(skillId => {
+                skillSystem.debugSkillState(skillId);
+            });
+        }
+
+        // 更新分数显示
+        function updateScore() {
+            const scoreElement = document.getElementById('current-score');
+            const currentScore = gameEngine.gameState.getScore();
+            scoreElement.textContent = currentScore;
+        }
+
+        // 更新技能按钮状态
+        function updateSkillButtons() {
+            const skills = ['threeHeadsSixArms', 'qiankunCircle', 'huntianLing', 'transformation'];
+            
+            skills.forEach(skillId => {
+                const button = document.getElementById(`skill-${skillId}`);
+                if (!button) return;
+                
+                const skillInfo = skillSystem.getSkillInfo(skillId);
+                
+                // 重置所有状态类
+                button.classList.remove('locked', 'available', 'cooldown');
+                
+                if (!skillInfo.unlocked) {
+                    button.classList.add('locked');
+                    button.title = `需要 ${skillSystem.skills[skillId].unlockScore} 分解锁`;
+                } else if (skillInfo.state.isActive) {
+                    button.classList.add('available');
+                    button.title = '技能激活中';
+                } else if (skillSystem.skillCooldowns[skillId] > 0) {
+                    button.classList.add('cooldown');
+                    button.title = `冷却中 (${Math.ceil(skillSystem.skillCooldowns[skillId] / 1000)} 秒)`;
+                } else if (skillInfo.canActivate) {
+                    button.classList.add('available');
+                    button.title = '可以激活';
+                } else {
+                    button.title = '不可用';
+                }
+            });
+        }
+
+        // 定期更新
+        function startUpdateLoop() {
+            setInterval(() => {
+                if (skillSystem) {
+                    skillSystem.update(100); // 100ms 更新间隔
+                    updateSkillButtons();
+                }
+            }, 100);
+        }
+
+        // 页面加载完成后初始化
+        window.addEventListener('load', () => {
+            initSystem();
+            startUpdateLoop();
+        });
+    </script>
+</body>
+</html>

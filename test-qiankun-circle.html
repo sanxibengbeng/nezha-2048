@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>乾坤圈技能测试 - 哪吒2048</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <style>
+        .test-controls {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .test-btn {
+            margin: 5px;
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .test-btn:hover {
+            background: #0056b3;
+        }
+        
+        .test-info {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255, 255, 0, 0.1);
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .instruction-box {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(255, 215, 0, 0.1);
+            border-radius: 10px;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+        }
+        
+        .instruction-box h4 {
+            margin: 0 0 10px 0;
+            color: #DC143C;
+        }
+        
+        .key-combo {
+            display: inline-block;
+            background: #333;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 0 2px;
+        }
+        
+        .combo-counter {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255, 165, 0, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 165, 0, 0.3);
+        }
+    </style>
+</head>
+<body data-theme="nezha">
+    <div id="game-container">
+        <!-- 测试控制面板 -->
+        <div class="test-controls">
+            <h3>乾坤圈技能测试</h3>
+            <div class="test-info">
+                <p>测试区域清除逻辑、动画特效和触发条件</p>
+            </div>
+            
+            <div class="instruction-box">
+                <h4>⭕ 乾坤圈技能使用说明：</h4>
+                <p>1. 连续合并5次方块自动触发乾坤圈技能</p>
+                <p>2. 或者点击"激活乾坤圈"按钮手动触发</p>
+                <p>3. 技能会智能选择最佳清除区域</p>
+                <p>4. 清除方块获得分数奖励和额外奖励</p>
+                <p>5. 技能冷却20秒</p>
+            </div>
+            
+            <div class="combo-counter">
+                <strong>连续合并计数: <span id="combo-count">0</span> / 5</strong>
+                <div style="margin-top: 5px;">
+                    <div id="combo-progress" style="width: 100%; height: 8px; background: #ddd; border-radius: 4px;">
+                        <div id="combo-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #FFD700, #FFA500); border-radius: 4px; transition: width 0.3s ease;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="test-btn" onclick="activateQiankunCircle()">激活乾坤圈</button>
+            <button class="test-btn" onclick="simulateCombo()">模拟连击</button>
+            <button class="test-btn" onclick="addTestPattern()">添加测试方块</button>
+            <button class="test-btn" onclick="testAreaSelection()">测试区域选择</button>
+            <button class="test-btn" onclick="showSkillStatus()">显示技能状态</button>
+            <button class="test-btn" onclick="clearTestResults()">清除测试结果</button>
+            <div id="test-results" style="margin-top: 10px; font-size: 0.9rem;"></div>
+        </div>
+
+        <!-- 游戏标题和UI -->
+        <header class="game-header">
+            <h1 class="game-title">哪吒2048</h1>
+            <div class="score-container">
+                <div class="score-box">
+                    <div class="score-label">分数</div>
+                    <div id="current-score" class="score-value">0</div>
+                </div>
+                <div class="score-box">
+                    <div class="score-label">最高分</div>
+                    <div id="high-score" class="score-value">0</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 技能栏 -->
+        <div class="skills-container">
+            <div class="skill-item locked" id="skill-three-heads" title="三头六臂">
+                <div class="skill-icon">🔥</div>
+                <div class="skill-cooldown"></div>
+            </div>
+            <div class="skill-item" id="skill-qiankun-circle" title="乾坤圈 - 区域清除">
+                <div class="skill-icon">⭕</div>
+                <div class="skill-cooldown"></div>
+            </div>
+            <div class="skill-item locked" id="skill-huntian-ling" title="混天绫">
+                <div class="skill-icon">🌊</div>
+                <div class="skill-cooldown"></div>
+            </div>
+            <div class="skill-item locked" id="skill-transformation" title="哪吒变身">
+                <div class="skill-icon">⚡</div>
+                <div class="skill-cooldown"></div>
+            </div>
+        </div>
+
+        <!-- 游戏信息显示 -->
+        <div class="game-info">
+            <div class="info-item">
+                <span class="info-label">移动:</span>
+                <span id="moves-count" class="info-value">0</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">时间:</span>
+                <span id="play-time" class="info-value">0:00</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">等级:</span>
+                <span id="nezha-level" class="info-value">1</span>
+            </div>
+        </div>
+
+        <!-- 游戏主区域 -->
+        <div class="game-area">
+            <canvas id="game-canvas" width="400" height="400"></canvas>
+            <div id="game-grid" class="game-grid breathing">
+                <!-- 4x4网格将通过JavaScript动态生成 -->
+            </div>
+            <!-- 特效容器 -->
+            <div id="effects-container" class="effects-container"></div>
+        </div>
+
+        <!-- 游戏控制按钮 -->
+        <div class="game-controls">
+            <button id="new-game-btn" class="control-btn primary">新游戏</button>
+            <button id="pause-btn" class="control-btn">暂停</button>
+            <button id="settings-btn" class="control-btn">设置</button>
+        </div>
+    </div>
+
+    <!-- 游戏结束弹窗 -->
+    <div id="game-over-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>游戏结束</h2>
+            <p>最终分数: <span id="final-score">0</span></p>
+            <p id="new-record" class="hidden">🎉 新纪录！</p>
+            <div class="modal-buttons">
+                <button id="restart-btn" class="control-btn primary">重新开始</button>
+                <button id="close-modal-btn" class="control-btn">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设置弹窗 -->
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>游戏设置</h2>
+            <div class="setting-item">
+                <label for="volume-slider">音量</label>
+                <input type="range" id="volume-slider" min="0" max="100" value="70">
+            </div>
+            <div class="setting-item">
+                <label for="theme-select">主题</label>
+                <select id="theme-select">
+                    <option value="nezha">哪吒主题</option>
+                    <option value="classic">经典主题</option>
+                </select>
+            </div>
+            <div class="modal-buttons">
+                <button id="save-settings-btn" class="control-btn primary">保存</button>
+                <button id="cancel-settings-btn" class="control-btn">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载脚本 -->
+    <script src="js/core/Tile.js"></script>
+    <script src="js/core/GameState.js"></script>
+    <script src="js/core/ThemeConfig.js"></script>
+    <script src="js/managers/GridManager.js"></script>
+    <script src="js/managers/InputManager.js"></script>
+    <script src="js/managers/ThemeManager.js"></script>
+    <script src="js/managers/AnimationSystem.js"></script>
+    <script src="js/managers/AudioManager.js"></script>
+    <script src="js/managers/StateManager.js"></script>
+    <script src="js/systems/NezhaSkillSystem.js"></script>
+    <script src="js/core/GameEngine.js"></script>
+    <script src="js/main.js"></script>
+
+    <script>
+        // 测试函数
+        function logTest(message) {
+            const results = document.getElementById('test-results');
+            const timestamp = new Date().toLocaleTimeString();
+            results.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+        }
+
+        function updateComboDisplay(count) {
+            const comboCountElement = document.getElementById('combo-count');
+            const comboBarElement = document.getElementById('combo-bar');
+            
+            if (comboCountElement) {
+                comboCountElement.textContent = count;
+            }
+            
+            if (comboBarElement) {
+                const progress = Math.min(count / 5, 1) * 100;
+                comboBarElement.style.width = `${progress}%`;
+                
+                if (count >= 5) {
+                    comboBarElement.style.background = 'linear-gradient(90deg, #00FF00, #32CD32)';
+                } else {
+                    comboBarElement.style.background = 'linear-gradient(90deg, #FFD700, #FFA500)';
+                }
+            }
+        }
+
+        function activateQiankunCircle() {
+            if (!game || !game.getNezhaSkillSystem) {
+                logTest('❌ 技能系统未初始化');
+                return;
+            }
+
+            logTest('⭕ 尝试激活乾坤圈技能...');
+            
+            const skillSystem = game.getNezhaSkillSystem();
+            
+            // 确保技能已解锁
+            const gameState = game.getGameState();
+            gameState.score = 3000; // 设置足够的分数解锁技能
+            updateScoreDisplay();
+            
+            // 强制解锁技能
+            skillSystem.unlockSkill('qiankunCircle');
+            
+            // 激活技能
+            const success = skillSystem.triggerSkill('qiankunCircle');
+            
+            if (success) {
+                logTest('✅ 乾坤圈技能激活成功！');
+                logTest('💡 观察区域预览和清除动画效果');
+            } else {
+                logTest('❌ 乾坤圈技能激活失败');
+            }
+        }
+
+        function simulateCombo() {
+            if (!game || !game.getNezhaSkillSystem) {
+                logTest('❌ 技能系统未初始化');
+                return;
+            }
+
+            logTest('🧪 开始模拟连击...');
+            
+            const skillSystem = game.getNezhaSkillSystem();
+            
+            // 模拟5次连续合并
+            for (let i = 1; i <= 5; i++) {
+                setTimeout(() => {
+                    skillSystem.onMerge({
+                        mergedTiles: [{ value: 4 }],
+                        totalScore: 4
+                    });
+                    
+                    updateComboDisplay(i);
+                    logTest(`📈 模拟第 ${i} 次合并`);
+                    
+                    if (i === 5) {
+                        logTest('✅ 连击达成！乾坤圈应该自动触发');
+                    }
+                }, i * 500);
+            }
+        }
+
+        function addTestPattern() {
+            if (!game) {
+                logTest('❌ 游戏引擎未初始化');
+                return;
+            }
+
+            logTest('🧪 添加测试方块模式...');
+            
+            const gameState = game.getGameState();
+            
+            // 清空网格
+            for (let x = 0; x < 4; x++) {
+                for (let y = 0; y < 4; y++) {
+                    gameState.setTile(x, y, null);
+                }
+            }
+            
+            // 添加一个密集的方块模式，适合乾坤圈清除
+            const testPattern = [
+                { x: 1, y: 1, value: 64 },
+                { x: 2, y: 1, value: 32 },
+                { x: 1, y: 2, value: 128 },
+                { x: 2, y: 2, value: 256 },
+                { x: 0, y: 0, value: 2 },
+                { x: 3, y: 0, value: 4 },
+                { x: 0, y: 3, value: 8 },
+                { x: 3, y: 3, value: 16 }
+            ];
+            
+            testPattern.forEach(tileData => {
+                const tile = new Tile(tileData.x, tileData.y, tileData.value);
+                gameState.setTile(tileData.x, tileData.y, tile);
+            });
+            
+            logTest('✅ 测试方块模式已添加，中心区域有高价值方块');
+        }
+
+        function testAreaSelection() {
+            if (!game || !game.getNezhaSkillSystem) {
+                logTest('❌ 技能系统未初始化');
+                return;
+            }
+
+            logTest('🧪 测试区域选择算法...');
+            
+            const skillSystem = game.getNezhaSkillSystem();
+            
+            // 测试不同的区域选择
+            const areas = [
+                { name: '默认区域', area: null },
+                { name: '左上角', area: [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 1 }] },
+                { name: '右下角', area: [{ x: 2, y: 2 }, { x: 3, y: 2 }, { x: 2, y: 3 }, { x: 3, y: 3 }] }
+            ];
+            
+            areas.forEach((areaTest, index) => {
+                setTimeout(() => {
+                    logTest(`🎯 测试${areaTest.name}清除...`);
+                    
+                    const options = areaTest.area ? { area: areaTest.area } : {};
+                    skillSystem.executeQiankunCircle(options);
+                    
+                }, index * 3000);
+            });
+        }
+
+        function showSkillStatus() {
+            if (!game || !game.getNezhaSkillSystem) {
+                logTest('❌ 技能系统未初始化');
+                return;
+            }
+
+            const skillSystem = game.getNezhaSkillSystem();
+            const skillInfo = skillSystem.getSkillInfo('qiankunCircle');
+            
+            if (skillInfo) {
+                const skill = skillInfo.skill;
+                const state = skillInfo.state;
+                
+                logTest('📊 乾坤圈技能状态:');
+                logTest(`   解锁: ${skillInfo.unlocked ? '✅' : '❌'}`);
+                logTest(`   可用: ${skillInfo.canActivate ? '✅' : '❌'}`);
+                logTest(`   激活中: ${state.isActive ? '✅' : '❌'}`);
+                logTest(`   冷却剩余: ${Math.ceil(state.cooldownRemaining / 1000)}秒`);
+                logTest(`   使用次数: ${state.usageCount}`);
+                logTest(`   连续合并: ${skillSystem.consecutiveMerges}`);
+                
+                updateComboDisplay(skillSystem.consecutiveMerges);
+            }
+        }
+
+        function clearTestResults() {
+            document.getElementById('test-results').innerHTML = '';
+            updateComboDisplay(0);
+            logTest('🧹 测试结果已清除');
+        }
+
+        // 页面加载完成后添加测试信息
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                logTest('📋 乾坤圈技能测试页面已加载');
+                logTest('💡 点击"添加测试方块"创建测试环境');
+                logTest('🎮 然后点击"激活乾坤圈"或"模拟连击"测试技能');
+                
+                // 自动添加测试方块
+                setTimeout(() => {
+                    addTestPattern();
+                }, 1000);
+            }, 1000);
+        });
+
+        // 监听合并事件，更新连击显示
+        if (typeof game !== 'undefined' && game) {
+            game.on('move', (data) => {
+                if (data.merged && data.merged.length > 0) {
+                    // 更新连击显示
+                    setTimeout(() => {
+                        if (game.getNezhaSkillSystem) {
+                            const skillSystem = game.getNezhaSkillSystem();
+                            updateComboDisplay(skillSystem.consecutiveMerges);
+                        }
+                    }, 100);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

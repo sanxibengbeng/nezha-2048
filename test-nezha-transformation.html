@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>哪吒变身动画测试</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .test-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .test-title {
+            color: white;
+            font-size: 2rem;
+            margin-bottom: 30px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .test-button {
+            background: linear-gradient(135deg, #FFD700, #FF8C00);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 140, 0, 0.3);
+        }
+
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 140, 0, 0.4);
+        }
+
+        .test-button:active {
+            transform: translateY(0);
+        }
+
+        .game-area {
+            width: 400px;
+            height: 400px;
+            background: rgba(139, 69, 19, 0.8);
+            border-radius: 10px;
+            margin: 20px auto;
+            position: relative;
+            border: 3px solid #8B4513;
+        }
+
+        .status-info {
+            color: white;
+            margin-top: 20px;
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+
+        .skill-info {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            color: white;
+        }
+
+        .skill-info h3 {
+            margin-top: 0;
+            color: #FFD700;
+        }
+
+        .skill-info ul {
+            text-align: left;
+            margin: 10px 0;
+        }
+
+        .skill-info li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1 class="test-title">⚡ 哪吒变身动画测试</h1>
+        
+        <div class="game-area" id="gameArea">
+            <canvas id="gameCanvas" width="400" height="400" style="border-radius: 10px;"></canvas>
+        </div>
+        
+        <button class="test-button" onclick="testTransformationAnimation()">
+            🔥 触发哪吒变身
+        </button>
+        
+        <button class="test-button" onclick="testTransformationEnd()">
+            ⭐ 结束变身状态
+        </button>
+        
+        <button class="test-button" onclick="testTransformationUI()">
+            📱 显示变身UI
+        </button>
+        
+        <div class="status-info" id="statusInfo">
+            点击按钮测试哪吒变身动画效果
+        </div>
+        
+        <div class="skill-info">
+            <h3>哪吒变身技能效果</h3>
+            <ul>
+                <li><strong>分数倍数：</strong>合并获得的分数 x3</li>
+                <li><strong>技能冷却：</strong>所有技能冷却时间减少 50%</li>
+                <li><strong>特殊效果：</strong>30% 概率生成高级方块</li>
+                <li><strong>持续时间：</strong>15秒</li>
+                <li><strong>冷却时间：</strong>60秒</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 引入必要的JavaScript文件 -->
+    <script src="js/effects/ParticleSystem.js"></script>
+    <script src="js/managers/EffectsManager.js"></script>
+    <script src="js/systems/NezhaSkillSystem.js"></script>
+
+    <script>
+        // 模拟游戏引擎和相关组件
+        class MockGameEngine {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.effectsManager = new EffectsManager(this.canvas);
+                this.gameState = {
+                    score: 15000,
+                    scoreMultiplier: 1,
+                    activeSkills: {}
+                };
+                
+                // 启动特效管理器
+                this.effectsManager.start();
+            }
+            
+            getCanvas() {
+                return this.canvas;
+            }
+            
+            getEffectsManager() {
+                return this.effectsManager;
+            }
+            
+            getGameState() {
+                return this.gameState;
+            }
+            
+            // 模拟动画循环
+            startAnimationLoop() {
+                const animate = (currentTime) => {
+                    this.effectsManager.update(currentTime);
+                    this.effectsManager.render();
+                    requestAnimationFrame(animate);
+                };
+                requestAnimationFrame(animate);
+            }
+        }
+
+        // 初始化模拟游戏引擎
+        const mockEngine = new MockGameEngine();
+        const skillSystem = new NezhaSkillSystem(mockEngine);
+        
+        // 启动动画循环
+        mockEngine.startAnimationLoop();
+        
+        // 解锁变身技能（用于测试）
+        skillSystem.skillUnlocked.transformation = true;
+        skillSystem.skillStates.transformation.available = true;
+        skillSystem.skillCooldowns.transformation = 0;
+
+        // 测试函数
+        function testTransformationAnimation() {
+            updateStatus('正在触发哪吒变身动画...');
+            
+            // 激活变身技能
+            const success = skillSystem.activateSkill('transformation');
+            
+            if (success) {
+                updateStatus('✅ 哪吒变身动画已触发！观察全屏动画效果');
+                
+                // 15秒后自动结束变身
+                setTimeout(() => {
+                    skillSystem.deactivateSkill('transformation');
+                    updateStatus('⏰ 变身时间结束，自动退出变身状态');
+                }, 15000);
+            } else {
+                updateStatus('❌ 变身技能激活失败，请检查冷却时间');
+            }
+        }
+
+        function testTransformationEnd() {
+            updateStatus('正在结束变身状态...');
+            
+            if (skillSystem.skillStates.transformation.isActive) {
+                skillSystem.deactivateSkill('transformation');
+                updateStatus('✅ 变身状态已结束');
+            } else {
+                updateStatus('⚠️ 当前没有激活的变身状态');
+            }
+        }
+
+        function testTransformationUI() {
+            updateStatus('正在显示变身UI...');
+            
+            // 直接调用UI创建方法
+            skillSystem.createTransformationUI();
+            updateStatus('✅ 变身UI已显示');
+            
+            // 5秒后自动移除UI
+            setTimeout(() => {
+                skillSystem.removeTransformationUI();
+                updateStatus('⏰ 变身UI已自动移除');
+            }, 5000);
+        }
+
+        function updateStatus(message) {
+            const statusInfo = document.getElementById('statusInfo');
+            statusInfo.textContent = message;
+            console.log('状态更新:', message);
+        }
+
+        // 监听技能系统事件
+        skillSystem.on('skillActivated', (data) => {
+            console.log('技能激活:', data);
+            if (data.skillId === 'transformation') {
+                updateStatus(`🔥 ${data.skill.name} 技能已激活！`);
+            }
+        });
+
+        skillSystem.on('skillDeactivated', (data) => {
+            console.log('技能结束:', data);
+            if (data.skillId === 'transformation') {
+                updateStatus(`⭐ ${data.skill.name} 技能已结束`);
+            }
+        });
+
+        // 页面加载完成提示
+        window.addEventListener('load', () => {
+            updateStatus('🎮 哪吒变身动画测试已准备就绪');
+        });
+
+        // 键盘快捷键
+        document.addEventListener('keydown', (event) => {
+            switch(event.key) {
+                case '1':
+                    testTransformationAnimation();
+                    break;
+                case '2':
+                    testTransformationEnd();
+                    break;
+                case '3':
+                    testTransformationUI();
+                    break;
+            }
+        });
+
+        console.log('哪吒变身动画测试页面已加载');
+        console.log('快捷键: 1-触发变身, 2-结束变身, 3-显示UI');
+    </script>
+</body>
+</html>

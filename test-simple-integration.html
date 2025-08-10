@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简单集成测试</title>
+</head>
+<body>
+    <div>
+        <h3>简单集成测试</h3>
+        <canvas id="game-canvas" width="400" height="400"></canvas>
+        <div id="result"></div>
+    </div>
+
+    <!-- 按正确顺序加载脚本 -->
+    <script src="js/core/Tile.js"></script>
+    <script src="js/core/GameState.js"></script>
+    <script src="js/core/ThemeConfig.js"></script>
+    <script src="js/managers/GridManager.js"></script>
+    <script src="js/managers/InputManager.js"></script>
+    <script src="js/managers/ThemeManager.js"></script>
+    <script src="js/managers/AnimationSystem.js"></script>
+    <script src="js/managers/AudioManager.js"></script>
+    <script src="js/managers/StateManager.js"></script>
+    <script src="js/effects/ParticleSystem.js"></script>
+    <script src="js/managers/EffectsManager.js"></script>
+    <script src="js/systems/NezhaSkillSystem.js"></script>
+    <script src="js/core/GameEngine.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                // 测试类是否存在
+                if (typeof ParticleSystem === 'undefined') {
+                    throw new Error('ParticleSystem未定义');
+                }
+                if (typeof EffectsManager === 'undefined') {
+                    throw new Error('EffectsManager未定义');
+                }
+                if (typeof GameEngine === 'undefined') {
+                    throw new Error('GameEngine未定义');
+                }
+                
+                resultDiv.innerHTML += '<p style="color: green;">✅ 所有类都已正确加载</p>';
+                
+                // 测试创建GameEngine
+                const canvas = document.getElementById('game-canvas');
+                if (!canvas) {
+                    throw new Error('Canvas元素未找到');
+                }
+                
+                const game = new GameEngine({
+                    targetFPS: 60,
+                    debug: false
+                });
+                
+                resultDiv.innerHTML += '<p style="color: green;">✅ GameEngine创建成功</p>';
+                
+                // 测试初始化
+                game.init(canvas).then(() => {
+                    resultDiv.innerHTML += '<p style="color: green;">✅ GameEngine初始化成功</p>';
+                    
+                    const effectsManager = game.getEffectsManager();
+                    if (effectsManager) {
+                        resultDiv.innerHTML += '<p style="color: green;">✅ EffectsManager获取成功</p>';
+                        
+                        // 测试特效创建
+                        try {
+                            effectsManager.createNezhaEffect('fire', 100, 100);
+                            resultDiv.innerHTML += '<p style="color: green;">✅ 特效创建测试成功</p>';
+                        } catch (effectError) {
+                            resultDiv.innerHTML += `<p style="color: orange;">⚠️ 特效创建测试失败: ${effectError.message}</p>`;
+                        }
+                    } else {
+                        resultDiv.innerHTML += '<p style="color: red;">❌ EffectsManager获取失败</p>';
+                    }
+                }).catch(error => {
+                    resultDiv.innerHTML += `<p style="color: red;">❌ GameEngine初始化失败: ${error.message}</p>`;
+                    console.error('GameEngine初始化错误:', error);
+                });
+                
+            } catch (error) {
+                resultDiv.innerHTML += `<p style="color: red;">❌ 错误: ${error.message}</p>`;
+                console.error('测试错误:', error);
+            }
+        });
+    </script>
+</body>
+</html>

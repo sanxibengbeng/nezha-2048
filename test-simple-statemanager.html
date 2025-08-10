@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简单 StateManager 测试</title>
+</head>
+<body>
+    <h1>简单 StateManager 测试</h1>
+    <div id="output"></div>
+
+    <script>
+        // 简单的 StateManager 类用于测试
+        class TestStateManager {
+            constructor() {
+                this.eventListeners = new Map();
+                console.log('TestStateManager 构造函数执行');
+            }
+            
+            on(event, callback) {
+                console.log('TestStateManager.on 被调用:', event);
+                if (!this.eventListeners.has(event)) {
+                    this.eventListeners.set(event, []);
+                }
+                this.eventListeners.get(event).push(callback);
+            }
+            
+            emit(event, data = null) {
+                console.log('TestStateManager.emit 被调用:', event, data);
+                if (this.eventListeners.has(event)) {
+                    this.eventListeners.get(event).forEach(callback => {
+                        try {
+                            callback(data);
+                        } catch (error) {
+                            console.error(`事件处理器错误 (${event}):`, error);
+                        }
+                    });
+                }
+            }
+        }
+        
+        // 简单的 GameEngine 测试
+        class TestGameEngine {
+            constructor() {
+                console.log('TestGameEngine 构造函数开始');
+                this.stateManager = new TestStateManager();
+                console.log('TestGameEngine 构造函数完成');
+            }
+            
+            bindStateManagerEvents() {
+                console.log('bindStateManagerEvents 开始');
+                console.log('this.stateManager:', this.stateManager);
+                console.log('this.stateManager.on 类型:', typeof this.stateManager.on);
+                
+                this.stateManager.on('test', (data) => {
+                    console.log('测试事件接收到:', data);
+                });
+                
+                console.log('bindStateManagerEvents 完成');
+            }
+            
+            init() {
+                console.log('TestGameEngine.init 开始');
+                this.bindStateManagerEvents();
+                this.stateManager.emit('test', { message: 'Hello from TestGameEngine' });
+                console.log('TestGameEngine.init 完成');
+            }
+        }
+        
+        // 运行测试
+        try {
+            console.log('开始测试...');
+            const engine = new TestGameEngine();
+            engine.init();
+            console.log('测试成功完成！');
+        } catch (error) {
+            console.error('测试失败:', error);
+            document.getElementById('output').innerHTML = '<p style="color: red;">测试失败: ' + error.message + '</p>';
+        }
+    </script>
+</body>
+</html>

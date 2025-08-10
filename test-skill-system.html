@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>技能系统测试 - 哪吒2048</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <style>
+        .test-controls {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .test-btn {
+            margin: 5px;
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .test-btn:hover {
+            background: #0056b3;
+        }
+        
+        .test-info {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255, 255, 0, 0.1);
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .skill-status {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(0, 255, 0, 0.1);
+            border-radius: 5px;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+    </style>
+</head>
+<body data-theme="nezha">
+    <div id="game-container">
+        <!-- 测试控制面板 -->
+        <div class="test-controls">
+            <h3>哪吒技能系统测试</h3>
+            <div class="test-info">
+                <p>测试技能解锁、激活、冷却和UI交互</p>
+            </div>
+            <button class="test-btn" onclick="testSkillUnlock()">解锁所有技能</button>
+            <button class="test-btn" onclick="testSkillActivation()">测试技能激活</button>
+            <button class="test-btn" onclick="testMergeCombo()">模拟连击</button>
+            <button class="test-btn" onclick="testSpecificPattern()">模拟特定模式</button>
+            <button class="test-btn" onclick="showSkillStatus()">显示技能状态</button>
+            <button class="test-btn" onclick="clearTestResults()">清除测试结果</button>
+            <div id="test-results" style="margin-top: 10px; font-size: 0.9rem;"></div>
+            <div id="skill-status" class="skill-status" style="display: none;"></div>
+        </div>
+
+        <!-- 游戏标题和UI -->
+        <header class="game-header">
+            <h1 class="game-title">哪吒2048</h1>
+            <div class="score-container">
+                <div class="score-box">
+                    <div class="score-label">分数</div>
+                    <div id="current-score" class="score-value">0</div>
+                </div>
+                <div class="score-box">
+                    <div class="score-label">最高分</div>
+                    <div id="high-score" class="score-value">0</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 技能栏 -->
+        <div class="skills-container">
+            <div class="skill-item locked" id="skill-three-heads" title="三头六臂">
+                <div class="skill-icon">🔥</div>
+                <div class="skill-cooldown"></div>
+            </div>
+            <div class="skill-item locked" id="skill-qiankun-circle" title="乾坤圈">
+                <div class="skill-icon">⭕</div>
+                <div class="skill-cooldown"></div>
+            </div>
+            <div class="skill-item locked" id="skill-huntian-ling" title="混天绫">
+                <div class="skill-icon">🌊</div>
+                <div class="skill-cooldown"></div>
+            </div>
+            <div class="skill-item locked" id="skill-transformation" title="哪吒变身">
+                <div class="skill-icon">⚡</div>
+                <div class="skill-cooldown"></div>
+            </div>
+        </div>
+
+        <!-- 游戏信息显示 -->
+        <div class="game-info">
+            <div class="info-item">
+                <span class="info-label">移动:</span>
+                <span id="moves-count" class="info-value">0</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">时间:</span>
+                <span id="play-time" class="info-value">0:00</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">等级:</span>
+                <span id="nezha-level" class="info-value">1</span>
+            </div>
+        </div>
+
+        <!-- 游戏主区域 -->
+        <div class="game-area">
+            <canvas id="game-canvas" width="400" height="400"></canvas>
+            <div id="game-grid" class="game-grid breathing">
+                <!-- 4x4网格将通过JavaScript动态生成 -->
+            </div>
+            <!-- 特效容器 -->
+            <div id="effects-container" class="effects-container"></div>
+        </div>
+
+        <!-- 游戏控制按钮 -->
+        <div class="game-controls">
+            <button id="new-game-btn" class="control-btn primary">新游戏</button>
+            <button id="pause-btn" class="control-btn">暂停</button>
+            <button id="settings-btn" class="control-btn">设置</button>
+        </div>
+    </div>
+
+    <!-- 游戏结束弹窗 -->
+    <div id="game-over-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>游戏结束</h2>
+            <p>最终分数: <span id="final-score">0</span></p>
+            <p id="new-record" class="hidden">🎉 新纪录！</p>
+            <div class="modal-buttons">
+                <button id="restart-btn" class="control-btn primary">重新开始</button>
+                <button id="close-modal-btn" class="control-btn">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设置弹窗 -->
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>游戏设置</h2>
+            <div class="setting-item">
+                <label for="volume-slider">音量</label>
+                <input type="range" id="volume-slider" min="0" max="100" value="70">
+            </div>
+            <div class="setting-item">
+                <label for="theme-select">主题</label>
+                <select id="theme-select">
+                    <option value="nezha">哪吒主题</option>
+                    <option value="classic">经典主题</option>
+                </select>
+            </div>
+            <div class="modal-buttons">
+                <button id="save-settings-btn" class="control-btn primary">保存</button>
+                <button id="cancel-settings-btn" class="control-btn">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载脚本 -->
+    <script src="js/core/Tile.js"></script>
+    <script src="js/core/GameState.js"></script>
+    <script src="js/core/ThemeConfig.js"></script>
+    <script src="js/managers/GridManager.js"></script>
+    <script src="js/managers/InputManager.js"></script>
+    <script src="js/managers/ThemeManager.js"></script>
+    <script src="js/managers/AnimationSystem.js"></script>
+    <script src="js/managers/AudioManager.js"></script>
+    <script src="js/managers/StateManager.js"></script>
+    <script src="js/systems/NezhaSkillSystem.js"></script>
+    <script src="js/core/GameEngine.js"></script>
+    <script src="js/main.js"></script>
+
+    <script>
+        // 测试函数
+        function logTest(message) {
+            const results = document.getElementById('test-results');
+            const timestamp = new Date().toLocaleTimeString();
+            results.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+        }
+
+        function testSkillUnlock() {
+            if (!game || !game.getNezhaSkillSystem) {
+                logTest('❌ 技能系统未初始化');
+                return;
+            }
+
+            logTest('🧪 开始测试技能解锁...');
+            
+            const skillSystem = game.getNezhaSkillSystem();
+            const gameState = game.getGameState();
+            
+            // 设置足够的分数来解锁所有技能
+            gameState.score = 15000;
+            updateScoreDisplay();
+            
+            // 强制检查解锁条件
+            skillSystem.checkUnlockConditions();
+            
+            logTest('✅ 所有技能应该已解锁');
+        }
+
+        function testSkillActivation() {
+            if (!game || !game.getNezhaSkillSystem) {
+                logTest('❌ 技能系统未初始化');
+                return;
+            }
+
+            logTest('🧪 开始测试技能激活...');
+            
+            const skillSystem = game.getNezhaSkillSystem();
+            const skills = ['threeHeadsSixArms', 'qiankunCircle', 'huntianLing', 'transformation'];
+            
+            skills.forEach((skillId, index) => {
+                setTimeout(() => {
+                    const success = skillSystem.triggerSkill(skillId);
+                    logTest(`${success ? '✅' : '❌'} 技能 ${skillId} 激活${success ? '成功' : '失败'}`);
+                }, index * 1000);
+            });
+        }
+
+        function testMergeCombo() {
+            if (!game || !game.getNezhaSkillSystem) {
+                logTest('❌ 技能系统未初始化');
+                return;
+            }
+
+            logTest('🧪 开始测试连击系统...');
+            
+            const skillSystem = game.getNezhaSkillSystem();
+            
+            // 模拟连续合并
+            for (let i = 0; i < 6; i++) {
+                setTimeout(() => {
+                    skillSystem.onMerge({
+                        mergedTiles: [{ value: 4 }],
+                        totalScore: 4
+                    });
+                    logTest(`📈 模拟第 ${i + 1} 次合并`);
+                }, i * 500);
+            }
+            
+            logTest('✅ 连击测试完成，应该触发乾坤圈技能');
+        }
+
+        function testSpecificPattern() {
+            if (!game || !game.getNezhaSkillSystem) {
+                logTest('❌ 技能系统未初始化');
+                return;
+            }
+
+            logTest('🧪 开始测试特定模式检测...');
+            
+            const gameState = game.getGameState();
+            
+            // 创建特定模式：2-4-8序列
+            gameState.setTile(0, 0, new Tile(0, 0, 2));
+            gameState.setTile(0, 1, new Tile(0, 1, 4));
+            gameState.setTile(0, 2, new Tile(0, 2, 8));
+            
+            const skillSystem = game.getNezhaSkillSystem();
+            const hasPattern = skillSystem.checkSpecificPattern();
+            
+            logTest(`${hasPattern ? '✅' : '❌'} 特定模式检测${hasPattern ? '成功' : '失败'}`);
+            
+            if (hasPattern) {
+                logTest('🌊 应该触发混天绫技能');
+            }
+        }
+
+        function showSkillStatus() {
+            if (!game || !game.getNezhaSkillSystem) {
+                logTest('❌ 技能系统未初始化');
+                return;
+            }
+
+            const skillSystem = game.getNezhaSkillSystem();
+            const allStates = skillSystem.getAllSkillStates();
+            
+            const statusDiv = document.getElementById('skill-status');
+            statusDiv.style.display = 'block';
+            
+            let statusHTML = '<h4>技能状态详情:</h4>';
+            
+            Object.keys(allStates).forEach(skillId => {
+                const info = allStates[skillId];
+                const skill = info.skill;
+                const state = info.state;
+                
+                statusHTML += `
+                    <div style="margin: 10px 0; padding: 8px; border: 1px solid #ccc; border-radius: 5px;">
+                        <strong>${skill.name} (${skillId})</strong><br>
+                        解锁: ${info.unlocked ? '✅' : '❌'}<br>
+                        可用: ${info.canActivate ? '✅' : '❌'}<br>
+                        激活中: ${state.isActive ? '✅' : '❌'}<br>
+                        冷却剩余: ${Math.ceil(state.cooldownRemaining / 1000)}秒<br>
+                        使用次数: ${state.usageCount}
+                    </div>
+                `;
+            });
+            
+            statusDiv.innerHTML = statusHTML;
+            
+            logTest('📊 技能状态已显示');
+        }
+
+        function clearTestResults() {
+            document.getElementById('test-results').innerHTML = '';
+            document.getElementById('skill-status').style.display = 'none';
+            logTest('🧹 测试结果已清除');
+        }
+
+        // 页面加载完成后添加测试信息
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                logTest('📋 技能系统测试页面已加载');
+                logTest('💡 使用上方按钮测试各种技能功能');
+                
+                // 自动解锁技能以便测试
+                setTimeout(() => {
+                    testSkillUnlock();
+                }, 2000);
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
