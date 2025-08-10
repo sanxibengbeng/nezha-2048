@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,23 +12,24 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
+
 <body data-theme="nezha">
     <!-- 云朵装饰 -->
     <div class="cloud-decoration">☁️</div>
     <div class="cloud-decoration">☁️</div>
     <div class="cloud-decoration">☁️</div>
-    
+
     <div id="game-container">
         <!-- 游戏标题和UI -->
         <header class="game-header">
-            <h1 class="game-title">哪吒2048</h1>
+            <h1 class="game-title" data-i18n="game.title">哪吒2048</h1>
             <div class="score-container">
                 <div class="score-box">
-                    <div class="score-label">分数</div>
+                    <div class="score-label" data-i18n="game.score">分数</div>
                     <div id="current-score" class="score-value">0</div>
                 </div>
                 <div class="score-box">
-                    <div class="score-label">最高分</div>
+                    <div class="score-label" data-i18n="game.highScore">最高分</div>
                     <div id="high-score" class="score-value">0</div>
                 </div>
             </div>
@@ -35,19 +37,19 @@
 
         <!-- 技能栏 -->
         <div class="skills-container">
-            <div class="skill-item" id="skill-three-heads" title="三头六臂">
+            <div class="skill-item" id="skill-three-heads" data-i18n-title="skills.threeHeadsSixArms">
                 <div class="skill-icon">🔥</div>
                 <div class="skill-cooldown"></div>
             </div>
-            <div class="skill-item" id="skill-qiankun-circle" title="乾坤圈">
+            <div class="skill-item" id="skill-qiankun-circle" data-i18n-title="skills.qiankunCircle">
                 <div class="skill-icon">⭕</div>
                 <div class="skill-cooldown"></div>
             </div>
-            <div class="skill-item" id="skill-huntian-ling" title="混天绫">
+            <div class="skill-item" id="skill-huntian-ling" data-i18n-title="skills.huntianLing">
                 <div class="skill-icon">🌊</div>
                 <div class="skill-cooldown"></div>
             </div>
-            <div class="skill-item" id="skill-transformation" title="哪吒变身">
+            <div class="skill-item" id="skill-transformation" data-i18n-title="skills.transformation">
                 <div class="skill-icon">⚡</div>
                 <div class="skill-cooldown"></div>
             </div>
@@ -66,41 +68,41 @@
         <!-- 游戏信息显示 -->
         <div class="game-info">
             <div class="info-item">
-                <span class="info-label">移动:</span>
+                <span class="info-label" data-i18n="game.moves">移动:</span>
                 <span id="moves-count" class="info-value">0</span>
             </div>
             <div class="info-item">
-                <span class="info-label">时间:</span>
+                <span class="info-label" data-i18n="game.time">时间:</span>
                 <span id="play-time" class="info-value">0:00</span>
             </div>
             <div class="info-item">
-                <span class="info-label">等级:</span>
+                <span class="info-label" data-i18n="game.level">等级:</span>
                 <span id="nezha-level" class="info-value">1</span>
             </div>
         </div>
 
         <!-- 游戏控制按钮 -->
         <div class="game-controls">
-            <button id="new-game-btn" class="control-btn primary">新游戏</button>
-            <button id="pause-btn" class="control-btn">暂停</button>
-            <button id="settings-btn" class="control-btn">设置</button>
+            <button id="new-game-btn" class="control-btn primary" data-i18n="game.newGame">新游戏</button>
+            <button id="pause-btn" class="control-btn" data-i18n="game.pause">暂停</button>
+            <button id="settings-btn" class="control-btn" data-i18n="common.settings">设置</button>
         </div>
 
         <!-- 移动设备操作提示 -->
         <div class="mobile-instructions">
-            <p>滑动屏幕移动方块，合并相同数字！</p>
+            <p data-i18n="instructions.touch">滑动屏幕移动方块，合并相同数字！</p>
         </div>
     </div>
 
     <!-- 游戏结束弹窗 -->
     <div id="game-over-modal" class="modal hidden">
         <div class="modal-content">
-            <h2>游戏结束</h2>
-            <p>最终分数: <span id="final-score">0</span></p>
-            <p id="new-record" class="hidden">🎉 新纪录！</p>
+            <h2 data-i18n="game.gameOver">游戏结束</h2>
+            <p><span data-i18n="game.finalScore">最终分数:</span> <span id="final-score">0</span></p>
+            <p id="new-record" class="hidden" data-i18n="game.newRecord">🎉 新纪录！</p>
             <div class="modal-buttons">
-                <button id="restart-btn" class="control-btn primary">重新开始</button>
-                <button id="close-modal-btn" class="control-btn">关闭</button>
+                <button id="restart-btn" class="control-btn primary" data-i18n="game.restart">重新开始</button>
+                <button id="close-modal-btn" class="control-btn" data-i18n="common.close">关闭</button>
             </div>
         </div>
     </div>
@@ -108,26 +110,43 @@
     <!-- 设置弹窗 -->
     <div id="settings-modal" class="modal hidden">
         <div class="modal-content">
-            <h2>游戏设置</h2>
+            <h2 data-i18n="common.settings">游戏设置</h2>
             <div class="setting-item">
-                <label for="volume-slider">音量</label>
+                <label for="volume-slider" data-i18n="settings.volume">音量</label>
                 <input type="range" id="volume-slider" min="0" max="100" value="70">
+                <span id="volume-value">70%</span>
             </div>
             <div class="setting-item">
-                <label for="theme-select">主题</label>
+                <label for="theme-select" data-i18n="settings.theme">主题</label>
                 <select id="theme-select">
-                    <option value="nezha">哪吒主题</option>
-                    <option value="classic">经典主题</option>
+                    <option value="nezha" data-i18n="settings.nezhaTheme">哪吒主题</option>
+                    <option value="classic" data-i18n="settings.classicTheme">经典主题</option>
+                </select>
+            </div>
+            <div class="setting-item">
+                <label for="language-select" data-i18n="settings.language">语言</label>
+                <select id="language-select">
+                    <option value="zh-CN">🇨🇳 简体中文</option>
+                    <option value="en-US">🇺🇸 English</option>
+                    <option value="ja-JP">🇯🇵 日本語</option>
                 </select>
             </div>
             <div class="modal-buttons">
-                <button id="save-settings-btn" class="control-btn primary">保存</button>
-                <button id="cancel-settings-btn" class="control-btn">取消</button>
+                <button id="save-settings-btn" class="control-btn primary" data-i18n="common.save">保存</button>
+                <button id="cancel-settings-btn" class="control-btn" data-i18n="common.cancel">取消</button>
             </div>
         </div>
     </div>
 
     <!-- 加载脚本 -->
+    <script src="js/utils/DeviceDetector.js"></script>
+    <script src="js/utils/BrowserCompatibility.js"></script>
+    <script src="js/managers/ResponsiveManager.js"></script>
+    <script src="js/managers/I18nManager.js"></script>
+    <script src="js/managers/ConfigManager.js"></script>
+    <script src="js/managers/PerformanceManager.js"></script>
+    <script src="js/managers/ErrorManager.js"></script>
+    <script src="js/managers/ResourceManager.js"></script>
     <script src="js/core/Tile.js"></script>
     <script src="js/core/GameState.js"></script>
     <script src="js/core/ThemeConfig.js"></script>
@@ -143,4 +162,5 @@
     <script src="js/core/GameEngine.js"></script>
     <script src="js/main.js"></script>
 </body>
+
 </html>
