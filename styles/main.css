@@ -472,6 +472,36 @@ body::before {
     }
 }
 
+/* 游戏信息显示 */
+.game-info {
+    display: flex;
+    justify-content: space-around;
+    margin: 15px 0;
+    padding: 10px;
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(220, 20, 60, 0.1));
+    border-radius: 10px;
+    border: 1px solid rgba(139, 69, 19, 0.2);
+}
+
+.info-item {
+    text-align: center;
+    flex: 1;
+}
+
+.info-label {
+    display: block;
+    font-size: 0.8rem;
+    color: #8B4513;
+    margin-bottom: 3px;
+    font-weight: 500;
+}
+
+.info-value {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #2F1B14;
+}
+
 /* 游戏控制按钮 */
 .game-controls {
     display: flex;
@@ -534,6 +564,7 @@ body::before {
 
 .modal.hidden {
     opacity: 0;
+    visibility: hidden;
     pointer-events: none;
 }
 
@@ -599,23 +630,126 @@ body::before {
     font-size: 1rem;
 }
 
-/* 响应式设计 */
+/* 响应式设计基础 */
+.responsive-container {
+    transition: all 0.3s ease;
+}
+
+/* 设备类型样式 */
+body.device-mobile {
+    font-size: 14px;
+}
+
+body.device-tablet {
+    font-size: 15px;
+}
+
+body.device-desktop {
+    font-size: 16px;
+}
+
+/* 屏幕尺寸样式 */
+body.screen-small #game-container {
+    width: 95vw;
+    padding: 10px;
+    border-radius: 15px;
+}
+
+body.screen-medium #game-container {
+    width: 90vw;
+    padding: 15px;
+    border-radius: 20px;
+}
+
+body.screen-large #game-container,
+body.screen-xlarge #game-container {
+    width: 520px;
+    padding: 25px;
+    border-radius: 25px;
+}
+
+/* 方向样式 */
+body.orientation-portrait .game-area {
+    margin: 15px auto;
+}
+
+body.orientation-landscape .game-area {
+    margin: 20px auto;
+}
+
+/* 触摸设备样式 */
+body.touch-device .mobile-instructions {
+    display: block;
+}
+
+body.no-touch .mobile-instructions {
+    display: none;
+}
+
+body.touch-device .skill-item {
+    min-height: 44px; /* 触摸友好的最小尺寸 */
+    min-width: 44px;
+}
+
+body.touch-device .control-btn {
+    min-height: 44px;
+    padding: 12px 20px;
+}
+
+/* 平板设备特殊样式 */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .game-title {
+        font-size: 2.4rem;
+    }
+    
+    .score-container {
+        gap: 18px;
+    }
+    
+    .skills-container {
+        gap: 12px;
+        padding: 12px;
+    }
+    
+    .skill-item {
+        width: 55px;
+        height: 55px;
+    }
+    
+    .skill-icon {
+        font-size: 1.5rem;
+    }
+}
+
+/* 移动设备样式 */
 @media (max-width: 768px) {
     .game-title {
         font-size: 2rem;
     }
     
+    .game-title::after {
+        font-size: 0.8rem;
+        top: -8px;
+    }
+    
     .score-container {
         gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
     }
     
     .score-box {
         padding: 8px 15px;
         min-width: 80px;
+        flex: 1;
+        max-width: 120px;
     }
     
     .skills-container {
         gap: 10px;
+        padding: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
     }
     
     .skill-item {
@@ -624,57 +758,302 @@ body::before {
     }
     
     .skill-icon {
-        font-size: 1.2rem;
+        font-size: 1.3rem;
+    }
+    
+    .skill-item:hover .skill-icon {
+        font-size: 1.4rem;
     }
     
     .game-area {
-        width: 350px;
-        height: 350px;
-    }
-    
-    .mobile-instructions {
-        display: block;
+        width: min(350px, 90vw);
+        height: min(350px, 90vw);
     }
     
     .game-controls {
         flex-wrap: wrap;
         gap: 10px;
+        justify-content: center;
     }
     
     .control-btn {
         padding: 10px 20px;
         font-size: 0.9rem;
+        flex: 1;
+        min-width: 100px;
+        max-width: 150px;
+    }
+    
+    /* 弹窗在移动设备上的调整 */
+    .modal-content {
+        width: 95vw;
+        max-width: 350px;
+        padding: 20px;
+    }
+    
+    .modal h2 {
+        font-size: 1.5rem;
+    }
+    
+    .modal-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .modal-buttons .control-btn {
+        width: 100%;
+        max-width: none;
     }
 }
 
+/* 小屏幕移动设备 */
 @media (max-width: 480px) {
     #game-container {
         padding: 15px;
         width: 95vw;
+        margin: 10px auto;
     }
     
     .game-title {
         font-size: 1.8rem;
+        margin-bottom: 15px;
+    }
+    
+    .game-title::after {
+        font-size: 0.6rem;
+        top: -6px;
+    }
+    
+    .score-container {
+        margin-bottom: 15px;
+    }
+    
+    .score-box {
+        padding: 6px 12px;
+        min-width: 70px;
+    }
+    
+    .score-label {
+        font-size: 0.75rem;
+    }
+    
+    .score-value {
+        font-size: 1.2rem;
+    }
+    
+    .skills-container {
+        padding: 8px;
+        margin-bottom: 15px;
+    }
+    
+    .skill-item {
+        width: 45px;
+        height: 45px;
+    }
+    
+    .skill-icon {
+        font-size: 1.1rem;
+    }
+    
+    .skill-item:hover .skill-icon {
+        font-size: 1.2rem;
     }
     
     .game-area {
-        width: 300px;
-        height: 300px;
+        width: min(300px, 85vw);
+        height: min(300px, 85vw);
+        margin: 15px auto;
     }
     
     .tile {
-        font-size: 1.5rem;
+        font-size: 1.4rem;
     }
     
     .tile-128,
     .tile-256,
     .tile-512 {
-        font-size: 1.3rem;
+        font-size: 1.2rem;
     }
     
     .tile-1024,
     .tile-2048 {
-        font-size: 1.1rem;
+        font-size: 1rem;
+    }
+    
+    .tile-4096,
+    .tile-8192 {
+        font-size: 0.9rem;
+    }
+    
+    .game-controls {
+        margin-top: 15px;
+    }
+    
+    .control-btn {
+        padding: 8px 16px;
+        font-size: 0.85rem;
+        min-width: 80px;
+    }
+    
+    /* 游戏信息区域 */
+    .game-info {
+        display: flex;
+        justify-content: space-around;
+        margin: 10px 0;
+        font-size: 0.8rem;
+    }
+    
+    .info-item {
+        text-align: center;
+    }
+    
+    .info-label {
+        display: block;
+        color: #8B4513;
+        margin-bottom: 2px;
+    }
+    
+    .info-value {
+        font-weight: bold;
+        color: #2F1B14;
+    }
+}
+
+/* 超小屏幕设备 */
+@media (max-width: 360px) {
+    #game-container {
+        padding: 10px;
+        margin: 5px auto;
+    }
+    
+    .game-title {
+        font-size: 1.6rem;
+    }
+    
+    .score-container {
+        gap: 8px;
+    }
+    
+    .score-box {
+        padding: 5px 10px;
+        min-width: 60px;
+    }
+    
+    .skills-container {
+        gap: 8px;
+    }
+    
+    .skill-item {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .skill-icon {
+        font-size: 1rem;
+    }
+    
+    .game-area {
+        width: min(280px, 90vw);
+        height: min(280px, 90vw);
+    }
+    
+    .tile {
+        font-size: 1.2rem;
+    }
+    
+    .tile-128,
+    .tile-256,
+    .tile-512 {
+        font-size: 1rem;
+    }
+    
+    .tile-1024,
+    .tile-2048 {
+        font-size: 0.9rem;
+    }
+    
+    .tile-4096,
+    .tile-8192 {
+        font-size: 0.8rem;
+    }
+}
+
+/* 横屏模式优化 */
+@media (orientation: landscape) and (max-height: 600px) {
+    #game-container {
+        padding: 15px;
+        margin: 10px auto;
+    }
+    
+    .game-title {
+        font-size: 1.8rem;
+        margin-bottom: 10px;
+    }
+    
+    .score-container,
+    .skills-container {
+        margin-bottom: 10px;
+    }
+    
+    .game-area {
+        margin: 10px auto;
+    }
+    
+    .game-controls {
+        margin-top: 10px;
+    }
+    
+    .mobile-instructions {
+        font-size: 0.8rem;
+        padding: 8px;
+    }
+}
+
+/* 高分辨率屏幕优化 */
+@media (min-width: 1200px) {
+    .game-title {
+        font-size: 3.2rem;
+    }
+    
+    .score-box {
+        padding: 15px 30px;
+        min-width: 130px;
+    }
+    
+    .skill-item {
+        width: 70px;
+        height: 70px;
+    }
+    
+    .skill-icon {
+        font-size: 2rem;
+    }
+    
+    .game-area {
+        width: 450px;
+        height: 450px;
+    }
+    
+    .tile {
+        font-size: 2.2rem;
+    }
+}
+
+/* 打印样式 */
+@media print {
+    body {
+        background: white;
+    }
+    
+    .cloud-decoration,
+    .game-controls,
+    .mobile-instructions {
+        display: none;
+    }
+    
+    #game-container {
+        box-shadow: none;
+        border: 2px solid #ccc;
     }
 }
 

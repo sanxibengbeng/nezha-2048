@@ -466,10 +466,20 @@ function bindUIEvents() {
     
     // 设置按钮
     const settingsBtn = document.getElementById('settings-btn');
-    settingsBtn.addEventListener('click', () => {
-        playButtonClickSound();
-        showSettings();
-    });
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', () => {
+            debugLog('设置按钮被点击');
+            try {
+                playButtonClickSound();
+            } catch (error) {
+                console.warn('播放按钮音效失败:', error);
+            }
+            showSettings();
+        });
+        debugLog('设置按钮事件已绑定');
+    } else {
+        console.error('找不到设置按钮元素 (settings-btn)');
+    }
     
     // 模态框关闭按钮
     const closeModalBtn = document.getElementById('close-modal-btn');
@@ -715,11 +725,27 @@ function togglePause() {
  * 显示设置
  */
 function showSettings() {
+    debugLog('showSettings() 被调用');
+    
     const settingsModal = document.getElementById('settings-modal');
+    if (!settingsModal) {
+        console.error('找不到设置模态框元素');
+        return;
+    }
+    
+    debugLog('找到设置模态框，移除 hidden 类');
     settingsModal.classList.remove('hidden');
     
-    // 创建主题预览界面
-    createThemePreviewUI();
+    // 暂时注释掉主题预览功能，避免可能的错误
+    try {
+        // 创建主题预览界面
+        createThemePreviewUI();
+    } catch (error) {
+        console.warn('创建主题预览界面失败:', error);
+        // 即使预览创建失败，也要显示基本的设置窗口
+    }
+    
+    debugLog('设置窗口应该已显示');
 }
 
 /**
