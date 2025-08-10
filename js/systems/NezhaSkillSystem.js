@@ -73,7 +73,6 @@ class NezhaSkillSystem {
             this.checkUnlockConditions();
         }, 100);
         
-        console.log('NezhaSkillSystem 初始化完成');
     }
 
     /**
@@ -206,7 +205,6 @@ class NezhaSkillSystem {
             skill: this.skills[skillId] 
         });
         
-        console.log(`技能解锁: ${this.skills[skillId].name}`);
     }
 
     /**
@@ -220,14 +218,6 @@ class NezhaSkillSystem {
         const available = state.available;
         const cooldown = this.skillCooldowns[skillId];
         const isActive = state.isActive;
-        
-        console.log(`检查技能 ${skillId} 激活条件:`, {
-            unlocked,
-            available,
-            cooldown,
-            isActive,
-            canActivate: unlocked && available && cooldown === 0 && !isActive
-        });
         
         return unlocked && 
                available && 
@@ -267,16 +257,11 @@ class NezhaSkillSystem {
      * @returns {boolean} 是否成功激活
      */
     activateSkill(skillId, options = {}) {
-        console.log(`尝试激活技能: ${skillId}`);
-        
         // 检查技能是否存在
         if (!this.skills[skillId]) {
             console.error(`技能不存在: ${skillId}`);
             return false;
         }
-        
-        // 调试技能状态
-        this.debugSkillState(skillId);
         
         if (!this.canActivateSkill(skillId)) {
             const state = this.skillStates[skillId];
@@ -362,7 +347,6 @@ class NezhaSkillSystem {
             skill: this.skills[skillId] 
         });
         
-        console.log(`技能结束: ${this.skills[skillId].name}`);
     }
 
     /**
@@ -409,7 +393,6 @@ class NezhaSkillSystem {
      * @param {Object} options - 选项
      */
     executeThreeHeadsSixArms(options) {
-        console.log('🔥 执行三头六臂技能');
         
         // 启用多方向操作模式
         if (this.gameEngine && this.gameEngine.getInputManager) {
@@ -431,7 +414,6 @@ class NezhaSkillSystem {
      * 结束三头六臂技能
      */
     endThreeHeadsSixArms() {
-        console.log('🔥 三头六臂技能结束');
         
         // 禁用多方向操作模式
         if (this.gameEngine && this.gameEngine.getInputManager) {
@@ -489,7 +471,6 @@ class NezhaSkillSystem {
     executeQiankunCircle(options = {}) {
         if (!this.gameEngine) return;
         
-        console.log('⭕ 执行乾坤圈技能');
         
         const gridManager = this.gameEngine.getGridManager();
         const gameState = this.gameEngine.getGameState();
@@ -760,7 +741,6 @@ class NezhaSkillSystem {
     executeHuntianLing(options = {}) {
         if (!this.gameEngine) return;
         
-        console.log('🌊 执行混天绫技能');
         
         const gameState = this.gameEngine.getGameState();
         
@@ -1248,31 +1228,48 @@ class NezhaSkillSystem {
      * @param {Object} options - 选项
      */
     executeTransformation(options) {
+        
         // 启用变身模式
         if (this.gameEngine) {
             const gameState = this.gameEngine.getGameState();
+            if (!gameState.activeSkills) {
+                gameState.activeSkills = {};
+            }
             gameState.activeSkills.transformation = true;
         }
         
+        // 创建全屏变身动画
+        this.createTransformationAnimation();
+        
+        // 延迟应用变身效果，让动画先播放
+        setTimeout(() => {
+            this.applyTransformationBonus();
+            this.createTransformationUI();
+        }, 2000);
+        
         // 创建变身视觉效果
         this.createSkillVisualEffect('transformation');
-        
-        // 提升游戏机制（例如：合并分数翻倍）
-        this.applyTransformationBonus();
     }
 
     /**
      * 结束哪吒变身技能
      */
     endTransformation() {
+        
         // 禁用变身模式
         if (this.gameEngine) {
             const gameState = this.gameEngine.getGameState();
-            gameState.activeSkills.transformation = false;
+            if (gameState.activeSkills) {
+                gameState.activeSkills.transformation = false;
+            }
         }
         
-        // 移除变身奖励
+        // 移除变身奖励和UI
         this.removeTransformationBonus();
+        this.removeTransformationUI();
+        
+        // 创建变身结束动画
+        this.createTransformationEndAnimation();
     }
 
     /**
@@ -1618,15 +1615,47 @@ class NezhaSkillSystem {
      * 应用变身奖励
      */
     applyTransformationBonus() {
-        // 这里可以修改游戏机制，比如合并分数翻倍
-        console.log('变身奖励已激活');
+        if (!this.gameEngine) return;
+        
+        const gameState = this.gameEngine.getGameState();
+        
+        // 应用变身期间的增强效果
+        if (!gameState.transformationBonus) {
+            gameState.transformationBonus = {
+                scoreMultiplier: 3.0,  // 分数3倍
+                skillCooldownReduction: 0.5,  // 技能冷却减少50%
+                mergeChance: 0.3,  // 30%概率额外生成高级方块
+                originalMultiplier: gameState.scoreMultiplier || 1
+            };
+            
+            // 应用分数倍数
+            gameState.scoreMultiplier = gameState.transformationBonus.scoreMultiplier;
+            
+            // 减少所有技能冷却时间
+            Object.keys(this.skillCooldowns).forEach(skillId => {
+                if (this.skillCooldowns[skillId] > 0) {
+                    this.skillCooldowns[skillId] *= gameState.transformationBonus.skillCooldownReduction;
+                }
+            });
+            
+            console.log('⚡ 哪吒变身奖励已激活：分数x3，技能冷却-50%，特殊合并效果');
+        }
     }
 
     /**
      * 移除变身奖励
      */
     removeTransformationBonus() {
-        console.log('变身奖励已移除');
+        if (!this.gameEngine) return;
+        
+        const gameState = this.gameEngine.getGameState();
+        
+        // 恢复原始游戏机制
+        if (gameState.transformationBonus) {
+            gameState.scoreMultiplier = gameState.transformationBonus.originalMultiplier;
+            delete gameState.transformationBonus;
+            console.log('⚡ 哪吒变身奖励已移除');
+        }
     }
 
     /**
@@ -1831,6 +1860,387 @@ class NezhaSkillSystem {
     }
 
     /**
+     * 创建哪吒变身动画
+     */
+    createTransformationAnimation() {
+        console.log('⚡ 创建哪吒变身动画');
+        
+        // 创建全屏变身覆盖层
+        const transformationOverlay = document.createElement('div');
+        transformationOverlay.className = 'nezha-transformation-overlay';
+        transformationOverlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.9), rgba(255, 69, 0, 0.7), rgba(220, 20, 60, 0.5));
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            animation: transformationAppear 2s ease-out forwards;
+            pointer-events: none;
+        `;
+        
+        // 创建哪吒变身图像
+        const nezhaImage = document.createElement('div');
+        nezhaImage.className = 'nezha-transformation-image';
+        nezhaImage.style.cssText = `
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, #FFD700, #FF4500);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            color: white;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+            animation: nezhaTransformationPulse 2s ease-in-out infinite;
+            margin-bottom: 30px;
+            box-shadow: 0 0 50px rgba(255, 215, 0, 0.8);
+        `;
+        nezhaImage.textContent = '⚡';
+        
+        // 创建变身文字
+        const transformationText = document.createElement('div');
+        transformationText.className = 'nezha-transformation-text';
+        transformationText.style.cssText = `
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+            animation: transformationTextGlow 2s ease-in-out infinite;
+            margin-bottom: 20px;
+        `;
+        transformationText.textContent = '哪吒变身';
+        
+        // 创建能力描述
+        const abilityText = document.createElement('div');
+        abilityText.className = 'nezha-ability-text';
+        abilityText.style.cssText = `
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.9);
+            text-align: center;
+            animation: transformationAbilityFade 2s ease-out forwards;
+            opacity: 0;
+        `;
+        abilityText.innerHTML = `
+            <div>分数获得 x3 倍数</div>
+            <div>技能冷却时间减少 50%</div>
+            <div>特殊合并效果激活</div>
+        `;
+        
+        // 组装变身界面
+        transformationOverlay.appendChild(nezhaImage);
+        transformationOverlay.appendChild(transformationText);
+        transformationOverlay.appendChild(abilityText);
+        
+        // 添加到页面
+        document.body.appendChild(transformationOverlay);
+        
+        // 创建粒子效果
+        this.createTransformationParticles();
+        
+        // 2秒后开始淡出
+        setTimeout(() => {
+            transformationOverlay.style.animation = 'transformationFadeOut 1s ease-in forwards';
+            
+            // 3秒后移除覆盖层
+            setTimeout(() => {
+                if (transformationOverlay.parentNode) {
+                    transformationOverlay.parentNode.removeChild(transformationOverlay);
+                }
+            }, 1000);
+        }, 2000);
+        
+        // 添加CSS动画样式
+        this.addTransformationStyles();
+    }
+
+    /**
+     * 创建变身粒子效果
+     */
+    createTransformationParticles() {
+        if (!this.gameEngine || !this.gameEngine.getEffectsManager) return;
+        
+        const effectsManager = this.gameEngine.getEffectsManager();
+        const canvas = this.gameEngine.getCanvas();
+        
+        if (!canvas) return;
+        
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        
+        // 创建多层粒子效果
+        effectsManager.createNezhaEffect('transformationAura', centerX, centerY, {
+            duration: 3000,
+            intensity: 2.0
+        });
+        
+        // 创建额外的神圣光芒效果
+        setTimeout(() => {
+            for (let i = 0; i < 8; i++) {
+                const angle = (i / 8) * Math.PI * 2;
+                const distance = 100;
+                const x = centerX + Math.cos(angle) * distance;
+                const y = centerY + Math.sin(angle) * distance;
+                
+                effectsManager.createNezhaEffect('transformationAura', x, y, {
+                    duration: 2000,
+                    intensity: 1.5
+                });
+            }
+        }, 500);
+    }
+
+    /**
+     * 创建变身结束动画
+     */
+    createTransformationEndAnimation() {
+        console.log('⚡ 创建变身结束动画');
+        
+        // 创建简单的结束提示
+        const endNotification = document.createElement('div');
+        endNotification.className = 'nezha-transformation-end';
+        endNotification.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 10px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            z-index: 1000;
+            animation: transformationEndFade 2s ease-out forwards;
+            pointer-events: none;
+        `;
+        endNotification.textContent = '哪吒变身结束';
+        
+        document.body.appendChild(endNotification);
+        
+        // 2秒后移除
+        setTimeout(() => {
+            if (endNotification.parentNode) {
+                endNotification.parentNode.removeChild(endNotification);
+            }
+        }, 2000);
+    }
+
+    /**
+     * 创建变身状态UI
+     */
+    createTransformationUI() {
+        console.log('⚡ 创建变身状态UI');
+        
+        // 检查是否已存在UI
+        let transformationUI = document.querySelector('.nezha-transformation-ui');
+        if (transformationUI) {
+            transformationUI.remove();
+        }
+        
+        // 创建变身状态指示器
+        transformationUI = document.createElement('div');
+        transformationUI.className = 'nezha-transformation-ui';
+        transformationUI.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.9), rgba(255, 140, 0, 0.9));
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-weight: bold;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+            animation: transformationUIGlow 2s ease-in-out infinite;
+            min-width: 200px;
+        `;
+        
+        // 创建状态内容
+        const statusContent = document.createElement('div');
+        statusContent.innerHTML = `
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <span style="font-size: 1.5rem; margin-right: 10px;">⚡</span>
+                <span style="font-size: 1.2rem;">哪吒变身中</span>
+            </div>
+            <div style="font-size: 0.9rem; opacity: 0.9;">
+                <div>• 分数 x3</div>
+                <div>• 技能冷却 -50%</div>
+                <div>• 特殊效果激活</div>
+            </div>
+        `;
+        
+        // 创建剩余时间指示器
+        const timeIndicator = document.createElement('div');
+        timeIndicator.className = 'transformation-time-indicator';
+        timeIndicator.style.cssText = `
+            margin-top: 10px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+            overflow: hidden;
+        `;
+        
+        const timeBar = document.createElement('div');
+        timeBar.className = 'transformation-time-bar';
+        timeBar.style.cssText = `
+            height: 100%;
+            background: white;
+            width: 100%;
+            animation: transformationTimeCountdown 15s linear forwards;
+        `;
+        
+        timeIndicator.appendChild(timeBar);
+        transformationUI.appendChild(statusContent);
+        transformationUI.appendChild(timeIndicator);
+        
+        // 添加到页面
+        document.body.appendChild(transformationUI);
+    }
+
+    /**
+     * 移除变身状态UI
+     */
+    removeTransformationUI() {
+        const transformationUI = document.querySelector('.nezha-transformation-ui');
+        if (transformationUI) {
+            transformationUI.style.animation = 'transformationUIFadeOut 0.5s ease-out forwards';
+            setTimeout(() => {
+                if (transformationUI.parentNode) {
+                    transformationUI.parentNode.removeChild(transformationUI);
+                }
+            }, 500);
+        }
+    }
+
+    /**
+     * 添加变身动画样式
+     */
+    addTransformationStyles() {
+        // 检查是否已添加样式
+        if (document.querySelector('#nezha-transformation-styles')) {
+            return;
+        }
+        
+        const style = document.createElement('style');
+        style.id = 'nezha-transformation-styles';
+        style.textContent = `
+            @keyframes transformationAppear {
+                0% {
+                    opacity: 0;
+                    transform: scale(0.5);
+                }
+                50% {
+                    opacity: 1;
+                    transform: scale(1.1);
+                }
+                100% {
+                    opacity: 1;
+                    transform: scale(1);
+                }
+            }
+            
+            @keyframes transformationFadeOut {
+                0% {
+                    opacity: 1;
+                    transform: scale(1);
+                }
+                100% {
+                    opacity: 0;
+                    transform: scale(0.8);
+                }
+            }
+            
+            @keyframes nezhaTransformationPulse {
+                0%, 100% {
+                    transform: scale(1);
+                    box-shadow: 0 0 50px rgba(255, 215, 0, 0.8);
+                }
+                50% {
+                    transform: scale(1.1);
+                    box-shadow: 0 0 80px rgba(255, 215, 0, 1);
+                }
+            }
+            
+            @keyframes transformationTextGlow {
+                0%, 100% {
+                    text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+                }
+                50% {
+                    text-shadow: 0 0 20px rgba(255, 215, 0, 1), 0 0 30px rgba(255, 140, 0, 0.8);
+                }
+            }
+            
+            @keyframes transformationAbilityFade {
+                0% {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                100% {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            
+            @keyframes transformationEndFade {
+                0% {
+                    opacity: 0;
+                    transform: translate(-50%, -50%) scale(0.8);
+                }
+                20% {
+                    opacity: 1;
+                    transform: translate(-50%, -50%) scale(1);
+                }
+                80% {
+                    opacity: 1;
+                    transform: translate(-50%, -50%) scale(1);
+                }
+                100% {
+                    opacity: 0;
+                    transform: translate(-50%, -50%) scale(0.8);
+                }
+            }
+            
+            @keyframes transformationUIGlow {
+                0%, 100% {
+                    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+                }
+                50% {
+                    box-shadow: 0 4px 25px rgba(255, 215, 0, 0.8);
+                }
+            }
+            
+            @keyframes transformationTimeCountdown {
+                0% {
+                    width: 100%;
+                }
+                100% {
+                    width: 0%;
+                }
+            }
+            
+            @keyframes transformationUIFadeOut {
+                0% {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+                100% {
+                    opacity: 0;
+                    transform: translateX(100px);
+                }
+            }
+        `;
+        
+        document.head.appendChild(style);
+    }
+
+    /**
      * 销毁技能系统
      */
     destroy() {
@@ -1846,6 +2256,9 @@ class NezhaSkillSystem {
         
         // 清除事件监听器
         this.eventListeners.clear();
+        
+        // 移除变身UI
+        this.removeTransformationUI();
         
         console.log('NezhaSkillSystem 已销毁');
     }

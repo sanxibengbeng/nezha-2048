@@ -328,31 +328,24 @@ class StateManager {
             comboCount = 1;
         }
         
-        console.log('calculateMergeScore 参数:', { tileValue, comboCount, skillUsed });
-        
         let baseScore = this.scoreConfig.mergeMultiplier[tileValue] || tileValue;
-        console.log('基础分数:', baseScore);
         
         // 应用连击奖励
         if (comboCount > 1) {
             const comboMultiplier = this.scoreConfig.comboBonus[Math.min(comboCount, 6)] || 1;
-            console.log('连击倍数:', comboMultiplier);
             baseScore *= comboMultiplier;
         }
         
         // 应用技能奖励
         if (skillUsed && this.scoreConfig.skillBonus[skillUsed]) {
             const skillMultiplier = this.scoreConfig.skillBonus[skillUsed];
-            console.log('技能倍数:', skillMultiplier);
             baseScore *= skillMultiplier;
         }
         
         // 应用基础倍数
         baseScore *= this.scoreConfig.baseMultiplier;
-        console.log('应用基础倍数后:', baseScore);
         
         const finalScore = Math.floor(baseScore);
-        console.log('最终分数:', finalScore);
         
         // 最终验证
         if (isNaN(finalScore)) {

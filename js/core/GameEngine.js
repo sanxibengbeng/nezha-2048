@@ -2,6 +2,11 @@
  * GameEngine类 - 游戏引擎核心
  * 管理游戏主循环、状态转换和系统协调
  */
+
+// 日志配置
+const DEBUG_MODE = false;
+const debugLog = DEBUG_MODE ? console.log : () => {};
+
 class GameEngine {
     constructor(config = {}) {
         // 配置参数
@@ -122,7 +127,6 @@ class GameEngine {
         // 事件系统
         this.eventListeners = new Map();
         
-        console.log('GameEngine 初始化完成');
     }
 
     /**
@@ -183,7 +187,6 @@ class GameEngine {
             // 触发初始化完成事件
             this.emit('initialized');
             
-            console.log('GameEngine 初始化成功');
             return true;
             
         } catch (error) {
@@ -234,7 +237,6 @@ class GameEngine {
         // 触发开始事件
         this.emit('started');
         
-        console.log('游戏开始');
     }
 
     /**
@@ -721,7 +723,6 @@ class GameEngine {
                 this.emit('storageError', data);
             });
             
-            console.log('StateManager 事件绑定完成');
             
         } catch (error) {
             console.error('绑定 StateManager 事件失败:', error);
@@ -1106,8 +1107,6 @@ class GameEngine {
      * @param {Array} mergedTiles - 合并的方块数组
      */
     startMergeAnimations(mergedTiles) {
-        console.log('startMergeAnimations called with:', mergedTiles);
-        
         if (!mergedTiles || mergedTiles.length === 0) {
             return;
         }
@@ -1121,8 +1120,6 @@ class GameEngine {
             }
             return isValid;
         });
-
-        console.log('有效的合并方块:', validMergedTiles);
 
         if (validMergedTiles.length === 0) {
             console.warn('没有有效的合并方块');
@@ -1142,8 +1139,6 @@ class GameEngine {
                 };
             })
             .filter(data => data !== null); // 过滤掉无效的数据
-
-        console.log('合并动画数据:', mergeData);
 
         if (mergeData.length === 0) {
             console.warn('没有有效的合并数据');
@@ -1239,13 +1234,9 @@ class GameEngine {
      * @param {Array} mergedTiles - 合并的方块数组
      */
     onMergeAnimationComplete(mergedTiles) {
-        console.log('合并动画完成回调，接收到的数据:', mergedTiles);
-        
         // 计算合并分数
         let totalScore = 0;
         mergedTiles.forEach((mergeInfo, index) => {
-            console.log(`处理合并信息 ${index}:`, mergeInfo);
-            
             // 确保 mergeInfo 有正确的结构
             let tileValue;
             if (mergeInfo && typeof mergeInfo === 'object') {
@@ -1268,15 +1259,11 @@ class GameEngine {
             // 获取当前技能
             const currentSkill = this.gameState.currentSkill || null;
             
-            console.log('计算分数参数:', { tileValue, consecutiveMerges, currentSkill });
-            
             const score = this.stateManager.calculateMergeScore(
                 tileValue,
                 consecutiveMerges,
                 currentSkill
             );
-            
-            console.log('计算得到的分数:', score);
             
             if (!isNaN(score) && score > 0) {
                 totalScore += score;
@@ -1284,8 +1271,6 @@ class GameEngine {
                 console.warn('计算分数结果无效:', score);
             }
         });
-        
-        console.log('总分数:', totalScore);
         
         // 更新游戏分数
         if (!isNaN(totalScore) && totalScore > 0) {
@@ -1308,8 +1293,6 @@ class GameEngine {
             mergedTiles: mergedTiles,
             scoreGained: totalScore
         });
-        
-        console.log('合并动画完成:', mergedTiles.length, '个方块，得分:', totalScore);
     }
 
     /**

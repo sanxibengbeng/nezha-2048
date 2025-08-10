@@ -3,6 +3,10 @@
  * 初始化游戏并处理基础交互
  */
 
+// 日志配置 - 设置为 false 来减少控制台输出
+const DEBUG_MODE = false;
+const debugLog = DEBUG_MODE ? console.log : () => {};
+
 // 全局游戏实例
 let game = null;
 
@@ -10,8 +14,6 @@ let game = null;
  * 页面加载完成后初始化游戏
  */
 document.addEventListener('DOMContentLoaded', async function() {
-    console.log('哪吒2048游戏正在初始化...');
-    
     try {
         // 初始化游戏引擎（暂时创建基础结构）
         await initializeGame();
@@ -22,7 +24,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         // 显示初始界面
         showWelcomeMessage();
         
-        console.log('游戏初始化完成！');
     } catch (error) {
         console.error('游戏初始化失败:', error);
         showErrorMessage('游戏初始化失败，请刷新页面重试。');
@@ -63,7 +64,6 @@ async function initializeGame() {
     // 启动游戏
     game.start();
     
-    console.log('游戏引擎初始化完成');
 }
 
 /**
@@ -117,7 +117,7 @@ function addTestTiles() {
         gameState.setTile(tileData.x, tileData.y, tile);
     });
     
-    console.log('测试方块已添加到游戏状态');
+    debugLog('测试方块已添加到游戏状态');
 }
 
 /**
@@ -189,7 +189,6 @@ function bindGameEngineEvents() {
     
     // 游戏初始化完成
     game.on('initialized', () => {
-        console.log('游戏引擎初始化完成');
         updateScoreDisplay();
         initializeThemeSettings();
         initializeVisualElements();
@@ -197,7 +196,6 @@ function bindGameEngineEvents() {
     
     // 游戏开始
     game.on('started', () => {
-        console.log('游戏开始');
         showTemporaryMessage('游戏开始！');
         
         // 播放游戏开始音效
@@ -211,26 +209,22 @@ function bindGameEngineEvents() {
     
     // 游戏暂停
     game.on('paused', () => {
-        console.log('游戏暂停');
         showTemporaryMessage('游戏暂停');
     });
     
     // 游戏恢复
     game.on('resumed', () => {
-        console.log('游戏恢复');
         showTemporaryMessage('游戏恢复');
     });
     
     // 游戏重置
     game.on('reset', () => {
-        console.log('游戏重置');
         updateScoreDisplay();
         showTemporaryMessage('游戏重置');
     });
     
     // 移动事件
     game.on('move', (data) => {
-        console.log('移动事件:', data);
         
         // 更新分数显示
         updateScoreDisplay();
@@ -251,7 +245,7 @@ function bindGameEngineEvents() {
     
     // 游戏结束事件
     game.on('gameOver', (data) => {
-        console.log('游戏结束:', data);
+        debugLog('游戏结束:', data);
         
         // 播放游戏结束音效
         if (game && game.getAudioManager) {
@@ -272,7 +266,7 @@ function bindGameEngineEvents() {
     
     // 获胜事件
     game.on('won', (data) => {
-        console.log('游戏获胜:', data);
+        debugLog('游戏获胜:', data);
         
         // 播放胜利音效和音乐
         if (game && game.getAudioManager) {
@@ -304,7 +298,6 @@ function bindGameEngineEvents() {
     
     // 技能激活事件
     game.on('skillActivated', (data) => {
-        console.log('技能激活:', data.skillName);
         activateSkillByName(data.skillName);
     });
     
@@ -316,25 +309,25 @@ function bindGameEngineEvents() {
     
     // 新游戏请求事件
     game.on('newGameRequested', () => {
-        console.log('请求新游戏');
+        debugLog('请求新游戏');
         startNewGame();
     });
     
     // 方向输入事件
     game.on('directionInput', (data) => {
-        console.log('方向输入:', data.direction);
+        debugLog('方向输入:', data.direction);
         handleMoveInput(data.direction);
     });
     
     // 多方向输入事件（三头六臂模式）
     game.on('multiDirectionInput', (data) => {
-        console.log('多方向输入:', data.directions);
+        debugLog('多方向输入:', data.directions);
         handleMultiDirectionInput(data.directions);
     });
     
     // 网格几乎满了事件
     game.on('gridAlmostFull', (data) => {
-        console.log('网格几乎满了:', data);
+        debugLog('网格几乎满了:', data);
         showTemporaryMessage('⚠️ 空间不足，小心游戏结束！', 2000);
         
         // 播放警告音效
@@ -348,7 +341,7 @@ function bindGameEngineEvents() {
     
     // 新的最大方块事件
     game.on('newMaxTile', (data) => {
-        console.log('新的最大方块:', data);
+        debugLog('新的最大方块:', data);
         showTemporaryMessage(`🎉 达到新高度: ${data.newMax}！`, 2000);
         
         // 播放成就音效
@@ -362,7 +355,7 @@ function bindGameEngineEvents() {
     
     // 移动选择有限事件
     game.on('limitedMoves', (data) => {
-        console.log('移动选择有限:', data);
+        debugLog('移动选择有限:', data);
         showTemporaryMessage('⚠️ 移动选择有限，请谨慎操作！', 2000);
         
         // 播放警告音效
@@ -376,7 +369,7 @@ function bindGameEngineEvents() {
     
     // ESC键事件
     game.on('escapePressed', () => {
-        console.log('ESC键按下');
+        debugLog('ESC键按下');
         // 可以用来关闭模态框或暂停游戏
         closeAllModals();
     });
@@ -525,7 +518,6 @@ function bindNezhaSkillSystemEvents() {
     
     // 技能解锁事件
     skillSystem.on('skillUnlocked', (data) => {
-        console.log('技能解锁:', data.skill.name);
         showTemporaryMessage(`🎉 技能解锁: ${data.skill.name}`, 3000);
         
         // 播放技能解锁音效
@@ -542,7 +534,6 @@ function bindNezhaSkillSystemEvents() {
     
     // 技能激活事件
     skillSystem.on('skillActivated', (data) => {
-        console.log('技能激活:', data.skill.name);
         showTemporaryMessage(`⚡ ${data.skill.name} 激活！`, 2000);
         
         // 更新技能按钮状态
@@ -557,7 +548,6 @@ function bindNezhaSkillSystemEvents() {
     
     // 技能停用事件
     skillSystem.on('skillDeactivated', (data) => {
-        console.log('技能停用:', data.skill.name);
         
         // 更新技能按钮状态
         updateSkillButtonState(data.skillId, 'deactivated');
@@ -565,7 +555,7 @@ function bindNezhaSkillSystemEvents() {
     
     // 技能准备就绪事件
     skillSystem.on('skillReady', (data) => {
-        console.log('技能准备就绪:', data.skill.name);
+        debugLog('技能准备就绪:', data.skill.name);
         showTemporaryMessage(`✨ ${data.skill.name} 准备就绪`, 1500);
         
         // 播放技能准备音效
@@ -597,7 +587,7 @@ function bindNezhaSkillSystemEvents() {
     
     // 乾坤圈清除完成事件
     skillSystem.on('qiankunCircleCleared', (data) => {
-        console.log('乾坤圈清除完成:', data);
+        debugLog('乾坤圈清除完成:', data);
         
         const message = `⭕ 乾坤圈清除 ${data.clearedTiles.length} 个方块，获得 ${data.score} 分！`;
         showTemporaryMessage(message, 3000);
@@ -611,7 +601,7 @@ function bindNezhaSkillSystemEvents() {
     
     // 混天绫连锁完成事件
     skillSystem.on('huntianLingCompleted', (data) => {
-        console.log('混天绫连锁完成:', data);
+        debugLog('混天绫连锁完成:', data);
         
         const message = `🌊 混天绫连锁: ${data.patterns.length} 个模式，清除 ${data.totalCleared} 个方块，获得 ${data.totalScore} 分！`;
         showTemporaryMessage(message, 4000);
@@ -625,7 +615,7 @@ function bindNezhaSkillSystemEvents() {
     
     // 哪吒变身开始事件
     skillSystem.on('transformationStarted', (data) => {
-        console.log('哪吒变身开始:', data);
+        debugLog('哪吒变身开始:', data);
         
         const message = `⚡ 哪吒变身激活！${data.enhancements.description}`;
         showTemporaryMessage(message, 5000);
@@ -648,7 +638,7 @@ function bindNezhaSkillSystemEvents() {
     
     // 哪吒变身结束事件
     skillSystem.on('transformationEnded', (data) => {
-        console.log('哪吒变身结束:', data);
+        debugLog('哪吒变身结束:', data);
         
         showTemporaryMessage('⚡ 哪吒变身结束，能力恢复正常', 3000);
         
@@ -679,7 +669,7 @@ function startNewGame() {
         return;
     }
     
-    console.log('开始新游戏');
+    debugLog('开始新游戏');
     
     // 重置游戏状态显示
     resetGameStateDisplay();
@@ -697,7 +687,7 @@ function startNewGame() {
         game.start();
         updateScoreDisplay();
         
-        console.log('新游戏已开始，初始方块已添加');
+        debugLog('新游戏已开始，初始方块已添加');
     }, 100);
 }
 
@@ -767,7 +757,7 @@ function showGameOverModal(data) {
         gameOverModal.classList.add('show');
     }, 10);
     
-    console.log('游戏结束模态框已显示');
+    debugLog('游戏结束模态框已显示');
 }
 
 /**
@@ -884,7 +874,7 @@ function showNewRecordCelebration() {
                 audioManager.playVictorySound();
             }
         } catch (error) {
-            console.log('音频管理器尚未实现，跳过音效播放');
+            debugLog('音频管理器尚未实现，跳过音效播放');
         }
     }
 }
@@ -906,7 +896,7 @@ function closeGameOverModal() {
  * 重新开始游戏
  */
 function restartGame() {
-    console.log('重新开始游戏');
+    debugLog('重新开始游戏');
     
     // 关闭游戏结束模态框
     closeGameOverModal();
@@ -964,7 +954,7 @@ function saveSettings() {
     const volumeSlider = document.getElementById('volume-slider');
     const themeSelect = document.getElementById('theme-select');
     
-    console.log('保存设置 - 音量:', volumeSlider.value, '主题:', themeSelect.value);
+    debugLog('保存设置 - 音量:', volumeSlider.value, '主题:', themeSelect.value);
     
     // 应用主题设置
     if (game && game.getThemeManager()) {
@@ -1000,7 +990,7 @@ function closeSettingsModal() {
  * @param {string} skillId - 技能ID
  */
 function activateSkill(skillId) {
-    console.log('激活技能:', skillId);
+    debugLog('激活技能:', skillId);
     
     if (!game || !game.getNezhaSkillSystem) {
         console.warn('技能系统不可用');
@@ -1212,11 +1202,11 @@ function playSkillSound(skillId) {
                         }, 500);
                         break;
                     default:
-                        console.log(`未知技能音效: ${skillId}`);
+                        debugLog(`未知技能音效: ${skillId}`);
                 }
             }
         } catch (error) {
-            console.log('技能音效播放失败:', error);
+            debugLog('技能音效播放失败:', error);
         }
     }
 }
@@ -1517,7 +1507,6 @@ function bindAudioManagerEvents() {
     
     // 音频初始化完成事件
     audioManager.on('initialized', () => {
-        console.log('音频管理器初始化完成');
         
         // 初始化音频设置UI
         initializeAudioSettings();
@@ -1525,12 +1514,12 @@ function bindAudioManagerEvents() {
     
     // 音频加载完成事件
     audioManager.on('audioLoaded', (data) => {
-        console.log('音频加载完成:', data.name, data.type);
+        debugLog('音频加载完成:', data.name, data.type);
     });
     
     // 哪吒音频资源加载完成事件
     audioManager.on('nezhaAudioLoaded', () => {
-        console.log('哪吒主题音频资源加载完成');
+        debugLog('哪吒主题音频资源加载完成');
         // 延迟播放背景音乐，等待用户交互
         setTimeout(() => {
             if (audioManager.userInteracted) {
@@ -1541,13 +1530,13 @@ function bindAudioManagerEvents() {
     
     // 音量变化事件
     audioManager.on('volumeChanged', (data) => {
-        console.log('音量变化:', data.type, data.volume);
+        debugLog('音量变化:', data.type, data.volume);
         updateVolumeUI(data.type, data.volume);
     });
     
     // 静音状态变化事件
     audioManager.on('muteChanged', (data) => {
-        console.log('静音状态变化:', data.muted);
+        debugLog('静音状态变化:', data.muted);
         updateMuteUI(data.muted);
     });
     
@@ -1991,7 +1980,7 @@ function handleMoveInput(direction) {
     
     if (moved) {
         // 移动成功的反馈
-        console.log(`成功移动: ${direction}`);
+        debugLog(`成功移动: ${direction}`);
         
         // 播放移动音效
         if (game && game.getAudioManager) {
@@ -2024,7 +2013,7 @@ function handleMoveInput(direction) {
         return true;
     } else {
         // 移动失败的反馈
-        console.log(`移动失败: ${direction}`);
+        debugLog(`移动失败: ${direction}`);
         showTemporaryMessage('无法移动到该方向');
         
         // 播放错误音效
@@ -2049,7 +2038,7 @@ function handleMultiDirectionInput(directions) {
         return false;
     }
     
-    console.log('🔥 处理三头六臂多方向输入:', directions);
+    debugLog('🔥 处理三头六臂多方向输入:', directions);
     
     let successCount = 0;
     let totalScore = 0;
@@ -2073,7 +2062,7 @@ function handleMultiDirectionInput(directions) {
                     scoreGained
                 });
                 
-                console.log(`🔥 方向 ${direction} 移动成功，得分: ${scoreGained}`);
+                debugLog(`🔥 方向 ${direction} 移动成功，得分: ${scoreGained}`);
             } else {
                 results.push({
                     direction,
@@ -2185,7 +2174,7 @@ function createInputTests() {
     const tests = {
         // 测试移动有效性验证
         testMoveValidation: () => {
-            console.log('测试移动有效性验证...');
+            debugLog('测试移动有效性验证...');
             
             // 测试无效方向
             const result1 = validateMove('invalid');
@@ -2195,45 +2184,45 @@ function createInputTests() {
             const result2 = validateMove('up');
             console.assert(typeof result2 === 'boolean', '有效方向应该返回boolean');
             
-            console.log('移动有效性验证测试通过');
+            debugLog('移动有效性验证测试通过');
         },
         
         // 测试输入处理流程
         testInputHandling: () => {
-            console.log('测试输入处理流程...');
+            debugLog('测试输入处理流程...');
             
             if (!game) {
-                console.log('游戏未初始化，跳过输入处理测试');
+                debugLog('游戏未初始化，跳过输入处理测试');
                 return;
             }
             
             const initialScore = game.getGameState().score;
             const result = handleMoveInput('right');
             
-            console.log(`输入处理结果: ${result}`);
-            console.log('输入处理流程测试完成');
+            debugLog(`输入处理结果: ${result}`);
+            debugLog('输入处理流程测试完成');
         },
         
         // 测试技能激活
         testSkillActivation: () => {
-            console.log('测试技能激活...');
+            debugLog('测试技能激活...');
             
             const skillNames = ['threeHeadsSixArms', 'qiankunCircle', 'huntianLing', 'transformation'];
             
             skillNames.forEach(skillName => {
                 activateSkillByName(skillName);
-                console.log(`技能 ${skillName} 激活测试完成`);
+                debugLog(`技能 ${skillName} 激活测试完成`);
             });
             
-            console.log('技能激活测试通过');
+            debugLog('技能激活测试通过');
         },
         
         // 测试游戏状态检查
         testGameStateChecks: () => {
-            console.log('测试游戏状态检查...');
+            debugLog('测试游戏状态检查...');
             
             if (!game) {
-                console.log('游戏未初始化，跳过游戏状态测试');
+                debugLog('游戏未初始化，跳过游戏状态测试');
                 return;
             }
             
@@ -2243,7 +2232,7 @@ function createInputTests() {
             console.assert(typeof gameState.moves === 'number', '移动次数应该是数字');
             console.assert(typeof gameState.isGameOver === 'boolean', '游戏结束状态应该是布尔值');
             
-            console.log('游戏状态检查测试通过');
+            debugLog('游戏状态检查测试通过');
         }
     };
     
@@ -2254,17 +2243,17 @@ function createInputTests() {
  * 运行输入响应测试
  */
 function runInputTests() {
-    console.log('开始运行输入响应测试...');
+    debugLog('开始运行输入响应测试...');
     
     const tests = createInputTests();
     
     try {
         Object.keys(tests).forEach(testName => {
-            console.log(`\n--- 运行测试: ${testName} ---`);
+            debugLog(`\n--- 运行测试: ${testName} ---`);
             tests[testName]();
         });
         
-        console.log('\n✅ 所有输入响应测试通过！');
+        debugLog('\n✅ 所有输入响应测试通过！');
     } catch (error) {
         console.error('❌ 测试失败:', error);
     }
@@ -2299,7 +2288,7 @@ function initializeThemeSettings() {
     
     // 添加主题变化监听器
     themeManager.addThemeChangeListener((themeName, themeConfig) => {
-        console.log('主题已切换:', themeName);
+        debugLog('主题已切换:', themeName);
         showTemporaryMessage(`已切换到${themeManager.getThemeInfo(themeName).name}`);
         
         // 更新主题选择器
@@ -2342,7 +2331,6 @@ function initializeVisualElements() {
     // 添加视觉反馈事件监听
     bindVisualFeedbackEvents();
     
-    console.log('视觉元素初始化完成');
 }
 
 /**
