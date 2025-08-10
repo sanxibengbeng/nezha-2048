@@ -3,9 +3,9 @@
  * 管理游戏主循环、状态转换和系统协调
  */
 
-// 日志配置
-const DEBUG_MODE = false;
-const debugLog = DEBUG_MODE ? console.log : () => {};
+// 游戏引擎日志配置
+const ENGINE_DEBUG_MODE = false;
+const engineDebugLog = ENGINE_DEBUG_MODE ? console.log : () => {};
 
 class GameEngine {
     constructor(config = {}) {
