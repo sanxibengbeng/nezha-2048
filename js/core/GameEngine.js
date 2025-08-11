@@ -28,6 +28,24 @@ class GameEngine {
         this.audioManager = new AudioManager();
         this.effectsManager = null; // 将在init方法中初始化
         
+        // 国际化管理器
+        this.i18nManager = new I18nManager();
+        
+        // 配置管理器
+        this.configManager = new ConfigManager();
+        
+        // 响应式管理器
+        this.responsiveManager = new ResponsiveManager();
+        
+        // 性能管理器
+        this.performanceManager = new PerformanceManager();
+        
+        // 错误管理器
+        this.errorManager = new ErrorManager();
+        
+        // 资源管理器
+        this.resourceManager = new ResourceManager();
+        
         // 调试 StateManager 创建
         console.log('准备创建 StateManager...');
         console.log('StateManager 类型:', typeof StateManager);
@@ -146,6 +164,24 @@ class GameEngine {
             // 设置Canvas属性
             this.setupCanvas();
             
+            // 初始化国际化管理器
+            await this.i18nManager.init();
+            
+            // 初始化配置管理器
+            await this.configManager.init();
+            
+            // 初始化响应式管理器
+            this.responsiveManager.init();
+            
+            // 初始化性能管理器
+            this.performanceManager.init();
+            
+            // 初始化错误管理器
+            this.errorManager.init();
+            
+            // 初始化资源管理器
+            this.resourceManager.init();
+            
             // 初始化特效管理器（需要canvas）
             this.effectsManager = new EffectsManager(this.canvas);
             
@@ -175,6 +211,9 @@ class GameEngine {
             // 绑定状态管理器事件
             this.bindStateManagerEvents();
             
+            // 绑定国际化管理器事件
+            this.bindI18nManagerEvents();
+            
             // 尝试加载保存的游戏状态
             this.loadSavedGame();
             
@@ -200,14 +239,42 @@ class GameEngine {
      * 设置Canvas属性
      */
     setupCanvas() {
-        // 设置Canvas尺寸
-        const container = this.canvas.parentElement;
-        const size = Math.min(container.clientWidth, container.clientHeight);
+        if (!this.canvas) {
+            console.error('Canvas 元素不存在');
+            return;
+        }
         
-        this.canvas.width = size;
-        this.canvas.height = size;
-        this.canvas.style.width = size + 'px';
-        this.canvas.style.height = size + 'px';
+        // 检查 canvas 是否有父元素
+        const container = this.canvas.parentElement;
+        if (!container) {
+            console.warn('Canvas 没有父元素，使用默认尺寸');
+            // 使用默认尺寸
+            const defaultSize = 400;
+            this.canvas.width = defaultSize;
+            this.canvas.height = defaultSize;
+            this.canvas.style.width = defaultSize + 'px';
+            this.canvas.style.height = defaultSize + 'px';
+        } else {
+            // 检查父元素是否有有效的尺寸
+            const containerWidth = container.clientWidth || container.offsetWidth || 400;
+            const containerHeight = container.clientHeight || container.offsetHeight || 400;
+            
+            if (containerWidth === 0 || containerHeight === 0) {
+                console.warn('父元素尺寸为 0，使用默认尺寸');
+                const defaultSize = 400;
+                this.canvas.width = defaultSize;
+                this.canvas.height = defaultSize;
+                this.canvas.style.width = defaultSize + 'px';
+                this.canvas.style.height = defaultSize + 'px';
+            } else {
+                // 设置Canvas尺寸
+                const size = Math.min(containerWidth, containerHeight);
+                this.canvas.width = size;
+                this.canvas.height = size;
+                this.canvas.style.width = size + 'px';
+                this.canvas.style.height = size + 'px';
+            }
+        }
         
         // 设置渲染质量
         this.ctx.imageSmoothingEnabled = true;
@@ -216,6 +283,12 @@ class GameEngine {
         // 设置字体
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
+        
+        engineDebugLog('Canvas 设置完成:', {
+            width: this.canvas.width,
+            height: this.canvas.height,
+            hasParent: !!container
+        });
     }
 
     /**
@@ -688,6 +761,45 @@ class GameEngine {
     }
 
     /**
+     * 绑定国际化管理器事件
+     */
+    bindI18nManagerEvents() {
+        if (!this.i18nManager) {
+            console.warn('国际化管理器不可用，跳过事件绑定');
+            return;
+        }
+        
+        try {
+            // 语言变更事件
+            this.i18nManager.on('languageChanged', (data) => {
+                console.log('语言已变更:', data.oldLanguage, '->', data.newLanguage);
+                
+                // 更新页面文本
+                this.updatePageTexts();
+                
+                // 触发语言变更事件
+                this.emit('languageChanged', data);
+            });
+            
+            // 应用语言事件
+            this.i18nManager.on('applyLanguage', (data) => {
+                console.log('应用语言设置:', data.language);
+                
+                // 更新页面文本
+                this.updatePageTexts();
+                
+                // 触发应用语言事件
+                this.emit('applyLanguage', data);
+            });
+            
+            console.log('国际化管理器事件绑定完成');
+            
+        } catch (error) {
+            console.error('绑定国际化管理器事件失败:', error);
+        }
+    }
+
+    /**
      * 绑定状态管理器事件
      */
     bindStateManagerEvents() {
@@ -1082,6 +1194,110 @@ class GameEngine {
      */
     getEffectsManager() {
         return this.effectsManager;
+    }
+
+    /**
+     * 获取国际化管理器
+     * @returns {I18nManager|null} 国际化管理器
+     */
+    getI18nManager() {
+        return this.i18nManager;
+    }
+
+    /**
+     * 获取配置管理器
+     * @returns {ConfigManager|null} 配置管理器
+     */
+    getConfigManager() {
+        return this.configManager;
+    }
+
+    /**
+     * 获取响应式管理器
+     * @returns {ResponsiveManager|null} 响应式管理器
+     */
+    getResponsiveManager() {
+        return this.responsiveManager;
+    }
+
+    /**
+     * 获取性能管理器
+     * @returns {PerformanceManager|null} 性能管理器
+     */
+    getPerformanceManager() {
+        return this.performanceManager;
+    }
+
+    /**
+     * 获取错误管理器
+     * @returns {ErrorManager|null} 错误管理器
+     */
+    getErrorManager() {
+        return this.errorManager;
+    }
+
+    /**
+     * 获取资源管理器
+     * @returns {ResourceManager|null} 资源管理器
+     */
+    getResourceManager() {
+        return this.resourceManager;
+    }
+
+    /**
+     * 更新页面文本
+     */
+    updatePageTexts() {
+        if (!this.i18nManager) {
+            console.warn('国际化管理器不可用，无法更新页面文本');
+            return;
+        }
+        
+        try {
+            // 更新所有带有 data-i18n 属性的元素
+            const elements = document.querySelectorAll('[data-i18n]');
+            elements.forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                const translation = this.i18nManager.t(key);
+                
+                if (translation !== key) {
+                    element.textContent = translation;
+                }
+            });
+            
+            // 更新所有带有 data-i18n-title 属性的元素
+            const titleElements = document.querySelectorAll('[data-i18n-title]');
+            titleElements.forEach(element => {
+                const key = element.getAttribute('data-i18n-title');
+                const translation = this.i18nManager.t(key);
+                
+                if (translation !== key) {
+                    element.title = translation;
+                }
+            });
+            
+            // 更新所有带有 data-i18n-placeholder 属性的元素
+            const placeholderElements = document.querySelectorAll('[data-i18n-placeholder]');
+            placeholderElements.forEach(element => {
+                const key = element.getAttribute('data-i18n-placeholder');
+                const translation = this.i18nManager.t(key);
+                
+                if (translation !== key) {
+                    element.placeholder = translation;
+                }
+            });
+            
+            // 更新页面标题
+            const title = this.i18nManager.t('game.title');
+            if (title !== 'game.title') {
+                document.title = title;
+            }
+            
+            console.log('页面文本更新完成');
+            
+        } catch (error) {
+            console.error('更新页面文本失败:', error);
+        }
     }
 
     /**
