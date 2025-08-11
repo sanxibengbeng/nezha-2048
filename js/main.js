@@ -11,10 +11,39 @@ const debugLog = DEBUG_MODE ? console.log : () => {};
 let game = null;
 
 /**
+ * 检查当前页面是否适合游戏初始化
+ * @returns {boolean} 是否可以初始化游戏
+ */
+function isGamePageCompatible() {
+    // 检查必需的游戏元素
+    const requiredElements = [
+        'game-canvas',
+        'new-game-btn',
+        'pause-btn',
+        'settings-btn'
+    ];
+    
+    for (const elementId of requiredElements) {
+        if (!document.getElementById(elementId)) {
+            debugLog(`缺少必需元素: ${elementId}`);
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+/**
  * 页面加载完成后初始化游戏
  */
 document.addEventListener('DOMContentLoaded', async function() {
     try {
+        // 检查页面是否适合游戏初始化
+        if (!isGamePageCompatible()) {
+            console.info('当前页面不是游戏页面，跳过游戏初始化');
+            return;
+        }
+        
         // 初始化游戏引擎（暂时创建基础结构）
         await initializeGame();
         
@@ -192,6 +221,7 @@ function bindGameEngineEvents() {
         updateScoreDisplay();
         initializeThemeSettings();
         initializeVisualElements();
+        initializeI18nSettings();
     });
     
     // 游戏开始
@@ -447,22 +477,86 @@ function updateGameInfoDisplay() {
 }
 
 /**
+ * 初始化国际化设置
+ */
+function initializeI18nSettings() {
+    if (!game || !game.getI18nManager) {
+        console.warn('国际化管理器不可用');
+        return;
+    }
+    
+    const i18nManager = game.getI18nManager();
+    
+    // 绑定语言变更事件
+    i18nManager.on('languageChanged', (data) => {
+        console.log('语言已变更:', data.newLanguage);
+        
+        // 显示语言变更提示
+        const languageInfo = data.languageInfo;
+        showTemporaryMessage(`${languageInfo.flag} 语言已切换到 ${languageInfo.nativeName}`, 2000);
+        
+        // 更新设置界面的语言选择器
+        updateLanguageSelector(data.newLanguage);
+    });
+    
+    // 初始更新页面文本
+    setTimeout(() => {
+        if (game && game.updatePageTexts) {
+            game.updatePageTexts();
+        }
+    }, 100);
+    
+    console.log('国际化设置初始化完成');
+}
+
+/**
+ * 更新语言选择器
+ */
+function updateLanguageSelector(selectedLanguage) {
+    const languageSelect = document.getElementById('language-select');
+    if (languageSelect) {
+        languageSelect.value = selectedLanguage;
+    }
+}
+
+/**
+ * 切换语言
+ */
+function changeLanguage(language) {
+    if (!game || !game.getI18nManager) {
+        console.warn('国际化管理器不可用');
+        return;
+    }
+    
+    const i18nManager = game.getI18nManager();
+    i18nManager.setLanguage(language);
+}
+
+/**
  * 绑定UI事件
  */
 function bindUIEvents() {
     // 新游戏按钮
     const newGameBtn = document.getElementById('new-game-btn');
-    newGameBtn.addEventListener('click', () => {
-        playButtonClickSound();
-        confirmRestartGame();
-    });
+    if (newGameBtn) {
+        newGameBtn.addEventListener('click', () => {
+            playButtonClickSound();
+            confirmRestartGame();
+        });
+    } else {
+        debugLog('未找到新游戏按钮');
+    }
     
     // 暂停按钮
     const pauseBtn = document.getElementById('pause-btn');
-    pauseBtn.addEventListener('click', () => {
-        playButtonClickSound();
-        togglePause();
-    });
+    if (pauseBtn) {
+        pauseBtn.addEventListener('click', () => {
+            playButtonClickSound();
+            togglePause();
+        });
+    } else {
+        debugLog('未找到暂停按钮');
+    }
     
     // 设置按钮
     const settingsBtn = document.getElementById('settings-btn');
@@ -494,6 +588,24 @@ function bindUIEvents() {
     
     const cancelSettingsBtn = document.getElementById('cancel-settings-btn');
     cancelSettingsBtn.addEventListener('click', closeSettingsModal);
+    
+    // 语言选择器
+    const languageSelect = document.getElementById('language-select');
+    if (languageSelect) {
+        languageSelect.addEventListener('change', (e) => {
+            // 实时预览语言变更
+            changeLanguage(e.target.value);
+        });
+    }
+    
+    // 音量滑块实时更新显示
+    const volumeSlider = document.getElementById('volume-slider');
+    const volumeValue = document.getElementById('volume-value');
+    if (volumeSlider && volumeValue) {
+        volumeSlider.addEventListener('input', (e) => {
+            volumeValue.textContent = e.target.value + '%';
+        });
+    }
     
     // 技能按钮
     bindSkillEvents();
@@ -736,6 +848,9 @@ function showSettings() {
     debugLog('找到设置模态框，移除 hidden 类');
     settingsModal.classList.remove('hidden');
     
+    // 初始化设置值
+    initializeSettingsValues();
+    
     // 暂时注释掉主题预览功能，避免可能的错误
     try {
         // 创建主题预览界面
@@ -746,6 +861,43 @@ function showSettings() {
     }
     
     debugLog('设置窗口应该已显示');
+}
+
+/**
+ * 初始化设置值
+ */
+function initializeSettingsValues() {
+    // 初始化音量滑块
+    const volumeSlider = document.getElementById('volume-slider');
+    const volumeValue = document.getElementById('volume-value');
+    if (volumeSlider && volumeValue) {
+        if (game && game.getAudioManager) {
+            const audioManager = game.getAudioManager();
+            if (audioManager && audioManager.getMasterVolume) {
+                const volume = Math.round(audioManager.getMasterVolume() * 100);
+                volumeSlider.value = volume;
+                volumeValue.textContent = volume + '%';
+            }
+        }
+    }
+    
+    // 初始化主题选择器
+    const themeSelect = document.getElementById('theme-select');
+    if (themeSelect && game && game.getThemeManager) {
+        const themeManager = game.getThemeManager();
+        if (themeManager && themeManager.currentTheme) {
+            themeSelect.value = themeManager.currentTheme;
+        }
+    }
+    
+    // 初始化语言选择器
+    const languageSelect = document.getElementById('language-select');
+    if (languageSelect && game && game.getI18nManager) {
+        const i18nManager = game.getI18nManager();
+        if (i18nManager && i18nManager.currentLanguage) {
+            languageSelect.value = i18nManager.currentLanguage;
+        }
+    }
 }
 
 /**
@@ -979,8 +1131,9 @@ function getGameEngine() {
 function saveSettings() {
     const volumeSlider = document.getElementById('volume-slider');
     const themeSelect = document.getElementById('theme-select');
+    const languageSelect = document.getElementById('language-select');
     
-    debugLog('保存设置 - 音量:', volumeSlider.value, '主题:', themeSelect.value);
+    debugLog('保存设置 - 音量:', volumeSlider.value, '主题:', themeSelect.value, '语言:', languageSelect.value);
     
     // 应用主题设置
     if (game && game.getThemeManager()) {
@@ -999,7 +1152,25 @@ function saveSettings() {
         }
     }
     
-    showTemporaryMessage('设置已保存');
+    // 保存语言设置
+    if (game && game.getI18nManager && languageSelect) {
+        const i18nManager = game.getI18nManager();
+        if (languageSelect.value !== i18nManager.currentLanguage) {
+            changeLanguage(languageSelect.value);
+        }
+    }
+    
+    // 获取当前语言的"设置已保存"文本
+    let message = '设置已保存';
+    if (game && game.getI18nManager) {
+        const i18nManager = game.getI18nManager();
+        const translation = i18nManager.t('settings.saved');
+        if (translation !== 'settings.saved') {
+            message = translation;
+        }
+    }
+    
+    showTemporaryMessage(message);
     closeSettingsModal();
 }
 
